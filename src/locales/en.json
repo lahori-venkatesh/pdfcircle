@@ -1,0 +1,165 @@
+{
+  "common": {
+    "home": "Home",
+    "imageTools": "Image Tools",
+    "pdfTools": "PDF Tools",
+    "digitalEnhancer": "Digital Enhancer",
+    "login": "Log In",
+    "signup": "Sign Up",
+    "signOut": "Sign Out",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  },
+  "hero": {
+    "title": "Transform Your Documents & Images",
+    "subtitle": "Professional-grade tools for all your document and image needs. Fast, secure, and completely free.",
+    "getStarted": "Get Started"
+  },
+  "features": {
+    "title": "Everything You Need in One Place",
+    "imageReduction": {
+      "title": "Image Size Reduction",
+      "description": "Quickly compress and convert images without losing quality"
+    },
+    "imageToPdf": {
+      "title": "Image to PDF",
+      "description": "Convert your images into professional PDF documents"
+    },
+    "pdfToImages": {
+      "title": "PDF to Images",
+      "description": "Extract images from PDF files with ease"
+    },
+    "removeBackground": {
+      "title": "Background Remover",
+      "description": "Remove backgrounds from images instantly"
+    },
+    "digitalEnhancer": {
+      "title": "Digital Image Enhancer",
+      "description": "Enhance image quality using advanced technology"
+    },
+    "compressPdf": {
+      "title": "Compress PDF",
+      "description": "Reduce PDF file size while maintaining quality"
+    },
+    "mergePdfs": {
+      "title": "Merge PDFs",
+      "description": "Combine multiple PDF files into one document"
+    },
+    "splitPdf": {
+      "title": "Split PDF",
+      "description": "Divide PDF files into separate documents"
+    },
+    "pdfToWord": {
+      "title": "PDF to Word",
+      "description": "Convert PDF files to editable Word documents"
+    },
+    "pdfToExcel": {
+      "title": "PDF to Excel",
+      "description": "Transform PDF tables into Excel spreadsheets"
+    },
+    "wordToPdf": {
+      "title": "Word to PDF",
+      "description": "Convert Word documents to PDF format"
+    },
+    "excelToPdf": {
+      "title": "Excel to PDF",
+      "description": "Create PDFs from Excel spreadsheets"
+    },
+    "editPdf": {
+      "title": "Edit PDF",
+      "description": "Modify and annotate PDF documents"
+    },
+    "addWatermark": {
+      "title": "Add Watermark",
+      "description": "Protect your PDFs with custom watermarks"
+    }
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "step1": {
+      "title": "Upload Your File",
+      "description": "Select the image or PDF you want to process"
+    },
+    "step2": {
+      "title": "Choose Your Tool",
+      "description": "Pick from our wide range of processing options"
+    },
+    "step3": {
+      "title": "Download",
+      "description": "Get your processed file in seconds"
+    }
+  },
+  "security": {
+    "title": "Security You Can Trust",
+    "subtitle": "Your privacy and data security are our top priorities",
+    "localProcessing": {
+      "title": "Local Processing",
+      "description": "Files are processed on your device when possible"
+    },
+    "endToEnd": {
+      "title": "End-to-End Encryption",
+      "description": "Secure file transfers with advanced encryption"
+    },
+    "noStorage": {
+      "title": "No File Storage",
+      "description": "We don't keep copies of your files"
+    },
+    "updates": {
+      "title": "Regular Updates",
+      "description": "Constant security improvements"
+    },
+    "connection": {
+      "title": "Secure Connection",
+      "description": "Protected with SSL/TLS encryption"
+    },
+    "verified": {
+      "title": "Verified Processing",
+      "description": "Trusted by thousands of users"
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Got questions? We have answers!",
+    "free": {
+      "question": "Is it really free?",
+      "answer": "Yes, all our core features are completely free to use!"
+    },
+    "fileSize": {
+      "question": "What’s the maximum file size?",
+      "answer": "We support files up to 100MB for free users."
+    },
+    "fileHandling": {
+      "question": "How are my files handled?",
+      "answer": "Files are processed securely and not stored on our servers."
+    },
+    "formats": {
+      "question": "What file formats are supported?",
+      "answer": "We support PDF, JPG, PNG, Word, Excel, and more!"
+    },
+    "account": {
+      "question": "Do I need an account?",
+      "answer": "No account is required for basic features."
+    },
+    "security": {
+      "question": "Is my data secure?",
+      "answer": "Yes, we use encryption and local processing to ensure security."
+    }
+  },
+  "footer": {
+    "description": "The Ultimate All-in-One Solution for PDF and Image Conversion, Compression, and Editing",
+    "quickLinks": "Quick Links",
+    "legal": "Legal",
+    "language": "Language",
+    "aboutUs": "About Us",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact Us",
+    "copyright": "© {{year}} Hallopdf. All rights reserved."
+  },
+  "seo": {
+    "home": {
+      "title": "Free Online PDF & Image Tools | Convert, Compress, Merge & Enhance Files",
+      "description": "All-in-One Online PDF & Image Processing Tool | Convert, Compress, Merge & Enhance for Free"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+importScripts('https://cdn.jsdelivr.net/npm/tesseract.js-core@2.2.0/tesseract-core.wasm.js');

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- OpenCV Initialization -->
+    <script>
+      console.log('Setting up OpenCV Module...');
+      window.Module = {
+        onRuntimeInitialized: function () {
+          console.log('OpenCV runtime initialized');
+          window.isOpenCvReady = true;
+          window.dispatchEvent(new Event('opencv-ready'));
+        },
+        locateFile: (file) => `/opencv.js/${file}`,
+      };
+    </script>
+    <script src="https://docs.opencv.org/4.9.0/opencv.js" async onload="console.log('OpenCV.js loaded')"></script>
+
+    <!-- Metadata -->
+    <title>pdfCircle - Document & Image Converter Tools</title>
+    <meta name="description" content="Transform Your Documents and Images with pdfCircle Powerful Conversion Tools - Convert, Compress, and Enhance with Ease" />
+    <meta name="keywords" content="pdfcircle , pdf circle ,Document Conversion , Image Tools , PDF Converter , OCR (Optical Character Recognition) , Image Compression  File Conversion , PDF Editing , Image Enhancement , Document Management , Online PDF Tools , Convert PDF to JPG,  PDF to Word Conversion,  PDF Compression , Image Resizing Tools , PDF Merge and Split , Scan to Text (OCR) , Document Scanning Tools , Free Online PDF Tools , File Compression Tools , PDF to Excel Conversion" />
+
+    <meta property="og:title" content="PdfCircle - Convert & Edit PDFs and Images Online" />
+    <meta property="og:description" content="Convert, compress, and enhance PDFs & images with PdfCircle's free online tools. Try now!" />
+    <meta property="og:url" content="https://www.pdfcircle.com/" />
+    <meta property="og:image" content="https://www.pdfcircle.com/apple-touch-icon.png" />
+    <meta property="og:type" content="website" />
+
+    <!-- Security Headers (Updated CSP) -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdnjs.cloudflare.com https://docs.opencv.org;
+      style-src 'self' 'unsafe-inline';
+      img-src 'self' blob: data: https://*.unsplash.com;
+      connect-src 'self' https://tragwrsmmqtiusvitofm.supabase.co https://tragwrsmmqtiusvitofm.supabase.co/storage/v1 https://tragwrsmmqtiusvitofm.supabase.co/functions/v1/* https://staticimgly.com data: blob:;
+      worker-src 'self' blob:;
+      frame-src 'self';
+      font-src 'self' data:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    " />
+
+    <!-- Performance Optimization -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://tragwrsmmqtiusvitofm.supabase.co" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://staticimgly.com" />
+
+    <!-- iOS Splash Screens and Icons -->
+    <link rel="apple-touch-icon" sizes="512x512" href="/icons/apple-touch-icon.png" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/apple-splash-750-1334.png" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/apple-splash-1125-2436.png" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/apple-splash-828-1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)" />
+    <link rel="apple-touch-startup-image" href="/splashscreens/apple-splash-2048-2732.png" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2)" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
