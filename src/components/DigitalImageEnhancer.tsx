@@ -549,7 +549,7 @@ export function DigitalImageEnhancer() {
       />
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
         <AdComponent slot="digital-image-enhancer-top" className="mb-6" style={{ minHeight: '90px' }} />
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Digital Image Enhancer</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Digital Image Enhancer</h1>
 
         {showCropModal && cropImageSrc && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -648,18 +648,18 @@ export function DigitalImageEnhancer() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div className="flex flex-col justify-center space-y-2 mr-36 ml-36" >
+          <div className="space-y-6 align-middle ">
             {!image ? (
               <div
                 {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${
+                className={`border-2 border-dashed rounded-lg p-6 align-middle text-center cursor-pointer ${
                   isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
                 }`}
               >
                 <input {...getInputProps()} />
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p>{isDragActive ? 'Drop the image here' : 'Drag & drop an image or tap to select'}</p>
+                <Upload className="w-12 h-12 text-gray-400 dark:text-white mx-auto mb-4" />
+                <p className='dark:text-white'>{isDragActive ? 'Drop the image here' : 'Drag & drop an image or tap to select'}</p>
               </div>
             ) : (
               <div className="space-y-4">

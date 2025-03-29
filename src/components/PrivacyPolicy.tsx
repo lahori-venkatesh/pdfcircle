@@ -5,8 +5,8 @@ export function PrivacyPolicy() {
   return (
     <>
       <SEOHeaders
-        title="Privacy Policy - Hallopdf | Free Document & Image Tools"
-        description="Learn how Hallopdf protects your privacy with our secure, browser-based document and image processing tools. No data storage, full control."
+        title="Privacy Policy - pdfcircle | Free Document & Image Tools"
+        description="Learn how pdfCircle protects your privacy with our secure, browser-based document and image processing tools. No data storage, full control."
         keywords={[
           'PdfCircle data privacy',  
           'Secure PDF and image processing',  
@@ -25,16 +25,16 @@ export function PrivacyPolicy() {
           </p>
 
           <p className="text-gray-600 mb-8">
-            At Hallopdf, your privacy is our priority. This Privacy Policy explains how we handle your information
+            At pdfCircle, your privacy is our priority. This Privacy Policy explains how we handle your information
             when you use our free online tools for document conversion and image processing (the "Service").
-            By using Hallopdf, you agree to the practices outlined here.
+            By using pdfCircle, you agree to the practices outlined here.
           </p>
 
           {/* 1. Introduction */}
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-gray-800 mb-4">1. Introduction</h2>
             <p className="text-gray-600">
-            PdfCircle, designed and developed by Venkatesh with development support from Prudhvi Verma, is committed to delivering secure and efficient tools while prioritizing your privacy. Whenever possible, we process files locally in your browser, ensuring complete control over your data without storing it on our servers.
+            PdfCircle, designed and developed by Venkatesh with development support from Prudhvi Varma, is committed to delivering secure and efficient tools while prioritizing your privacy. Whenever possible, we process files locally in your browser, ensuring complete control over your data without storing it on our servers.
             </p>
           </section>
 

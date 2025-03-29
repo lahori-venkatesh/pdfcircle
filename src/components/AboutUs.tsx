@@ -31,7 +31,7 @@ export function AboutUs() {
               </h2>
               <p className="text-lg text-white/90">
                 Welcome to pdfcircle, your go-to platform for free, reliable, and secure online tools for document
-                conversion and image processing. Founded by passionate developers Venkatesh and Prudvi kumar, we’re
+                conversion and image processing. Founded by passionate developers Venkatesh and Prudvi Varma, we’re
                 committed to making productivity tools accessible to everyone—no subscriptions, no hassle, just results.
               </p>
             </div>
@@ -47,7 +47,7 @@ export function AboutUs() {
               <p className="text-gray-600">
                 At pdfcircle, our mission is simple: empower users worldwide with high-quality tools to edit PDFs,
                 convert documents, and process images effortlessly. Whether you’re a student, professional, or
-                creative, Venkatesh and Prudvi kumar have designed this platform to break down barriers and boost your efficiency.
+                creative, Venkatesh and Prudvi Varma have designed this platform to break down barriers and boost your efficiency.
               </p>
             </div>
           </section>
@@ -69,7 +69,7 @@ export function AboutUs() {
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Prudvi</h3>
                 <p className="text-gray-600">
-                  Prudvi is the creative force driving pdfcircle seamless user experience. With a knack for design
+                  Prudvi Varma is the creative force driving pdfcircle seamless user experience. With a knack for design
                   and functionality, he ensures our tools are intuitive and meet real-world needs.
                 </p>
               </div>

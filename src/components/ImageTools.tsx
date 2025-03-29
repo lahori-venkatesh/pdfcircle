@@ -466,7 +466,7 @@ export function ImageTools() {
         keywords={['image converter', 'compress images']} 
       />
       <div className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6 text-center">Image Tools</h1>
+        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Image Tools</h1>
         <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
         <div className="bg-white rounded-xl shadow-lg p-4">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
@@ -553,15 +553,15 @@ export function ImageTools() {
               </div>
             </div>
           ) : images.length === 0 ? (
-            <div>
+            <div >
               <div 
                 {...getRootProps()} 
-                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
+                className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300  hover:border-indigo-400'}`}
               >
                 <input {...getInputProps()} />
-                <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">{isDragActive ? 'Drop here' : 'Drag & drop or tap to select'}</p>
-                <p className="text-sm text-gray-500 mt-2">JPEG, PNG, WebP, GIF, SVG</p>
+                <Upload className="w-12 h-12 text-gray-400  mx-auto mb-4" />
+                <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Drag & drop or tap to select'}</p>
+                <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, GIF, SVG</p>
               </div>
             </div>
           ) : (
