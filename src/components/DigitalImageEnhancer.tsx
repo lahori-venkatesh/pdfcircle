@@ -648,7 +648,7 @@ export function DigitalImageEnhancer() {
           </div>
         )}
 
-        <div className="flex flex-col justify-center space-y-2 mr-36 ml-36" >
+        <div className="flex flex-col justify-center space-y-2 mx-4 md:mx-16 lg:mx-36" >
           <div className="space-y-6 align-middle ">
             {!image ? (
               <div
