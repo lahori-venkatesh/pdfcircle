@@ -40,7 +40,7 @@ export function Contact() {
     <>
       <SEOHeaders
         title="Contact Us"
-        description="Get in touch with the Bropdf team. We're here to help with any questions or feedback."
+        description="Get in touch with the pdfcircle team. We're here to help with any questions or feedback."
       />
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-8">
