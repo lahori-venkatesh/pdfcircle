@@ -19,7 +19,7 @@ export function AboutUs() {
         ]}
       />
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">About Hallopdf</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">About pdfCircle</h1>
         
         <div className="prose prose-lg max-w-none">
           {/* Introduction */}
