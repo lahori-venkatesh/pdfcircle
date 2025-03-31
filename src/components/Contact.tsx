@@ -39,8 +39,8 @@ export function Contact() {
   return (
     <>
       <SEOHeaders
-        title="Contact Us"
-        description="Get in touch with the pdfcircle team. We're here to help with any questions or feedback."
+        title="Contact PDFCircle – Get Support & Send Feedback"
+        description="Need help with PDFCircle? Contact our team for support, inquiries, or feedback. We're here to assist you!"
       />
       <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
         <div className="text-center mb-8">
