@@ -19,8 +19,8 @@ export function SEOHeaders({
   const baseUrl = 'https://pdfcircle.com/';
   const currentUrl = canonicalUrl || `${baseUrl}${location.pathname}`;
 
-  const defaultTitle = 'PdfCircle - Free Document & Image Converter Tools | pdfCircle';
-  const defaultDescription = 'Easily compress, convert, merge, and edit PDFs online with pdfCircle. 100% free & secure. Try our fast and easy PDF tools today!';
+  const defaultTitle = 'PdfCircle - Free Tools for Converting Documents and Images | PdfCircle';
+  const defaultDescription = 'PdfCircle-Free all-in-one tool to convert, compress, merge, and enhance PDFs and images easily';
   const defaultKeywords = [
     'convert image to pdf online',
     'pdf to jpg converter free',

@@ -471,11 +471,13 @@ export function ImageTools() {
 
   return (
     <>
-      <SEOHeaders
-        title="Image resize | Convert and compress images"
-        description="Convert and compress images"
-        keywords={['image converter', 'compress images']}
-      />
+      <SEOHeaders 
+        title="Online Image Resize, Convert, and Compress Tool - Free Image Optimization"
+        description="Resize, convert, and compress images online with our free tool. Optimize your images for faster load times, better performance, and improved website SEO."
+        keywords={['image resize online', 'compress images online', 'convert images free', 'image converter tool', 'image optimization tool', 'resize image for website', 'compress photo for web', 'optimize images', 'free image compressor', 'image quality reduction', 'batch image conversion', 'resize photos free', 'online image resizing tool', 'resize image for social media', 'free photo resizer', 'batch image resizer', 'resize images without losing quality', 'convert jpg to png online', 'png to jpg converter', 'online image conversion tool', 'convert photo to png', 'convert jpeg to webp', 'image format changer online', 'compress image for faster loading', 'compress jpg and png online']}
+
+     />
+
       <div className="max-w-4xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Image Tools</h1>
         <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
