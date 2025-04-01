@@ -11,31 +11,31 @@
     "lightMode": "Light Mode"
   },
   "hero": {
-    "title": "Transform Your Documents & Images",
-    "subtitle": "Professional-grade tools for all your document and image needs. Fast, secure, and completely free.",
+    "title": " pdfCircle Transform Your Documents & Images",
+    "subtitle": "pdfCircle is Professional-grade tools for all your document and image needs. Fast, secure, and completely free.",
     "getStarted": "Get Started"
   },
   "features": {
-    "title": "Everything You Need in One Place",
+    "title": "Everything You Need in One Place in pdfCircle",
     "imageReduction": {
       "title": "Image Size Reduction",
       "description": "Quickly compress and convert images without losing quality"
     },
     "imageToPdf": {
       "title": "Image to PDF",
-      "description": "Convert your images into professional PDF documents"
+      "description": "pdfCircle can Convert your images into professional PDF documents"
     },
     "pdfToImages": {
       "title": "PDF to Images",
-      "description": "Extract images from PDF files with ease"
+      "description": "pdfCircle can Extract images from PDF files with ease"
     },
     "removeBackground": {
       "title": "Background Remover",
-      "description": "Remove backgrounds from images instantly"
+      "description": "pdfCircle Remove backgrounds from images instantly"
     },
     "digitalEnhancer": {
       "title": "Digital Image Enhancer",
-      "description": "Enhance image quality using advanced technology"
+      "description": "pdfcircle Enhance image quality using advanced technology"
     },
     "compressPdf": {
       "title": "Compress PDF",
@@ -75,7 +75,7 @@
     }
   },
   "howItWorks": {
-    "title": "How It Works",
+    "title": "How pdfCircle Works",
     "step1": {
       "title": "Upload Your File",
       "description": "Select the image or PDF you want to process"
@@ -90,7 +90,7 @@
     }
   },
   "security": {
-    "title": "Security You Can Trust",
+    "title": "pdfCircle has Your Security You Can Trust",
     "subtitle": "Your privacy and data security are our top priorities",
     "localProcessing": {
       "title": "Local Processing",
@@ -146,7 +146,7 @@
     }
   },
   "footer": {
-    "description": "The Ultimate All-in-One Solution for PDF and Image Conversion, Compression, and Editing",
+    "description": "The pdfCircle Ultimate All-in-One Solution for PDF and Image Conversion, Compression, and Editing",
     "quickLinks": "Quick Links",
     "legal": "Legal",
     "language": "Language",
@@ -158,8 +158,8 @@
   },
   "seo": {
     "home": {
-      "title": "Free Online PDF & Image Tools | Convert, Compress, Merge & Enhance Files",
-      "description": "All-in-One Online PDF & Image Processing Tool | Convert, Compress, Merge & Enhance for Free"
+      "title": "PDFcircle |  Free Online PDF & Image Tools - Convert, Compress, Merge, Enhance",
+      "description": "Use PDFcircle, the all-in-one free online tool for PDF and image processing. Easily convert, compress, merge, and enhance your files at no cost"
     }
   }
 }

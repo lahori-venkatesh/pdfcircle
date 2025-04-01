@@ -474,7 +474,7 @@ export function ImageTools() {
       <SEOHeaders 
         title="Online Image Resize, Convert, and Compress Tool - Free Image Optimization"
         description="Resize, convert, and compress images online with our free tool. Optimize your images for faster load times, better performance, and improved website SEO."
-        keywords={['image resize online', 'compress images online', 'convert images free', 'image converter tool', 'image optimization tool', 'resize image for website', 'compress photo for web', 'optimize images', 'free image compressor', 'image quality reduction', 'batch image conversion', 'resize photos free', 'online image resizing tool', 'resize image for social media', 'free photo resizer', 'batch image resizer', 'resize images without losing quality', 'convert jpg to png online', 'png to jpg converter', 'online image conversion tool', 'convert photo to png', 'convert jpeg to webp', 'image format changer online', 'compress image for faster loading', 'compress jpg and png online']}
+        keywords={[ 'pdfcircle' ,'image resize online', 'compress images online', 'convert images free', 'image converter tool', 'image optimization tool', 'resize image for website', 'compress photo for web', 'optimize images', 'free image compressor', 'image quality reduction', 'batch image conversion', 'resize photos free', 'online image resizing tool', 'resize image for social media', 'free photo resizer', 'batch image resizer', 'resize images without losing quality', 'convert jpg to png online', 'png to jpg converter', 'online image conversion tool', 'convert photo to png', 'convert jpeg to webp', 'image format changer online', 'compress image for faster loading', 'compress jpg and png online']}
 
      />
 

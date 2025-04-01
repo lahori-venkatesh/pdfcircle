@@ -1,11 +1,11 @@
 import { PropsWithChildren } from 'react';
-import React, { useState, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   FileUp, Image, FileText, FilePlus, FileDown, Split, FileCode2, Search, 
   Minimize2, Menu, X, Camera, Mail, Lock, Eye, EyeOff, LogOut, Images,
   Shield, ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-  Globe, Award, Code, Pencil, Stamp, Type, Eraser, Wand2, Sun, Moon
+  Globe, Award, Code, Pencil, Stamp, Type, Eraser, Wand2, Sun, Moon, ArrowUp
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
@@ -23,6 +23,17 @@ import { AuthModal } from './components/AuthModal';
 import { SEOHeaders } from './components/SEOHeaders';
 import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
+
+// ScrollToTop component to handle scrolling on route change
+const ScrollToTop = ({ children }) => {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0); // Scroll to top on route change
+  }, [location.pathname]);
+
+  return <>{children}</>;
+};
 
 function SecurityFeature({ icon: Icon, title, description }) {
   return (
@@ -63,7 +74,7 @@ function FAQItem({ question, answer }) {
 
 function FeatureCard({ icon: Icon, title, description, to }) {
   return (
-    <Link to={to} className="block">
+    <Link to={to} onClick={() => window.scrollTo(0, 0)} className="block">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg mb-4">
           <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
@@ -95,9 +106,10 @@ function HomePage() {
   return (
     <>
       <SEOHeaders 
-        title={t('seo.home.title', 'PdfCircle - Free Tools for Converting Documents and Images | PdfCircle')}
+        title={t('seo.home.title', 'PdfCircle | Free Tools for Converting Documents and Images.')}
         description={t('seo.home.description', 'PdfCircle-Free all-in-one tool to convert, compress, merge, and enhance PDFs and images easily')}
         keywords={[
+          'pdfcircle',
           'convert image to pdf online',
           'pdf to jpg converter free',
           'split pdf online free',
@@ -152,7 +164,6 @@ function HomePage() {
           'resize image to specific dimensions',
           'best free image resizing software',
           'compress and resize images online',
-         // Added from previous discussion
           'pdfCircle document conversion tools',
           'pdfCircle image enhancement online',
           'pdfCircle ocr scan to text free',
@@ -180,6 +191,7 @@ function HomePage() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/image-tools"
+                onClick={() => window.scrollTo(0, 0)}
                 className="inline-block bg-white text-indigo-600 dark:bg-indigo-400 dark:text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-500 transition-colors duration-300 shadow-lg"
               >
                 {t('hero.getStarted')}
@@ -344,6 +356,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpenState] = useState(false);
   const [authMode, setAuthModeState] = useState('signup');
+  const [isVisible, setIsVisible] = useState(false); // State for scroll button visibility
 
   setAuthModalOpen = setAuthModalOpenState;
   setAuthMode = setAuthModeState;
@@ -359,23 +372,46 @@ function Layout({ children }: PropsWithChildren<{}>) {
     setMobileMenuOpen(false);
   };
 
+  // Handle scroll to show/hide the button
+  const handleScroll = useCallback(() => {
+    if (window.scrollY > 300) { // Show button after scrolling 300px
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+  }, []);
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth', // Smooth scrolling
+    });
+  };
+
+  // Add scroll event listener
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll); // Cleanup
+  }, [handleScroll]);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-40">
         <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16">
           <div className="flex items-center justify-between h-full">
             <div className="flex-shrink-0">
-              <Link to="/" className="flex items-center space-x-2">
+              <Link to="/" onClick={scrollToTop} className="flex items-center space-x-2">
                 <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-600" />
                 <span className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-600">pdfCircle</span>
               </Link>
             </div>
             <div className="hidden sm:flex items-center justify-center flex-1 px-8">
               <div className="flex space-x-6">
-                <Link to="/" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.home')}</Link>
-                <Link to="/image-tools" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.imageTools')}</Link>
-                <Link to="/pdf-tools" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.pdfTools')}</Link>
-                <Link to="/digital-enhancer" className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.digitalEnhancer')}</Link>
+                <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.home')}</Link>
+                <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.imageTools')}</Link>
+                <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.pdfTools')}</Link>
+                <Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.digitalEnhancer')}</Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
@@ -413,10 +449,10 @@ function Layout({ children }: PropsWithChildren<{}>) {
         {mobileMenuOpen && (
           <div className="sm:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div className="px-4 py-3 space-y-3">
-              <Link to="/" className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" onClick={() => setMobileMenuOpen(false)}>{t('common.home')}</Link>
-              <Link to="/image-tools" className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" onClick={() => setMobileMenuOpen(false)}>{t('common.imageTools')}</Link>
-              <Link to="/pdf-tools" className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" onClick={() => setMobileMenuOpen(false)}>{t('common.pdfTools')}</Link>
-              <Link to="/digital-enhancer" className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" onClick={() => setMobileMenuOpen(false)}>{t('common.digitalEnhancer')}</Link>
+              <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.home')}</Link>
+              <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.imageTools')}</Link>
+              <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.pdfTools')}</Link>
+              <Link to="/digital-enhancer" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.digitalEnhancer')}</Link>
               <button
                 onClick={toggleTheme}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -454,6 +490,15 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
       {children}
 
+      {/* Scroll to Top Button */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'} transition-transform duration-300`}
+        aria-label={t('common.scrollToTop')}
+      >
+        <ArrowUp className="w-6 h-6" />
+      </button>
+
       <footer className="bg-gray-900 dark:bg-gray-950 text-white py-8 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
@@ -467,19 +512,19 @@ function Layout({ children }: PropsWithChildren<{}>) {
             <div>
               <h3 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h3>
               <ul className="space-y-2">
-                <li><Link to="/" className="text-gray-400 hover:text-white">{t('common.home')}</Link></li>
-                <li><Link to="/image-tools" className="text-gray-400 hover:text-white">{t('common.imageTools')}</Link></li>
-                <li><Link to="/pdf-tools" className="text-gray-400 hover:text-white">{t('common.pdfTools')}</Link></li>
-                <li><Link to="/digital-enhancer" className="text-gray-400 hover:text-white">{t('common.digitalEnhancer')}</Link></li>
+                <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.home')}</Link></li>
+                <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.imageTools')}</Link></li>
+                <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.pdfTools')}</Link></li>
+                <li><Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.digitalEnhancer')}</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">{t('footer.legal')}</h3>
               <ul className="space-y-2">
-                <li><Link to="/about" className="text-gray-400 hover:text-white">{t('footer.aboutUs')}</Link></li>
-                <li><Link to="/privacy" className="text-gray-400 hover:text-white">{t('footer.privacy')}</Link></li>
-                <li><Link to="/terms" className="text-gray-400 hover:text-white">{t('footer.terms')}</Link></li>
-                <li><Link to="/contact" className="text-gray-400 hover:text-white">{t('footer.contact')}</Link></li>
+                <li><Link to="/about" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.aboutUs')}</Link></li>
+                <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.privacy')}</Link></li>
+                <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.terms')}</Link></li>
+                <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.contact')}</Link></li>
               </ul>
             </div>
             <div>
@@ -503,21 +548,23 @@ function App() {
     <Router>
       <AuthProvider>
         <ThemeProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/image-tools" element={<ImageTools />} />
-              <Route path="/pdf-tools" element={<PDFTools />} />
-              <Route path="/html-to-pdf" element={<HTMLToPDF />} />
-              <Route path="/digital-enhancer" element={<DigitalImageEnhancer />} />
-              <Route path="/background-remover" element={<BackgroundRemover />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/contact" element={<Contact />} />
-            </Routes>
-            <StickyBottomAd />
-          </Layout>
+          <ScrollToTop>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/image-tools" element={<ImageTools />} />
+                <Route path="/pdf-tools" element={<PDFTools />} />
+                <Route path="/html-to-pdf" element={<HTMLToPDF />} />
+                <Route path="/digital-enhancer" element={<DigitalImageEnhancer />} />
+                <Route path="/background-remover" element={<BackgroundRemover />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/contact" element={<Contact />} />
+              </Routes>
+              <StickyBottomAd />
+            </Layout>
+          </ScrollToTop>
         </ThemeProvider>
       </AuthProvider>
     </Router>

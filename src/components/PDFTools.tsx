@@ -68,8 +68,9 @@ export function PDFTools() {
         title="Free Online PDF Tools: Merge, Split, Compress, Convert Easy"  // 60 characters
         description="Free online PDF tools to merge, split, compress, convert PDFs to Excel, Word,  JPG, or from Word/Excel to PDF easily. No sign-up required."  // 130 characters
         keywords={[
+          'pdfcircle',
           'free online pdf merger tool',
-           'split pdf online free tool',
+          'split pdf online free tool',
           'compress pdf online free fast',
           'convert pdf to jpg online free',
           'merge pdf files free online',
