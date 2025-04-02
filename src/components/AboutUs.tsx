@@ -6,15 +6,15 @@ export function AboutUs() {
   return (
     <>
       <SEOHeaders
-        title="About Us - pdfcircle | Document & Image Converter Tools"
-        description="Discover PDFCircle Mission: Providing Free, Secure, and Innovative Document and Image Processing Tools, Crafted by Developers Venkatesh and Prudvi Kumar"
+        title="About Us - pdfCircle | Document & Image Converter Tools"
+        description="Discover pdfCircle's mission: Providing free, secure, and innovative document and image processing tools, crafted by developers Venkatesh and Prudvi Varma."
         keywords={[
-          'about pdfcircle',
+          'about pdfCircle',
           'free pdf tools',
           'document conversion online',
           'image processing tools',
           'venkatesh developer',
-          'prudvi developer',
+          'prudvi varma developer',
           'secure pdf tools'
         ]}
       />
@@ -30,7 +30,7 @@ export function AboutUs() {
                 Who We Are
               </h2>
               <p className="text-lg text-white/90">
-                Welcome to pdfcircle, your go-to platform for free, reliable, and secure online tools for document
+                Welcome to pdfCircle, your go-to platform for free, reliable, and secure online tools for document
                 conversion and image processing. Founded by passionate developers Venkatesh and Prudvi Varma, we’re
                 committed to making productivity tools accessible to everyone—no subscriptions, no hassle, just results.
               </p>
@@ -45,9 +45,9 @@ export function AboutUs() {
             </h2>
             <div className="bg-white p-6 rounded-lg shadow-md">
               <p className="text-gray-600">
-                At pdfcircle, our mission is simple: empower users worldwide with high-quality tools to edit PDFs,
-                convert documents, and process images effortlessly. Whether you’re a student, professional, or
-                creative, Venkatesh and Prudvi Varma have designed this platform to break down barriers and boost your efficiency.
+                At pdfCircle, our mission is simple: empower users worldwide with high-quality tools to edit PDFs,
+                convert documents, and process images effortlessly. Whether you’re a student, professional, or creative,
+                Venkatesh and Prudvi Varma have designed this platform to break down barriers and boost your efficiency.
               </p>
             </div>
           </section>
@@ -62,14 +62,14 @@ export function AboutUs() {
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">Venkatesh</h3>
                 <p className="text-gray-600">
-                  Venkatesh is the technical visionary behind pdfcircle, bringing expertise in web development and
+                  Venkatesh is the technical visionary behind pdfCircle, bringing expertise in web development and
                   innovative problem-solving. His goal? To create tools that are fast, secure, and user-friendly.
                 </p>
               </div>
               <div className="bg-white p-6 rounded-lg shadow-md">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">Prudvi</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-2">Prudvi Varma</h3>
                 <p className="text-gray-600">
-                  Prudvi Varma is the creative force driving pdfcircle seamless user experience. With a knack for design
+                  Prudvi Varma is the creative force driving pdfCircle’s seamless user experience. With a knack for design
                   and functionality, he ensures our tools are intuitive and meet real-world needs.
                 </p>
               </div>
@@ -80,7 +80,7 @@ export function AboutUs() {
           <section className="mb-12">
             <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
               <Shield className="w-6 h-6 mr-2" />
-              Why Choose pdfcircle?
+              Why Choose pdfCircle?
             </h2>
             <div className="bg-gray-50 p-6 rounded-lg">
               <ul className="space-y-4 text-gray-600">
@@ -112,8 +112,8 @@ export function AboutUs() {
             </h2>
             <div className="bg-white p-6 rounded-lg shadow-md text-center">
               <p className="text-gray-600 mb-4">
-                Venkatesh and Prudvi kumar are excited to have you here! Explore our tools, share your feedback, and help us
-                shape the future of Hallopdf. Have questions? We’re just a click away.
+                Venkatesh and Prudvi Varma are excited to have you here! Explore our tools, share your feedback, and help us
+                shape the future of pdfCircle. Have questions? We’re just a click away.
               </p>
               <a
                 href="/contact"
@@ -129,3 +129,5 @@ export function AboutUs() {
     </>
   );
 }
+
+export default AboutUs;

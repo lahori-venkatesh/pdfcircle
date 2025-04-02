@@ -20,7 +20,6 @@ export function SplitPDF() {
   const [splitPages, setSplitPages] = useState<string>('');
   const [totalPages, setTotalPages] = useState<number | null>(null);
 
-  // Load PDF page count when file changes
   useEffect(() => {
     const loadPageCount = async () => {
       if (files.length === 1) {
@@ -30,6 +29,7 @@ export function SplitPDF() {
           setTotalPages(pdfDoc.getPageCount());
         } catch (err) {
           console.error('Error loading page count:', err);
+          setError('Error loading PDF. Please try again.');
         }
       } else {
         setTotalPages(null);
@@ -64,9 +64,45 @@ export function SplitPDF() {
     multiple: false
   });
 
+  const parsePageInput = (input: string, maxPages: number): number[] => {
+    const pages: number[] = [];
+    const parts = input.split(',').map(part => part.trim());
+
+    for (const part of parts) {
+      if (!part) continue;
+
+      const rangeMatch = part.match(/^(\d+)-(\d+)$/);
+      if (rangeMatch) {
+        const start = parseInt(rangeMatch[1], 10);
+        const end = parseInt(rangeMatch[2], 10);
+        
+        if (isNaN(start) || isNaN(end) || start > end || start < 1 || end > maxPages) {
+          throw new Error(`Invalid range: ${part}. Pages must be between 1 and ${maxPages}`);
+        }
+        
+        for (let i = start; i <= end; i++) {
+          pages.push(i - 1); // Convert to 0-based indexing
+        }
+      } else {
+        const pageNum = parseInt(part, 10);
+        if (isNaN(pageNum) || pageNum < 1 || pageNum > maxPages) {
+          throw new Error(`Invalid page number: ${part}. Pages must be between 1 and ${maxPages}`);
+        }
+        pages.push(pageNum - 1); // Convert to 0-based indexing
+      }
+    }
+
+    return [...new Set(pages)].sort((a, b) => a - b); // Remove duplicates and sort
+  };
+
   const handleSplitPDF = async () => {
-    if (files.length !== 1) {
-      setError('Please select one PDF file');
+    if (files.length !== 1 || !totalPages) {
+      setError('Please select a valid PDF file');
+      return;
+    }
+
+    if (!splitPages.trim()) {
+      setError('Please specify pages to remove');
       return;
     }
 
@@ -76,48 +112,40 @@ export function SplitPDF() {
     try {
       const pdfBytes = await files[0].file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pageCount = pdfDoc.getPageCount();
+      const pagesToRemove = parsePageInput(splitPages, totalPages);
 
-      const pageRanges = splitPages
-        .split(',')
-        .map(range => range.trim())
-        .map(range => {
-          const [start, end] = range.split('-').map(num => parseInt(num));
-          return end ? { start: start - 1, end } : { start: start - 1, end: start };
-        })
-        .filter(range => range.start >= 0 && range.end <= pageCount);
-
-      if (pageRanges.length === 0) {
-        throw new Error('Invalid page ranges specified');
+      if (pagesToRemove.length === 0) {
+        throw new Error('No valid pages specified to remove');
       }
 
-      const splitPdfs = await Promise.all(pageRanges.map(async (range) => {
-        const newPdf = await PDFDocument.create();
-        const pages = await newPdf.copyPages(pdfDoc, Array.from(
-          { length: range.end - range.start },
-          (_, i) => range.start + i
-        ));
-        pages.forEach(page => newPdf.addPage(page));
-        return newPdf.save();
-      }));
+      if (pagesToRemove.length === totalPages) {
+        throw new Error('Cannot remove all pages');
+      }
 
-      const blobs = splitPdfs.map(pdfBytes => 
-        new Blob([pdfBytes], { type: 'application/pdf' })
+      const newPdf = await PDFDocument.create();
+      const copiedPages = await newPdf.copyPages(pdfDoc, 
+        Array.from({ length: totalPages }, (_, i) => i)
+          .filter(i => !pagesToRemove.includes(i))
       );
 
+      copiedPages.forEach(page => newPdf.addPage(page));
+
+      const pdfBytesResult = await newPdf.save();
+      const blob = new Blob([pdfBytesResult], { type: 'application/pdf' });
+
       if (result) revokeBlobUrl(result);
-      const newResult = createSecureObjectURL(blobs[0]);
+      const newResult = createSecureObjectURL(blob);
       setResult(newResult);
-      setResultBlob(blobs[0]);
+      setResultBlob(blob);
 
       saveOperation({
         type: 'split_pdf',
         metadata: {
           filename: files[0].file.name,
-          fileSize: blobs[0].size,
-          settings: { pageRanges }
+          fileSize: blob.size,
+          settings: { removedPages: splitPages }
         },
-        preview: createSecureObjectURL(blobs[0])
+        preview: newResult
       });
     } catch (err) {
       setError(err.message || 'Error splitting PDF. Please try again.');
@@ -193,11 +221,11 @@ export function SplitPDF() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-700">
-                Split Page Ranges
+                Pages to Remove
               </label>
               <div className="flex items-center text-sm text-gray-500">
                 <Info className="w-4 h-4 mr-1" />
-                <span>e.g., 1-3, 4, 5-7</span>
+                <span>e.g., 5,6,9 or 4-7,9</span>
               </div>
             </div>
             <div className="relative">
@@ -205,9 +233,8 @@ export function SplitPDF() {
                 type="text"
                 value={splitPages}
                 onChange={(e) => setSplitPages(e.target.value)}
-                placeholder={totalPages ? `Enter ranges (1-${totalPages})` : 'Enter page ranges'}
+                placeholder={totalPages ? `Enter pages to remove (1-${totalPages})` : 'Enter pages to remove'}
                 className="block w-full rounded-lg border border-gray-500 stroke-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 pl-3 pr-10 py-2"
-
               />
               {totalPages !== null && (
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
@@ -216,7 +243,7 @@ export function SplitPDF() {
               )}
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              Separate ranges with commas. Use hyphens for ranges or single numbers.
+              Use commas to separate numbers or ranges (e.g., 5,6,9 or 4-7).
             </p>
           </div>
 

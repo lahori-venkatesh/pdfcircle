@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, Crop, RotateCw, Wand2 } from 'lucide-react';
-import { AdComponent } from './AdComponent'; // Assuming this is in your project
-import { SEOHeaders } from './SEOHeaders'; // Optional: Assuming this is in your project
+import { AdComponent } from './AdComponent';
+import { SEOHeaders } from './SEOHeaders';
 
 // Debounce utility function
 const debounce = <F extends (...args: any[]) => void>(func: F, wait: number) => {
@@ -519,6 +519,7 @@ export function DigitalImageEnhancer() {
     onDrop,
     accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.tiff'] },
     maxFiles: 1,
+    maxSize: 15 * 1024 * 1024, // 15MB limit for high-quality images
   });
 
   const resetImage = useCallback(() => {
@@ -543,18 +544,27 @@ export function DigitalImageEnhancer() {
   return (
     <>
       <SEOHeaders 
-        title="Digital Image Enhancer" 
-        description="Enhance your images with advanced processing tools" 
-        keywords={['image enhancer', 'photo editing', 'image processing']} 
+        title="Free Digital Image Enhancer - Crop, Rotate & Enhance High-Quality Photos"
+        description="Enhance your high-quality images online for free. Crop, rotate, and adjust brightness, contrast, and saturation with our advanced photo editing tool."
+        keywords={[
+          'digital image enhancer', 'photo editor online free', 'enhance high-quality images', 'crop image online', 'rotate image tool', 
+          'image brightness adjuster', 'contrast enhancement tool', 'saturation editor', 'free photo enhancer', 'online image editing', 
+          'improve image quality', 'photo cropper free', 'image enhancement software', 'edit photos online', 'high-resolution image editor', 
+          'image processing tool', 'free image optimizer', 'enhance photos for web', 'digital photo editor', 'online photo enhancement'
+        ]}
+        canonicalUrl="https://example.com/digital-image-enhancer"
       />
+
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-6 text-center">
+          Free Digital Image Enhancer - Crop, Rotate & Enhance Photos
+        </h1>
         <AdComponent slot="digital-image-enhancer-top" className="mb-6" style={{ minHeight: '90px' }} />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">Digital Image Enhancer</h1>
 
         {showCropModal && cropImageSrc && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-              <h2 className="text-lg font-semibold mb-4">Crop Image</h2>
+              <h2 className="text-lg font-semibold mb-4">Crop and Rotate Your Image</h2>
               <div
                 ref={cropContainerRef}
                 className="relative w-full h-full overflow-auto touch-none select-none"
@@ -568,7 +578,7 @@ export function DigitalImageEnhancer() {
                 <img
                   ref={imgRef}
                   src={cropImageSrc}
-                  alt="Crop"
+                  alt="Image to crop and rotate"
                   onLoad={handleImageLoad}
                   className="w-auto h-auto max-w-full max-h-[70vh]"
                 />
@@ -648,18 +658,24 @@ export function DigitalImageEnhancer() {
           </div>
         )}
 
-        <div className="flex flex-col justify-center space-y-2 mx-4 md:mx-16 lg:mx-36" >
-          <div className="space-y-6 align-middle ">
+        <div className="flex flex-col justify-center space-y-2 mx-4 md:mx-16 lg:mx-36">
+          <div className="space-y-6 align-middle">
             {!image ? (
-              <div
-                {...getRootProps()}
-                className={`border-2 border-dashed rounded-lg p-6 align-middle text-center cursor-pointer ${
-                  isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
-                }`}
-              >
-                <input {...getInputProps()} />
-                <Upload className="w-12 h-12 text-gray-400 dark:text-white mx-auto mb-4" />
-                <p className='dark:text-white'>{isDragActive ? 'Drop the image here' : 'Drag & drop an image or tap to select'}</p>
+              <div>
+                <h2 className="text-lg font-semibold mb-4">Upload Your Image to Enhance</h2>
+                <div
+                  {...getRootProps()}
+                  className={`border-2 border-dashed rounded-lg p-6 align-middle text-center cursor-pointer ${
+                    isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'
+                  }`}
+                >
+                  <input {...getInputProps()} />
+                  <Upload className="w-12 h-12 text-gray-400 dark:text-white mx-auto mb-4" />
+                  <p className="dark:text-white">
+                    {isDragActive ? 'Drop the image here' : 'Drag & drop an image or tap to select'}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2 dark:text-white">PNG, JPG, JPEG, WEBP, TIFF (Max 15MB)</p>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -671,7 +687,7 @@ export function DigitalImageEnhancer() {
                 </div>
                 <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
                   {image.preview ? (
-                    <img src={image.preview} alt="Original" className="w-full h-full object-contain rounded-lg" />
+                    <img src={image.preview} alt="Original high-quality image" className="w-full h-full object-contain rounded-lg" />
                   ) : (
                     <div className="absolute inset-0 flex items-center justify-center text-gray-500">
                       Original image not available.
@@ -696,7 +712,7 @@ export function DigitalImageEnhancer() {
             {image && (
               <>
                 <div className="space-y-4">
-                  <h2 className="text-lg font-semibold">Enhanced Image</h2>
+                  <h2 className="text-lg font-semibold">Enhanced Image Preview</h2>
                   <div className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden">
                     {loading ? (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-100/75">
@@ -706,7 +722,7 @@ export function DigitalImageEnhancer() {
                         </div>
                       </div>
                     ) : image.enhanced ? (
-                      <img src={image.enhanced} alt="Enhanced" className="w-full h-full object-contain" />
+                      <img src={image.enhanced} alt="Enhanced high-quality image" className="w-full h-full object-contain" />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-gray-500">
                         No enhanced image available.
@@ -717,7 +733,7 @@ export function DigitalImageEnhancer() {
 
                 <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium">Enhancement Controls</h3>
+                    <h2 className="text-sm font-medium">Enhancement Controls</h2>
                     <button
                       onClick={() => {
                         setEnhancements(defaultEnhancements);
@@ -790,7 +806,35 @@ export function DigitalImageEnhancer() {
               </>
             )}
           </div>
+
+          {/* High-Quality SEO Links */}
+          <div className="mt-8">
+            <h2 className="text-lg font-semibold mb-4">Useful Resources for Image Enhancement</h2>
+            <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
+              <li>
+                <a href="https://www.adobe.com/products/photoshop.html" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                  Adobe Photoshop - Professional Photo Editing Software
+                </a>
+              </li>
+              <li>
+                <a href="https://www.gimp.org/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                  GIMP - Free and Open-Source Image Editor
+                </a>
+              </li>
+              <li>
+                <a href="https://opencv.org/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                  OpenCV - Advanced Image Processing Library
+                </a>
+              </li>
+              <li>
+                <a href="https://www.canva.com/photo-editor/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
+                  Canva Photo Editor - Easy Online Design Tool
+                </a>
+              </li>
+            </ul>
+          </div>
         </div>
+
         {error && <div className="mt-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
       </div>
     </>

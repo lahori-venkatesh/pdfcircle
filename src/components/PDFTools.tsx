@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images, Pencil, Stamp } from 'lucide-react';
+import { useSearchParams, Link } from 'react-router-dom';
+import { FileText, FilePlus, Split, Images, Pencil, Stamp, Minimize2, Type, FileCode2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
 import { CreatePDF } from './pdf/CreatePDF';
@@ -22,51 +23,40 @@ const tabs = [
   { id: 'edit', label: 'Edit PDF', icon: Pencil },
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
-  { id: 'compress', label: 'Compress PDF', icon: FileText },
+  { id: 'compress', label: 'Compress PDF', icon: Minimize2 },
+  { id: 'to-word', label: 'PDF to Word', icon: Type },
   { id: 'to-excel', label: 'PDF to Excel', icon: FileText },
-  { id: 'to-word', label: 'PDF to Word', icon: FileText },
-  { id: 'word-to-pdf', label: 'Word to PDF', icon: FileText },
+  { id: 'word-to-pdf', label: 'Word to PDF', icon: FileCode2 },
   { id: 'excel-to-pdf', label: 'Excel to PDF', icon: FileText },
 ];
 
 export function PDFTools() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'create');
 
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case 'create':
-        return <CreatePDF />;
-      case 'merge':
-        return <MergePDF />;
-      case 'split':
-        return <SplitPDF />;
-      case 'edit':
-        return <EditPDF />;
-      case 'watermark':
-        return <WatermarkPDF />;
-      case 'to-images':
-        return <PDFToImages />;
-      case 'compress':
-        return <CompressPDF />;
-      case 'to-excel':
-        return <PDFToExcel />;
-      case 'to-word':
-        return <PDFToWord />;
-      case 'word-to-pdf':
-        return <WordToPDF />;
-      case 'excel-to-pdf':
-        return <ExcelToPDF />;
-      default:
-        return <CreatePDF />;
+      case 'create': return <CreatePDF />;
+      case 'merge': return <MergePDF />;
+      case 'split': return <SplitPDF />;
+      case 'edit': return <EditPDF />;
+      case 'watermark': return <WatermarkPDF />;
+      case 'to-images': return <PDFToImages />;
+      case 'compress': return <CompressPDF />;
+      case 'to-excel': return <PDFToExcel />;
+      case 'to-word': return <PDFToWord />;
+      case 'word-to-pdf': return <WordToPDF />;
+      case 'excel-to-pdf': return <ExcelToPDF />;
+      default: return <CreatePDF />;
     }
   };
 
   return (
     <>
       <SEOHeaders 
-        title="Free Online PDF Tools: Merge, Split, Compress, Convert Easy"  // 60 characters
-        description="Free online PDF tools to merge, split, compress, convert PDFs to Excel, Word,  JPG, or from Word/Excel to PDF easily. No sign-up required."  // 130 characters
+        title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
+        description={t('seo.pdfTools.description', 'Merge, split, compress, and convert PDFs to Excel, Word, JPG, or from Word/Excel to PDF with pdfCircle’s free online tools. No sign-up needed.')}
         keywords={[
           'pdfcircle',
           'free online pdf merger tool',
@@ -115,16 +105,24 @@ export function PDFTools() {
           'pdf splitter online free fast',
           'reduce pdf size free online',
           'pdf compressor online free tool',
-         'pdf to image free converter',
-         'pdf to excel online free tool',
-         'word to pdf free online converter',
-         'excel to pdf online free fast'
+          'pdf to image free converter',
+          'pdf to excel online free tool',
+          'word to pdf free online converter',
+          'excel to pdf online free fast'
         ]}
+        canonicalUrl="https://pdfcircle.com/pdf-tools"
       />
-      <div className="max-w-4xl  mx-auto px-4 py-6 sm:py-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8 text-center">
-          PDF Tools
-        </h1>
+
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
+        {/* Hero Section with H1 */}
+        <section className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            {t('pdfTools.title', 'Free Online PDF Tools')}
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            {t('pdfTools.subtitle', 'Effortlessly merge, split, compress, and convert your PDFs with pdfCircle’s secure, no-sign-up tools.')}
+          </p>
+        </section>
 
         <AdComponent
           slot="pdf-tools-top"
@@ -132,26 +130,58 @@ export function PDFTools() {
           style={{ minHeight: '90px' }}
         />
 
-        <div className="flex flex-wrap gap-2 mb-6">
-          {tabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center px-4 py-2 dark:bg-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors
-                ${activeTab === tab.id
-                  ? 'bg-indigo-600 text-white dark:bg-indigo-600'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-            >
-              <tab.icon className="w-4 h-4 mr-2" />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Tools Navigation with H2 */}
+        <section>
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-6 sm:mb-8 text-center">
+            {t('pdfTools.toolsTitle', 'Choose Your PDF Tool')}
+          </h2>
+          <div className="flex flex-wrap gap-2 mb-6 justify-center">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center px-4 py-2 dark:bg-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors
+                  ${activeTab === tab.id
+                    ? 'bg-indigo-600 text-white dark:bg-indigo-600'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  }`}
+              >
+                <tab.icon className="w-4 h-4 mr-2" />
+                {t(`pdfTools.tabs.${tab.id}`, tab.label)}
+              </button>
+            ))}
+          </div>
 
-        <div className="bg-white dark:bg-gray-900  rounded-xl shadow-lg p-4 sm:p-6">
-          {renderActiveComponent()}
-        </div>
+          <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-4 sm:p-6">
+            {renderActiveComponent()}
+          </div>
+        </section>
+
+        {/* Additional Information and Links */}
+        <section className="mt-8 text-center">
+          <p className="text-gray-600 dark:text-gray-300 mb-4">
+            {t('pdfTools.info', 'Need more PDF solutions? Explore our ')}
+            <Link to="/" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+              {t('pdfTools.homeLink', 'homepage')}
+            </Link>
+            {t('pdfTools.or', ' or ')}
+            <Link to="/image-tools" className="text-indigo-600 dark:text-indigo-400 hover:underline">
+              {t('pdfTools.imageToolsLink', 'image tools')}
+            </Link>
+            {t('pdfTools.forMore', ' for additional features.')}
+          </p>
+          <p className="text-gray-600 dark:text-gray-300">
+            {t('pdfTools.externalInfo', 'Learn advanced PDF tips from ')}
+            <a
+              href="https://www.adobe.com/acrobat/resources.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              {t('pdfTools.adobeLink', 'Adobe Acrobat Resources')}
+            </a>.
+          </p>
+        </section>
       </div>
     </>
   );

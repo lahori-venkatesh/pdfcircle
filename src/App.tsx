@@ -24,12 +24,12 @@ import { SEOHeaders } from './components/SEOHeaders';
 import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
 
-// ScrollToTop component to handle scrolling on route change
+// ScrollToTop component (unchanged)
 const ScrollToTop = ({ children }) => {
   const location = useLocation();
 
   useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to top on route change
+    window.scrollTo(0, 0);
   }, [location.pathname]);
 
   return <>{children}</>;
@@ -102,91 +102,31 @@ function StepCard({ number, title, description }) {
 
 function HomePage() {
   const { t } = useTranslation();
-  
+
   return (
     <>
       <SEOHeaders 
-        title={t('seo.home.title', 'PdfCircle | Free Tools for Converting Documents and Images.')}
-        description={t('seo.home.description', 'PdfCircle-Free all-in-one tool to convert, compress, merge, and enhance PDFs and images easily')}
+        title={t('seo.home.title', 'pdfCircle | Free & Secure PDF and Image Tools')}
+        description={t('seo.home.description', 'Compress, convert, merge, and edit PDFs and images online for free with pdfCircle. Fast, secure, and easy-to-use tools.')}
         keywords={[
-          'pdfcircle',
-          'convert image to pdf online',
-          'pdf to jpg converter free',
-          'split pdf online free',
-          'merge pdf files online',
-          'ocr pdf to text free',
-          'compress pdf size online',
-          'image to digital converter free',
-          'reduce image file size online',
-          'free pdf converter online',
-          'best pdf to image converter',
-          'online pdf compressor tool',
-          'merge pdf documents securely',
-          'split pdf by pages free',
-          'convert jpg to pdf without software',
-          'free ocr software for pdf',
-          'reduce pdf file size for email',
-          'alternatives to ilovepdf',
-          'online pdf editor free',
-          'pdfCircle free pdf converter online',
-          'pdfCircle pdf to jpg converter free',
-          'pdfCircle split pdf online free',
-          'pdfCircle merge pdf files online',
-          'pdfCircle ocr pdf to text free',
-          'pdfCircle compress pdf size online',
-          'pdfCircle image to digital converter free',
-          'pdfCircle reduce image file size online',
-          'free online pdf converter',
-          'best pdf to image converter online',
-          'pdfCircle online pdf compressor free',
-          'pdfCircle merge pdf documents securely',
-          'pdfCircle split pdf by pages free',
-          'pdfCircle convert jpg to pdf online',
-          'pdfCircle free ocr software for pdf',
-          'pdfCircle reduce pdf file size for email',
-          'pdfCircle alternatives to ilovepdf',
-          'pdfCircle online pdf editor free',
-          'how to use pdfCircle to compress pdf',
-          'pdfCircle convert scanned pdf to text',
-          'convert image to pdf online free',
-          'jpg to pdf converter free',
-          'png to pdf converter online',
-          'image to text converter free',
-          'convert image to word online',
-          'free image format converter',
-          'best image to pdf converter',
-          'convert multiple images to pdf',
-          'resize image online free',
-          'how to resize an image without losing quality',
-          'free image resizer tool',
-          'bulk image resize online',
-          'reduce image size for email',
-          'resize image to specific dimensions',
-          'best free image resizing software',
-          'compress and resize images online',
-          'pdfCircle document conversion tools',
-          'pdfCircle image enhancement online',
-          'pdfCircle ocr scan to text free',
-          'pdfCircle pdf editing tools online',
-          'pdfCircle file compression tools free',
-          'pdfCircle pdf to word converter free',
-          'pdfCircle pdf to excel converter online',
-          'pdfCircle document management tools',
-          'pdfCircle image resizing tools free',
-          'pdfCircle pdf merge and split online'
+          'pdfcircle', 'pdf converter', 'image converter', 'compress pdf', 'convert pdf to jpg', 'free pdf tools',
+          'pdf compression', 'image optimization', 'online document tools', 'secure file conversion', 'pdf to word',
+          'pdf to excel', 'image resize', 'image to pdf', 'ocr pdf', 'merge pdf', 'split pdf', 'background remover',
+          'html to pdf', 'digital enhancer', 'free online tools', 'pdf editing', 'image enhancement'
         ]}
+        canonicalUrl="https://pdfcircle.com/"
       />
-      
-      {/* Hero Section */}
+
+      {/* Hero Section with H1 */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497493292307-31c376b6e479?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-              {t('hero.title')}
+              {t('hero.title', 'Free Tools for Converting and Enhancing Documents')}
             </h1>
             <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
-              {t('hero.subtitle')}
+              {t('hero.subtitle', 'Transform your PDFs and images with pdfCircle’s fast, secure, and free tools.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -194,150 +134,150 @@ function HomePage() {
                 onClick={() => window.scrollTo(0, 0)}
                 className="inline-block bg-white text-indigo-600 dark:bg-indigo-400 dark:text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-500 transition-colors duration-300 shadow-lg"
               >
-                {t('hero.getStarted')}
+                {t('hero.getStarted', 'Get Started')}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Everything You Need in One Place */}
+      {/* Features Section with H2 */}
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('features.title')}
+            {t('features.title', 'Everything You Need in One Place')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <FeatureCard 
               icon={Image} 
-              title={t('features.imageReduction.title')} 
-              description={t('features.imageReduction.description')} 
+              title={t('features.imageReduction.title', 'Image Reduction')} 
+              description={t('features.imageReduction.description', 'Reduce image file size without losing quality.')} 
               to="/image-tools" 
             />
-            <FeatureCard icon={FileUp} title={t('features.imageToPdf.title')} description={t('features.imageToPdf.description')} to="/pdf-tools?tab=create" />
-            <FeatureCard icon={Images} title={t('features.pdfToImages.title')} description={t('features.pdfToImages.description')} to="/pdf-tools?tab=to-images" />
-            <FeatureCard icon={Eraser} title={t('features.removeBackground.title')} description={t('features.removeBackground.description')} to="/background-remover" />
-            <FeatureCard icon={Wand2} title={t('features.digitalEnhancer.title')} description={t('features.digitalEnhancer.description')} to="/digital-enhancer" />
-            <FeatureCard icon={FileText} title={t('features.compressPdf.title')} description={t('features.compressPdf.description')} to="/pdf-tools?tab=compress" />
-            <FeatureCard icon={FilePlus} title={t('features.mergePdfs.title')} description={t('features.mergePdfs.description')} to="/pdf-tools?tab=merge" />
-            <FeatureCard icon={Split} title={t('features.splitPdf.title')} description={t('features.splitPdf.description')} to="/pdf-tools?tab=split" />
-            <FeatureCard icon={FileText} title={t('features.pdfToWord.title')} description={t('features.pdfToWord.description')} to="/pdf-tools?tab=to-word" />
-            <FeatureCard icon={FileText} title={t('features.pdfToExcel.title')} description={t('features.pdfToExcel.description')} to="/pdf-tools?tab=to-excel" />
-            <FeatureCard icon={FileText} title={t('features.wordToPdf.title')} description={t('features.wordToPdf.description')} to="/pdf-tools?tab=word-to-pdf" />
-            <FeatureCard icon={FileText} title={t('features.excelToPdf.title')} description={t('features.excelToPdf.description')} to="/pdf-tools?tab=excel-to-pdf" />
-            <FeatureCard icon={Pencil} title={t('features.editPdf.title')} description={t('features.editPdf.description')} to="/pdf-tools?tab=edit" />
-            <FeatureCard icon={Stamp} title={t('features.addWatermark.title')} description={t('features.addWatermark.description')} to="/pdf-tools?tab=watermark" />
+            <FeatureCard icon={FileUp} title={t('features.imageToPdf.title', 'Image to PDF')} description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} to="/pdf-tools?tab=create" />
+            <FeatureCard icon={Images} title={t('features.pdfToImages.title', 'PDF to Images')} description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} to="/pdf-tools?tab=to-images" />
+            <FeatureCard icon={Eraser} title={t('features.removeBackground.title', 'Remove Background')} description={t('features.removeBackground.description', 'Erase backgrounds from images effortlessly.')} to="/background-remover" />
+            <FeatureCard icon={Wand2} title={t('features.digitalEnhancer.title', 'Digital Enhancer')} description={t('features.digitalEnhancer.description', 'Enhance image quality with one click.')} to="/digital-enhancer" />
+            <FeatureCard icon={FileText} title={t('features.compressPdf.title', 'Compress PDF')} description={t('features.compressPdf.description', 'Shrink PDF files for easier sharing.')} to="/pdf-tools?tab=compress" />
+            <FeatureCard icon={FilePlus} title={t('features.mergePdfs.title', 'Merge PDFs')} description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} to="/pdf-tools?tab=merge" />
+            <FeatureCard icon={Split} title={t('features.splitPdf.title', 'Split PDF')} description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} to="/pdf-tools?tab=split" />
+            <FeatureCard icon={FileText} title={t('features.pdfToWord.title', 'PDF to Word')} description={t('features.pdfToWord.description', 'Convert PDFs to editable Word documents.')} to="/pdf-tools?tab=to-word" />
+            <FeatureCard icon={FileText} title={t('features.pdfToExcel.title', 'PDF to Excel')} description={t('features.pdfToExcel.description', 'Extract data from PDFs to Excel sheets.')} to="/pdf-tools?tab=to-excel" />
+            <FeatureCard icon={FileText} title={t('features.wordToPdf.title', 'Word to PDF')} description={t('features.wordToPdf.description', 'Convert Word documents to PDFs easily.')} to="/pdf-tools?tab=word-to-pdf" />
+            <FeatureCard icon={FileText} title={t('features.excelToPdf.title', 'Excel to PDF')} description={t('features.excelToPdf.description', 'Turn Excel files into PDFs quickly.')} to="/pdf-tools?tab=excel-to-pdf" />
+            <FeatureCard icon={Pencil} title={t('features.editPdf.title', 'Edit PDF')} description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} to="/pdf-tools?tab=edit" />
+            <FeatureCard icon={Stamp} title={t('features.addWatermark.title', 'Add Watermark')} description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} to="/pdf-tools?tab=watermark" />
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
+      {/* How It Works Section with H2 */}
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('howItWorks.title')}
+            {t('howItWorks.title', 'How It Works')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StepCard
               number={1}
-              title={t('howItWorks.step1.title')}
-              description={t('howItWorks.step1.description')}
+              title={t('howItWorks.step1.title', 'Upload Your File')}
+              description={t('howItWorks.step1.description', 'Simply drag and drop or select your file to begin.')}
             />
             <StepCard
               number={2}
-              title={t('howItWorks.step2.title')}
-              description={t('howItWorks.step2.description')}
+              title={t('howItWorks.step2.title', 'Choose Your Tool')}
+              description={t('howItWorks.step2.description', 'Select the tool you need from our wide range of options.')}
             />
             <StepCard
               number={3}
-              title={t('howItWorks.step3.title')}
-              description={t('howItWorks.step3.description')}
+              title={t('howItWorks.step3.title', 'Download Your Result')}
+              description={t('howItWorks.step3.description', 'Get your processed file instantly and securely.')}
             />
           </div>
         </div>
       </section>
 
-      {/* Security Section */}
+      {/* Security Section with H2 */}
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('security.title')}
+              {t('security.title', 'Your Security Matters')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              {t('security.subtitle')}
+              {t('security.subtitle', 'We prioritize your privacy with top-notch security features.')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <SecurityFeature 
               icon={ShieldCheck} 
-              title={t('security.localProcessing.title')} 
-              description={t('security.localProcessing.description')} 
+              title={t('security.localProcessing.title', 'Local Processing')} 
+              description={t('security.localProcessing.description', 'Files are processed locally for enhanced privacy.')} 
             />
             <SecurityFeature 
               icon={Key} 
-              title={t('security.endToEnd.title')} 
-              description={t('security.endToEnd.description')} 
+              title={t('security.endToEnd.title', 'End-to-End Encryption')} 
+              description={t('security.endToEnd.description', 'Your data is encrypted from start to finish.')} 
             />
             <SecurityFeature 
               icon={Server} 
-              title={t('security.noStorage.title')} 
-              description={t('security.noStorage.description')} 
+              title={t('security.noStorage.title', 'No Cloud Storage')} 
+              description={t('security.noStorage.description', 'We don’t store your files after processing.')} 
             />
             <SecurityFeature 
               icon={RefreshCw} 
-              title={t('security.updates.title')} 
-              description={t('security.updates.description')} 
+              title={t('security.updates.title', 'Regular Updates')} 
+              description={t('security.updates.description', 'Our tools are continuously updated for security.')} 
             />
             <SecurityFeature 
               icon={LockIcon} 
-              title={t('security.connection.title')} 
-              description={t('security.connection.description')} 
+              title={t('security.connection.title', 'Secure Connection')} 
+              description={t('security.connection.description', 'All data transfers use HTTPS for safety.')} 
             />
             <SecurityFeature 
               icon={CheckCircle} 
-              title={t('security.verified.title')} 
-              description={t('security.verified.description')} 
+              title={t('security.verified.title', 'Verified Security')} 
+              description={t('security.verified.description', 'Certified secure by industry standards.')} 
             />
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* FAQ Section with H2 */}
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('faq.title')}
+              {t('faq.title', 'Frequently Asked Questions')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              {t('faq.subtitle')}
+              {t('faq.subtitle', 'Find answers to common questions about our tools.')}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
             <FAQItem 
-              question={t('faq.free.question')} 
-              answer={t('faq.free.answer')} 
+              question={t('faq.free.question', 'Is pdfCircle really free?')} 
+              answer={t('faq.free.answer', 'Yes, all our tools are completely free to use with no hidden fees.')} 
             />
             <FAQItem 
-              question={t('faq.fileSize.question')} 
-              answer={t('faq.fileSize.answer')} 
+              question={t('faq.fileSize.question', 'What is the maximum file size?')} 
+              answer={t('faq.fileSize.answer', 'You can process files up to 100MB for free.')} 
             />
             <FAQItem 
-              question={t('faq.fileHandling.question')} 
-              answer={t('faq.fileHandling.answer')} 
+              question={t('faq.fileHandling.question', 'How are my files handled?')} 
+              answer={t('faq.fileHandling.answer', 'Files are processed locally and deleted immediately after use.')} 
             />
             <FAQItem 
-              question={t('faq.formats.question')} 
-              answer={t('faq.formats.answer')} 
+              question={t('faq.formats.question', 'Which file formats are supported?')} 
+              answer={t('faq.formats.answer', 'We support PDF, JPG, PNG, Word, Excel, and more.')} 
             />
             <FAQItem 
-              question={t('faq.account.question')} 
-              answer={t('faq.account.answer')} 
+              question={t('faq.account.question', 'Do I need an account?')} 
+              answer={t('faq.account.answer', 'No account is required, but signing up unlocks additional features.')} 
             />
             <FAQItem 
-              question={t('faq.security.question')} 
-              answer={t('faq.security.answer')} 
+              question={t('faq.security.question', 'Is my data secure?')} 
+              answer={t('faq.security.answer', 'Absolutely, we use end-to-end encryption and local processing.')} 
             />
           </div>
         </div>
@@ -374,7 +314,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
   // Handle scroll to show/hide the button
   const handleScroll = useCallback(() => {
-    if (window.scrollY > 300) { // Show button after scrolling 300px
+    if (window.scrollY > 300) {
       setIsVisible(true);
     } else {
       setIsVisible(false);
@@ -385,14 +325,14 @@ function Layout({ children }: PropsWithChildren<{}>) {
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
-      behavior: 'smooth', // Smooth scrolling
+      behavior: 'smooth',
     });
   };
 
   // Add scroll event listener
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll); // Cleanup
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
   return (
@@ -408,17 +348,17 @@ function Layout({ children }: PropsWithChildren<{}>) {
             </div>
             <div className="hidden sm:flex items-center justify-center flex-1 px-8">
               <div className="flex space-x-6">
-                <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.home')}</Link>
-                <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.imageTools')}</Link>
-                <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.pdfTools')}</Link>
-                <Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.digitalEnhancer')}</Link>
+                <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
+                <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
+                <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
+                <Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Digital Enhancer</Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
               <button
                 onClick={toggleTheme}
                 className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                title={theme === 'dark' ? t('common.lightMode') : t('common.darkMode')}
+                title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
@@ -427,16 +367,16 @@ function Layout({ children }: PropsWithChildren<{}>) {
                   <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
                   <button onClick={handleSignOut} className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
                     <LogOut className="w-5 h-5" />
-                    <span>{t('common.signOut')}</span>
+                    <span>Sign Out</span>
                   </button>
                 </div>
               ) : (
                 <>
                   <button onClick={() => openAuthModal('login')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    {t('common.login')}
+                    Login
                   </button>
                   <button onClick={() => openAuthModal('signup')} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                    {t('common.signup')}
+                    Sign Up
                   </button>
                 </>
               )}
@@ -449,10 +389,10 @@ function Layout({ children }: PropsWithChildren<{}>) {
         {mobileMenuOpen && (
           <div className="sm:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div className="px-4 py-3 space-y-3">
-              <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.home')}</Link>
-              <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.imageTools')}</Link>
-              <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.pdfTools')}</Link>
-              <Link to="/digital-enhancer" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">{t('common.digitalEnhancer')}</Link>
+              <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
+              <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
+              <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
+              <Link to="/digital-enhancer" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Digital Enhancer</Link>
               <button
                 onClick={toggleTheme}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -460,12 +400,12 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 {theme === 'dark' ? (
                   <>
                     <Sun className="w-5 h-5" />
-                    <span>{t('common.lightMode')}</span>
+                    <span>Light Mode</span>
                   </>
                 ) : (
                   <>
                     <Moon className="w-5 h-5" />
-                    <span>{t('common.darkMode')}</span>
+                    <span>Dark Mode</span>
                   </>
                 )}
               </button>
@@ -474,13 +414,13 @@ function Layout({ children }: PropsWithChildren<{}>) {
                   <div className="py-2 text-gray-600 dark:text-gray-300">{user.email}</div>
                   <button onClick={handleSignOut} className="w-full flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">
                     <LogOut className="w-5 h-5" />
-                    <span>{t('common.signOut')}</span>
+                    <span>Sign Out</span>
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">{t('common.login')}</button>
-                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">{t('common.signup')}</button>
+                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">Login</button>
+                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Sign Up</button>
                 </>
               )}
             </div>
@@ -494,7 +434,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
       <button
         onClick={scrollToTop}
         className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'} transition-transform duration-300`}
-        aria-label={t('common.scrollToTop')}
+        aria-label="Scroll to Top"
       >
         <ArrowUp className="w-6 h-6" />
       </button>
@@ -507,33 +447,33 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <FileText className="w-6 h-6" />
                 <span className="text-xl font-bold">pdfCircle</span>
               </div>
-              <p className="text-gray-400">{t('footer.description')}</p>
+              <p className="text-gray-400">pdfCircle Transform your documents and images with our free, secure tools.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t('footer.quickLinks')}</h3>
+              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.home')}</Link></li>
-                <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.imageTools')}</Link></li>
-                <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.pdfTools')}</Link></li>
-                <li><Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('common.digitalEnhancer')}</Link></li>
+                <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-white">Home</Link></li>
+                <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">Image Tools</Link></li>
+                <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">PDF Tools</Link></li>
+                <li><Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-400 hover:text-white">Digital Enhancer</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t('footer.legal')}</h3>
+              <h3 className="text-lg font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
-                <li><Link to="/about" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.aboutUs')}</Link></li>
-                <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.privacy')}</Link></li>
-                <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.terms')}</Link></li>
-                <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-white">{t('footer.contact')}</Link></li>
+                <li><Link to="/about" onClick={scrollToTop} className="text-gray-400 hover:text-white">About Us</Link></li>
+                <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
+                <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-white">Terms of Service</Link></li>
+                <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-white">Contact Us</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">{t('footer.language')}</h3>
+              <h3 className="text-lg font-semibold mb-4">Language</h3>
               <LanguageSelector />
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-8 text-center text-gray-400">
-            <p>{t('footer.copyright', { year: new Date().getFullYear() })}</p>
+            <p>© {new Date().getFullYear()} pdfCircle. All rights reserved.</p>
           </div>
         </div>
       </footer>

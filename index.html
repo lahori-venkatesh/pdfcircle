@@ -12,8 +12,9 @@
      window.dataLayer = window.dataLayer || [];
      function gtag(){dataLayer.push(arguments);}
      gtag('js', new Date());
-
-     gtag('config', 'G-SVNJ9G6WHC');
+     gtag('config', 'G-SVNJ9G6WHC', {
+     'cookie_flags': 'SameSite=None;Secure'
+     });
     </script>
     
     
@@ -41,7 +42,23 @@
     <meta property="og:url" content="https://www.pdfcircle.com/" />
     <meta property="og:image" content="https://www.pdfcircle.com/apple-touch-icon.png" />
     <meta property="og:type" content="website" />
-
+    <!-- For Homepage -->
+    <link rel="canonical" href="https://pdfcircle.com/">
+    
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "pdfCircle",
+        "url": "https://pdfcircle.com",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": "https://pdfcircle.com/search?q={search_term_string}",
+          "query-input": "required name=search_term_string"
+        }
+      }
+     </script>
+    
     <!-- Security Headers (Updated CSP) -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
