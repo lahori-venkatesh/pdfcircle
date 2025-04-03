@@ -117,7 +117,7 @@ function HomePage() {
         canonicalUrl="https://pdfcircle.com/"
       />
 
-      {/* Hero Section with H1 */}
+      {/* Hero Section with H1 and Two Buttons */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497493292307-31c376b6e479?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -136,6 +136,13 @@ function HomePage() {
               >
                 {t('hero.getStarted', 'Get Started')}
               </Link>
+              <Link
+                to="/about"
+                onClick={() => window.scrollTo(0, 0)}
+                className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-800 transition-colors duration-300 shadow-lg"
+              >
+                {t('hero.learnMore', 'Learn More About Us')}
+              </Link>
             </div>
           </div>
         </div>
@@ -152,26 +159,91 @@ function HomePage() {
               icon={Image} 
               title={t('features.imageReduction.title', 'Image Reduction')} 
               description={t('features.imageReduction.description', 'Reduce image file size without losing quality.')} 
-              to="/image-tools" 
+              to="" // No link
             />
-            <FeatureCard icon={FileUp} title={t('features.imageToPdf.title', 'Image to PDF')} description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} to="/pdf-tools?tab=create" />
-            <FeatureCard icon={Images} title={t('features.pdfToImages.title', 'PDF to Images')} description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} to="/pdf-tools?tab=to-images" />
-            <FeatureCard icon={Eraser} title={t('features.removeBackground.title', 'Remove Background')} description={t('features.removeBackground.description', 'Erase backgrounds from images effortlessly.')} to="/background-remover" />
-            <FeatureCard icon={Wand2} title={t('features.digitalEnhancer.title', 'Digital Enhancer')} description={t('features.digitalEnhancer.description', 'Enhance image quality with one click.')} to="/digital-enhancer" />
-            <FeatureCard icon={FileText} title={t('features.compressPdf.title', 'Compress PDF')} description={t('features.compressPdf.description', 'Shrink PDF files for easier sharing.')} to="/pdf-tools?tab=compress" />
-            <FeatureCard icon={FilePlus} title={t('features.mergePdfs.title', 'Merge PDFs')} description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} to="/pdf-tools?tab=merge" />
-            <FeatureCard icon={Split} title={t('features.splitPdf.title', 'Split PDF')} description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} to="/pdf-tools?tab=split" />
-            <FeatureCard icon={FileText} title={t('features.pdfToWord.title', 'PDF to Word')} description={t('features.pdfToWord.description', 'Convert PDFs to editable Word documents.')} to="/pdf-tools?tab=to-word" />
-            <FeatureCard icon={FileText} title={t('features.pdfToExcel.title', 'PDF to Excel')} description={t('features.pdfToExcel.description', 'Extract data from PDFs to Excel sheets.')} to="/pdf-tools?tab=to-excel" />
-            <FeatureCard icon={FileText} title={t('features.wordToPdf.title', 'Word to PDF')} description={t('features.wordToPdf.description', 'Convert Word documents to PDFs easily.')} to="/pdf-tools?tab=word-to-pdf" />
-            <FeatureCard icon={FileText} title={t('features.excelToPdf.title', 'Excel to PDF')} description={t('features.excelToPdf.description', 'Turn Excel files into PDFs quickly.')} to="/pdf-tools?tab=excel-to-pdf" />
-            <FeatureCard icon={Pencil} title={t('features.editPdf.title', 'Edit PDF')} description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} to="/pdf-tools?tab=edit" />
-            <FeatureCard icon={Stamp} title={t('features.addWatermark.title', 'Add Watermark')} description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} to="/pdf-tools?tab=watermark" />
+            <FeatureCard 
+              icon={FileUp} 
+              title={t('features.imageToPdf.title', 'Image to PDF')} 
+              description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Images} 
+              title={t('features.pdfToImages.title', 'PDF to Images')} 
+              description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Eraser} 
+              title={t('features.removeBackground.title', 'Remove Background')} 
+              description={t('features.removeBackground.description', 'Erase backgrounds from images effortlessly.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Wand2} 
+              title={t('features.digitalEnhancer.title', 'Digital Enhancer')} 
+              description={t('features.digitalEnhancer.description', 'Enhance image quality with one click.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FileText} 
+              title={t('features.compressPdf.title', 'Compress PDF')} 
+              description={t('features.compressPdf.description', 'Shrink PDF files for easier sharing.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FilePlus} 
+              title={t('features.mergePdfs.title', 'Merge PDFs')} 
+              description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Split} 
+              title={t('features.splitPdf.title', 'Split PDF')} 
+              description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FileText} 
+              title={t('features.pdfToWord.title', 'PDF to Word')} 
+              description={t('features.pdfToWord.description', 'Convert PDFs to editable Word documents.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FileText} 
+              title={t('features.pdfToExcel.title', 'PDF to Excel')} 
+              description={t('features.pdfToExcel.description', 'Extract data from PDFs to Excel sheets.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FileText} 
+              title={t('features.wordToPdf.title', 'Word to PDF')} 
+              description={t('features.wordToPdf.description', 'Convert Word documents to PDFs easily.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={FileText} 
+              title={t('features.excelToPdf.title', 'Excel to PDF')} 
+              description={t('features.excelToPdf.description', 'Turn Excel files into PDFs quickly.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Pencil} 
+              title={t('features.editPdf.title', 'Edit PDF')} 
+              description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} 
+              to="" // No link
+            />
+            <FeatureCard 
+              icon={Stamp} 
+              title={t('features.addWatermark.title', 'Add Watermark')} 
+              description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
+              to="" // No link
+            />
           </div>
         </div>
       </section>
 
-      {/* How It Works Section with H2 */}
+      {/* How It Works Section with H2 and External Link */}
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
@@ -193,6 +265,24 @@ function HomePage() {
               title={t('howItWorks.step3.title', 'Download Your Result')}
               description={t('howItWorks.step3.description', 'Get your processed file instantly and securely.')}
             />
+          </div>
+          {/* Internal and External Links */}
+          <div className="text-center mt-8">
+            <Link
+              to="/pdf-tools"
+              onClick={() => window.scrollTo(0, 0)}
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline mr-4"
+            >
+              {t('howItWorks.seeAllTools', 'See All PDF Tools')}
+            </Link>
+            <a
+              href="https://www.adobe.com/acrobat/online/pdf-tools.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
+            >
+              {t('howItWorks.exploreExternal', 'Explore Adobe PDF Tools')}
+            </a>
           </div>
         </div>
       </section>
@@ -239,6 +329,16 @@ function HomePage() {
               title={t('security.verified.title', 'Verified Security')} 
               description={t('security.verified.description', 'Certified secure by industry standards.')} 
             />
+          </div>
+          <div className="text-center mt-8">
+            <a
+              href="https://www.ssl.com/article/what-is-end-to-end-encryption/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
+            >
+              {t('security.learnMore', 'Learn More About Encryption')}
+            </a>
           </div>
         </div>
       </section>
