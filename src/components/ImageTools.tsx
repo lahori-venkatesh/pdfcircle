@@ -1,104 +1,56 @@
-import React, { useState, useCallback, useRef, memo } from 'react';
+import React, { useState, useCallback, useRef, memo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Image as ImageIcon, Loader2, X, Crop, RotateCw, Settings2, FileText, ZoomIn, ZoomOut, Square } from 'lucide-react';
+import { Upload, Download, Image as ImageIcon, Loader2, X, Crop, Settings2, FileText } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 
 // Interfaces
-interface PreviewImage {
-  file: File;
-  preview: string;
-}
-
-interface Point {
-  x: number;
-  y: number;
-}
-
-interface ConversionSettings {
-  mode: 'size' | 'quality';
-  targetSize: number | null;
-  quality: number;
-  format: string;
-  width: number | null;
-  height: number | null;
-  maintainAspectRatio: boolean;
-}
-
-interface FormatOption {
-  value: string;
-  label: string;
-  mimeType: string;
-}
+interface PreviewImage { file: File; preview: string; }
+interface ConversionSettings { mode: 'size' | 'quality'; targetSize: number | null; quality: number; format: string; width: number | null; height: number | null; maintainAspectRatio: boolean; unit: 'px' | 'in' | 'cm' | 'mm'; }
+interface FormatOption { value: string; label: string; mimeType: string; }
+interface CropSettings { width: number; height: number; positionX: number; positionY: number; aspectRatio: string | null; }
 
 // Constants
 const FORMAT_OPTIONS: FormatOption[] = [
   { value: 'jpeg', label: 'JPEG', mimeType: 'image/jpeg' },
   { value: 'png', label: 'PNG', mimeType: 'image/png' },
   { value: 'webp', label: 'WebP', mimeType: 'image/webp' },
-  { value: 'gif', label: 'GIF', mimeType: 'image/gif' },
   { value: 'svg', label: 'SVG', mimeType: 'image/svg+xml' },
   { value: 'pdf', label: 'PDF', mimeType: 'application/pdf' },
+  { value: 'avif', label: 'AVIF', mimeType: 'image/avif' },
+  { value: 'heic', label: 'HEIC', mimeType: 'image/heic' },
+];
+const SIZE_OPTIONS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2];
+const UNIT_OPTIONS = ['px', 'in', 'cm', 'mm'];
+const ASPECT_RATIOS = [
+  { label: 'Freeform', value: null },
+  { label: '1:1', value: '1:1' },
+  { label: '4:3', value: '4:3' },
+  { label: '16:9', value: '16:9' },
+  { label: '3:2', value: '3:2' },
 ];
 
-const SIZE_OPTIONS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2];
-const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2]; // Zoom scale options
+// Utility Functions
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+const parseAspectRatio = (ratio: string | null): number => ratio ? Number(ratio.split(':')[0]) / Number(ratio.split(':')[1]) : 1;
 
 // Memoized Image Preview Component
-const ImagePreview = memo(({
-  image,
-  index,
-  convertedImage,
-  convertedBlob,
-  onRemove,
-  onCrop,
-  onDownload,
-  formatFileSize
-}: {
-  image: PreviewImage;
-  index: number;
-  convertedImage?: string;
-  convertedBlob?: Blob;
-  onRemove: (index: number) => void;
-  onCrop: (index: number) => void;
-  onDownload: (index: number) => void;
-  formatFileSize: (bytes: number) => string;
+const ImagePreview = memo(({ image, index, convertedImage, convertedBlob, onRemove, onCrop, onDownload, formatFileSize }: {
+  image: PreviewImage; index: number; convertedImage?: string; convertedBlob?: Blob; onRemove: (index: number) => void;
+  onCrop: (index: number) => void; onDownload: (index: number) => void; formatFileSize: (bytes: number) => string;
 }) => (
   <div className="relative">
-    <img
-      src={image.preview}
-      alt={`Image preview ${index}`}
-      className="w-full aspect-square object-contain rounded-lg bg-gray-100"
-    />
-    <button
-      onClick={() => onRemove(index)}
-      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"
-    >
-      <X className="w-4 h-4" />
-    </button>
-    <button
-      onClick={() => onCrop(index)}
-      className="absolute bottom-10 right-2 bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center"
-    >
-      <Crop className="w-4 h-4 mr-1" />Crop
-    </button>
+    <img src={image.preview} alt={`Image preview ${index}`} className="w-full aspect-square object-contain rounded-lg bg-gray-100" />
+    <button onClick={() => onRemove(index)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"><X className="w-4 h-4" /></button>
+    <button onClick={() => onCrop(index)} className="absolute bottom-10 right-2 bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center"><Crop className="w-4 h-4 mr-1" />Crop</button>
     <p className="mt-2 text-sm text-gray-500">Original: {formatFileSize(image.file.size)}</p>
     {convertedImage && (
       <div className="mt-2">
-        <img
-          src={convertedImage}
-          alt={`Converted image ${index}`}
-          className="w-full aspect-square object-contain rounded-lg bg-gray-100"
-        />
+        <img src={convertedImage} alt={`Converted image ${index}`} className="w-full aspect-square object-contain rounded-lg bg-gray-100" />
         <p className="mt-2 text-sm text-gray-500">Converted: {convertedBlob ? formatFileSize(convertedBlob.size) : 'N/A'}</p>
-        <button
-          onClick={() => onDownload(index)}
-          className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
-        >
-          <Download className="w-5 h-5 mr-2" />Download
-        </button>
+        <button onClick={() => onDownload(index)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"><Download className="w-5 h-5 mr-2" />Download</button>
       </div>
     )}
   </div>
@@ -114,13 +66,14 @@ export function ImageTools() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [cropImageIndex, setCropImageIndex] = useState<number | null>(null);
-  const [points, setPoints] = useState<Point[]>([]);
-  const [rotation, setRotation] = useState(0);
-  const [zoom, setZoom] = useState(1); // Default zoom level
-  const [dragState, setDragState] = useState<{ index: number | 'rotate' | null; type: 'move' | 'rotate' | null }>({ index: null, type: null });
+  const [cropSettings, setCropSettings] = useState<CropSettings>({ width: 600, height: 600, positionX: 0, positionY: 0, aspectRatio: null });
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState<string | null>(null);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  const [scale, setScale] = useState(1);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const cropContainerRef = useRef<HTMLDivElement | null>(null);
-  const [cropMode, setCropMode] = useState<'perspective' | 'square'>('perspective'); // Crop mode toggle
 
   const dataURLtoBlob = useCallback((dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
@@ -142,19 +95,11 @@ export function ImageTools() {
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
     const newImages = acceptedFiles
       .filter(file => validateFile(file, ALLOWED_IMAGE_TYPES).isValid)
-      .map(file => ({
-        file,
-        preview: createSecureObjectURL(file)
-      }));
+      .map(file => ({ file, preview: createSecureObjectURL(file) }));
 
-    if (newImages.length !== acceptedFiles.length) {
-      setError('Some files were rejected due to invalid type');
-    }
-
+    if (newImages.length !== acceptedFiles.length) setError('Some files were rejected due to invalid type');
     if (fileRejections.length > 0) {
-      const rejectionErrors = fileRejections.map(rejection =>
-        `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`
-      ).join('; ');
+      const rejectionErrors = fileRejections.map(rejection => `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`).join('; ');
       setError(`Upload failed: ${rejectionErrors}`);
     }
 
@@ -166,95 +111,30 @@ export function ImageTools() {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'] },
+    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.avif', '.heic'] },
     maxFiles: 0,
-    maxSize: 15 * 1024 * 1024, // 15MB limit
+    maxSize: 15 * 1024 * 1024,
   });
 
   const handleImageLoad = useCallback(() => {
     if (!imgRef.current || !cropContainerRef.current) return;
-    const { width, height } = imgRef.current;
-    const cropSize = Math.min(width, height) * 0.7; // Default to 70% of smallest dimension
-    const cropX = (width - cropSize) / 2;
-    const cropY = (height - cropSize) / 2;
-    setPoints(cropMode === 'square'
-      ? [
-          { x: cropX, y: cropY },
-          { x: cropX + cropSize, y: cropY },
-          { x: cropX + cropSize, y: cropY + cropSize },
-          { x: cropX, y: cropY + cropSize }
-        ]
-      : [
-          { x: cropX, y: cropY },
-          { x: cropX + cropSize, y: cropY },
-          { x: cropX + cropSize, y: cropY + cropSize * 0.8 },
-          { x: cropX, y: cropY + cropSize * 0.8 }
-        ]);
-  }, [cropMode]);
-
-  const getEventPosition = useCallback((e: React.MouseEvent | React.TouchEvent, rect: DOMRect) => {
-    const isTouch = 'touches' in e;
-    const x = isTouch ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = isTouch ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    return {
-      x: Math.max(0, Math.min(x, rect.width)),
-      y: Math.max(0, Math.min(y, rect.height))
-    };
-  }, []);
-
-  const handleDragStart = useCallback((e: React.MouseEvent | React.TouchEvent, index: number | 'rotate') => {
-    e.preventDefault();
-    setDragState({ index, type: index === 'rotate' ? 'rotate' : 'move' });
-  }, []);
-
-  const handleDragMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!cropContainerRef.current || dragState.index === null) return;
-    e.preventDefault();
-    const rect = cropContainerRef.current.getBoundingClientRect();
-    const { x, y } = getEventPosition(e, rect);
-
-    setPoints(prevPoints => {
-      const newPoints = [...prevPoints];
-      if (dragState.type === 'rotate') {
-        const center = prevPoints.reduce((acc, p) => ({ x: acc.x + p.x / 4, y: acc.y + p.y / 4 }), { x: 0, y: 0 });
-        const angle = Math.atan2(y - center.y, x - center.x) - Math.PI / 2;
-        const newRotation = Math.round((angle * 180) / Math.PI / 15) * 15; // Snap to 15° increments
-        setRotation(newRotation);
-        return prevPoints.map(p => {
-          const dx = p.x - center.x;
-          const dy = p.y - center.y;
-          const radius = Math.sqrt(dx * dx + dy * dy);
-          const currentAngle = Math.atan2(dy, dx);
-          const newAngle = currentAngle + (newRotation * Math.PI) / 180;
-          return {
-            x: center.x + radius * Math.cos(newAngle),
-            y: center.y + radius * Math.sin(newAngle)
-          };
-        });
-      }
-
-      const draggedIndex = dragState.index as number;
-      if (cropMode === 'square') {
-        const oppositeIndex = (draggedIndex + 2) % 4;
-        const deltaX = x - newPoints[oppositeIndex].x;
-        const deltaY = y - newPoints[oppositeIndex].y;
-        const size = Math.min(Math.abs(deltaX), Math.abs(deltaY)) * Math.sign(deltaX * deltaY);
-        newPoints[draggedIndex] = { x: newPoints[oppositeIndex].x + size, y: newPoints[oppositeIndex].y + size };
-        newPoints[(draggedIndex + 1) % 4] = { x: newPoints[draggedIndex].x, y: newPoints[oppositeIndex].y };
-        newPoints[(draggedIndex + 3) % 4] = { x: newPoints[oppositeIndex].x, y: newPoints[draggedIndex].y };
-      } else {
-        newPoints[draggedIndex] = { x, y };
-      }
-      return newPoints;
+    const { naturalWidth, naturalHeight, width, height } = imgRef.current;
+    setImageDimensions({ width: naturalWidth, height: naturalHeight });
+    const scaleX = width / naturalWidth;
+    const scaleY = height / naturalHeight;
+    const newScale = Math.min(scaleX, scaleY);
+    setScale(newScale);
+    const defaultSize = Math.min(naturalWidth, naturalHeight, 600);
+    setCropSettings({
+      width: defaultSize,
+      height: defaultSize,
+      positionX: (naturalWidth - defaultSize) / 2,
+      positionY: (naturalHeight - defaultSize) / 2,
+      aspectRatio: null,
     });
-  }, [dragState, getEventPosition, cropMode]);
-
-  const handleDragEnd = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    e.preventDefault();
-    setDragState({ index: null, type: null });
   }, []);
 
-  const applyCrop = useCallback(async (imageSrc: string, cropPoints: Point[]): Promise<string> => {
+  const applyCrop = useCallback(async (imageSrc: string, cropSettings: CropSettings): Promise<string> => {
     const img = new Image();
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
@@ -266,93 +146,21 @@ export function ImageTools() {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context unavailable');
 
-    const scaleX = img.width / (imgRef.current?.width || img.width);
-    const scaleY = img.height / (imgRef.current?.height || img.height);
-    const scaledPoints = cropPoints.map(p => ({ x: p.x * scaleX, y: p.y * scaleY }));
-
-    if (cropMode === 'perspective') {
-      const sortedPoints = [...scaledPoints];
-      sortedPoints.sort((a, b) => a.y - b.y);
-      const top = sortedPoints.slice(0, 2).sort((a, b) => a.x - b.x);
-      const bottom = sortedPoints.slice(2).sort((a, b) => a.x - b.x);
-      const srcPoints = [top[0], top[1], bottom[1], bottom[0]];
-
-      const width = Math.max(...scaledPoints.map(p => p.x)) - Math.min(...scaledPoints.map(p => p.x));
-      const height = Math.max(...scaledPoints.map(p => p.y)) - Math.min(...scaledPoints.map(p => p.y));
-      canvas.width = width;
-      canvas.height = height;
-
-      const dstPoints = [
-        { x: 0, y: 0 },
-        { x: width, y: 0 },
-        { x: width, y: height },
-        { x: 0, y: height }
-      ];
-
-      const perspectiveMatrix = calculatePerspectiveTransform(srcPoints, dstPoints);
-      ctx.setTransform(
-        perspectiveMatrix[0], perspectiveMatrix[1], perspectiveMatrix[3],
-        perspectiveMatrix[4], perspectiveMatrix[6], perspectiveMatrix[7]
-      );
-      ctx.drawImage(img, 0, 0);
-      ctx.resetTransform();
-    } else {
-      const [minX, maxX, minY, maxY] = [
-        Math.min(...scaledPoints.map(p => p.x)),
-        Math.max(...scaledPoints.map(p => p.x)),
-        Math.min(...scaledPoints.map(p => p.y)),
-        Math.max(...scaledPoints.map(p => p.y))
-      ];
-
-      const cropWidth = maxX - minX;
-      const cropHeight = maxY - minY;
-
-      if (cropWidth <= 0 || cropHeight <= 0) throw new Error('Invalid crop dimensions');
-
-      canvas.width = cropWidth;
-      canvas.height = cropHeight;
-
-      if (rotation) {
-        ctx.translate(cropWidth / 2, cropHeight / 2);
-        ctx.rotate((rotation * Math.PI) / 180);
-        ctx.translate(-cropWidth / 2, -cropHeight / 2);
-      }
-
-      ctx.drawImage(img, minX, minY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-    }
-
+    canvas.width = cropSettings.width;
+    canvas.height = cropSettings.height;
+    ctx.drawImage(img, cropSettings.positionX, cropSettings.positionY, cropSettings.width, cropSettings.height, 0, 0, cropSettings.width, cropSettings.height);
     return blobToDataURL(await new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 1)));
-  }, [rotation, blobToDataURL, cropMode]);
-
-  const calculatePerspectiveTransform = (src: Point[], dst: Point[]): number[] => {
-    // Simplified perspective transform calculation (homography)
-    const a = new Array(8);
-    const b = new Array(8);
-    for (let i = 0; i < 4; i++) {
-      a[i * 2] = [src[i].x, src[i].y, 1, 0, 0, 0, -src[i].x * dst[i].x, -src[i].y * dst[i].x];
-      a[i * 2 + 1] = [0, 0, 0, src[i].x, src[i].y, 1, -src[i].x * dst[i].y, -src[i].y * dst[i].y];
-      b[i * 2] = dst[i].x;
-      b[i * 2 + 1] = dst[i].y;
-    }
-    const h = solveLinearSystem(a, b); // This requires a linear algebra solver
-    return [h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1];
-  };
-
-  const solveLinearSystem = (a: number[][], b: number[]): number[] => {
-    // Placeholder for Gaussian elimination or matrix inversion (e.g., using a library like math.js)
-    // For simplicity, assume a basic implementation or integrate a library
-    return new Array(8).fill(0); // Replace with actual solver
-  };
+  }, [blobToDataURL]);
 
   const handleCropComplete = useCallback(async () => {
-    if (!cropImageSrc || points.length !== 4 || cropImageIndex === null) {
+    if (!cropImageSrc || cropImageIndex === null || !imageDimensions) {
       setError('Invalid crop selection');
       return;
     }
 
     setLoading(true);
     try {
-      const croppedSrc = await applyCrop(cropImageSrc, points);
+      const croppedSrc = await applyCrop(cropImageSrc, cropSettings);
       const croppedBlob = dataURLtoBlob(croppedSrc);
       const croppedFile = new File([croppedBlob], images[cropImageIndex]?.file.name || 'cropped.jpg', { type: 'image/jpeg' });
 
@@ -366,15 +174,12 @@ export function ImageTools() {
       setShowCropModal(false);
       setCropImageSrc(null);
       setCropImageIndex(null);
-      setPoints([]);
-      setRotation(0);
-      setZoom(1);
     } catch (err) {
       setError(`Cropping failed: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
-  }, [cropImageSrc, points, cropImageIndex, images, applyCrop, dataURLtoBlob]);
+  }, [cropImageSrc, cropImageIndex, images, applyCrop, dataURLtoBlob, cropSettings, imageDimensions]);
 
   const [settings, setSettings] = useState<ConversionSettings>({
     mode: 'quality',
@@ -383,70 +188,61 @@ export function ImageTools() {
     format: 'jpeg',
     width: null,
     height: null,
-    maintainAspectRatio: true
+    maintainAspectRatio: true,
+    unit: 'px',
   });
 
   const createPDF = useCallback(async (preview: string, settings: ConversionSettings): Promise<Blob> => {
-    try {
-      const { jsPDF } = await import('jspdf');
-      const pdf = new jsPDF({ orientation: 'portrait', unit: 'px' });
-      const img = new Image();
-      img.crossOrigin = 'Anonymous';
+    const { jsPDF } = await import('jspdf');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px' });
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
 
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error('Failed to load image for PDF conversion'));
-        img.src = preview;
-      });
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image for PDF conversion'));
+      img.src = preview;
+    });
 
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) throw new Error('Failed to get canvas context');
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Failed to get canvas context');
 
+    let width = settings.width || img.width;
+    let height = settings.height || img.height;
+    if (settings.maintainAspectRatio) {
       const aspectRatio = img.width / img.height;
-      let width = settings.width || img.width;
-      let height = settings.height || img.height;
-
-      if (settings.maintainAspectRatio) {
-        if (width / height > aspectRatio) {
-          width = height * aspectRatio;
-        } else {
-          height = width / aspectRatio;
-        }
-      }
-
-      canvas.width = width;
-      canvas.height = height;
-      ctx.drawImage(img, 0, 0, width, height);
-
-      const imgData = canvas.toDataURL('image/jpeg', settings.quality / 100);
-      pdf.addImage(
-        imgData,
-        'JPEG',
-        0,
-        0,
-        pdf.internal.pageSize.getWidth(),
-        pdf.internal.pageSize.getHeight(),
-        undefined,
-        'FAST'
-      );
-
-      return pdf.output('blob');
-    } catch (error) {
-      throw new Error(`PDF creation failed: ${(error as Error).message}`);
+      if (width / height > aspectRatio) width = height * aspectRatio;
+      else height = width / aspectRatio;
     }
+
+    const pixelRatio = settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906;
+    width = width * pixelRatio;
+    height = height * pixelRatio;
+
+    canvas.width = width;
+    canvas.height = height;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    const imgData = canvas.toDataURL('image/jpeg', settings.quality / 100);
+    pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), undefined, 'FAST');
+    return pdf.output('blob');
   }, []);
 
   const compressImage = useCallback((file: File, settings: ConversionSettings): Promise<Blob> => {
-    return import('browser-image-compression').then(({ default: imageCompression }) =>
-      imageCompression(file, {
+    return import('browser-image-compression').then(({ default: imageCompression }) => {
+      let maxWidthOrHeight = Math.max(settings.width || 0, settings.height || 0);
+      const pixelRatio = settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906;
+      maxWidthOrHeight = maxWidthOrHeight * pixelRatio;
+
+      return imageCompression(file, {
         maxSizeMB: settings.mode === 'size' ? settings.targetSize || 1 : undefined,
-        maxWidthOrHeight: Math.max(settings.width || 0, settings.height || 0) || undefined,
+        maxWidthOrHeight: maxWidthOrHeight || undefined,
         initialQuality: settings.quality / 100,
         useWebWorker: true,
         fileType: FORMAT_OPTIONS.find(f => f.value === settings.format)?.mimeType || 'image/jpeg'
-      })
-    );
+      });
+    });
   }, []);
 
   const handleConversion = useCallback(async () => {
@@ -461,22 +257,9 @@ export function ImageTools() {
       const isPDF = settings.format === 'pdf';
       const results = await Promise.all(images.map(async (image, index) => {
         try {
-          const resultBlob = isPDF
-            ? await createPDF(image.preview, settings)
-            : await compressImage(image.file, settings);
-
+          const resultBlob = isPDF ? await createPDF(image.preview, settings) : await compressImage(image.file, settings);
           const resultUrl = createSecureObjectURL(resultBlob);
-          saveOperation({
-            type: 'image_conversion',
-            metadata: {
-              filename: image.file.name,
-              fileSize: resultBlob.size,
-              format: settings.format,
-              settings
-            },
-            preview: resultUrl
-          });
-
+          saveOperation({ type: 'image_conversion', metadata: { filename: image.file.name, fileSize: resultBlob.size, format: settings.format, settings }, preview: resultUrl });
           return { url: resultUrl, blob: resultBlob };
         } catch (err) {
           throw new Error(`Failed to convert image ${index + 1}: ${(err as Error).message}`);
@@ -494,10 +277,7 @@ export function ImageTools() {
 
   const handleDownload = useCallback((index: number) => {
     if (!convertedBlobs[index] || !settings.format) return;
-    const link = createSecureDownloadLink(
-      convertedBlobs[index],
-      `converted-${index}.${settings.format === 'jpeg' ? 'jpg' : settings.format}`
-    );
+    const link = createSecureDownloadLink(convertedBlobs[index], `converted-${index}.${settings.format === 'jpeg' ? 'jpg' : settings.format}`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -513,9 +293,6 @@ export function ImageTools() {
     setShowCropModal(false);
     setCropImageSrc(null);
     setCropImageIndex(null);
-    setPoints([]);
-    setRotation(0);
-    setZoom(1);
   }, [images, convertedImages]);
 
   const removeImage = useCallback((index: number) => {
@@ -548,135 +325,254 @@ export function ImageTools() {
     return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
   }, []);
 
+  const getPlaceholder = (field: 'width' | 'height') => {
+    switch (settings.unit) {
+      case 'px': return `${field.charAt(0).toUpperCase() + field.slice(1)} in pixels (e.g., 800)`;
+      case 'in': return `${field.charAt(0).toUpperCase() + field.slice(1)} in inches (e.g., 8.5)`;
+      case 'cm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in centimeters (e.g., 21.6)`;
+      case 'mm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in millimeters (e.g., 216)`;
+      default: return `${field.charAt(0).toUpperCase() + field.slice(1)}`;
+    }
+  };
+
+  const getPositionFromEvent = useCallback((e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
+    const rect = cropContainerRef.current?.getBoundingClientRect();
+    if (!rect || !imgRef.current || !imageDimensions) return { x: 0, y: 0 };
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+    const x = (clientX - rect.left) / scale;
+    const y = (clientY - rect.top) / scale;
+    return { x: clamp(x, 0, imageDimensions.width), y: clamp(y, 0, imageDimensions.height) };
+  }, [scale, imageDimensions]);
+
+  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const { x, y } = getPositionFromEvent(e);
+    if (x >= cropSettings.positionX && x <= cropSettings.positionX + cropSettings.width &&
+        y >= cropSettings.positionY && y <= cropSettings.positionY + cropSettings.height) {
+      setIsDragging(true);
+      setDragStart({ x, y });
+    }
+  }, [cropSettings, getPositionFromEvent]);
+
+  const handleResizeStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, corner: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const { x, y } = getPositionFromEvent(e);
+    setIsResizing(corner);
+    setDragStart({ x: x - cropSettings.positionX, y: y - cropSettings.positionY });
+  }, [getPositionFromEvent]);
+
+  const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!dragStart || !imageDimensions || !cropContainerRef.current) return;
+    if (!isDragging && !isResizing) return;
+
+    e.preventDefault();
+    const { x, y } = getPositionFromEvent(e);
+    const minSize = 50;
+
+    setCropSettings(prev => {
+      let newState = { ...prev };
+
+      if (isDragging) {
+        const dx = x - dragStart.x;
+        const dy = y - dragStart.y;
+        if (isDragging) {
+          newState.positionX = clamp(x - dragStart.x, 0, imageDimensions.width - prev.width);
+          newState.positionY = clamp(y - dragStart.y, 0, imageDimensions.height - prev.height);
+        }
+      } else if (isResizing) {
+        const sensitivity = 0.3;
+        const dx = (x - dragStart.x) * sensitivity;
+        const dy = (y - dragStart.y) * sensitivity;
+        if (isResizing === 'tl') {
+          const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width);
+          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(prev.height - dy, minSize, prev.positionY + prev.height);
+          newState.positionX = prev.positionX + (prev.width - newWidth);
+          newState.positionY = prev.aspectRatio ? prev.positionY + (prev.height - newHeight) : prev.positionY + (prev.height - newHeight);
+          newState.width = newWidth;
+          newState.height = newHeight;
+        } else if (isResizing === 'tr') {
+          const newWidth = clamp(prev.positionX + dx, minSize, imageDimensions.width - prev.positionX);
+          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(prev.height - dy, minSize, prev.positionY + prev.height);
+          newState.positionY = prev.aspectRatio ? prev.positionY + (prev.height - newHeight) : prev.positionY + (prev.height - newHeight);
+          newState.width = newWidth;
+          newState.height = newHeight;
+        } else if (isResizing === 'bl') {
+          const newWidth = clamp(prev.width - (x - dragStart.x), minSize, prev.positionX + prev.width);
+          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY);
+          newState.positionX = prev.positionX + (prev.width - newWidth);
+          newState.width = newWidth;
+          newState.height = newHeight;
+        } else if (isResizing === 'br') {
+          const newWidth = clamp(x - prev.positionX, minSize, imageDimensions.width - prev.positionX);
+          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY);
+          newState.width = newWidth;
+          newState.height = newHeight;
+        }
+        newState.positionX = clamp(newState.positionX, 0, imageDimensions.width - newState.width);
+        newState.positionY = clamp(newState.positionY, 0, imageDimensions.height - newState.height);
+      }
+
+      return newState;
+    });
+  }, [isDragging, isResizing, dragStart, imageDimensions]);
+
+  const handleEnd = useCallback(() => {
+    setIsDragging(false);
+    setIsResizing(null);
+    setDragStart(null);
+  }, []);
+
+  useEffect(() => {
+    if (!showCropModal) return;
+
+    const handleGlobalMove = (e: MouseEvent | TouchEvent) => handleMove(e);
+    const handleGlobalEnd = () => handleEnd();
+
+    window.addEventListener('mousemove', handleGlobalMove, { passive: false });
+    window.addEventListener('mouseup', handleGlobalEnd);
+    window.addEventListener('touchmove', handleGlobalMove, { passive: false });
+    window.addEventListener('touchend', handleGlobalEnd);
+
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMove);
+      window.removeEventListener('mouseup', handleGlobalEnd);
+      window.removeEventListener('touchmove', handleGlobalMove);
+      window.removeEventListener('touchend', handleGlobalEnd);
+    };
+  }, [showCropModal, handleMove, handleEnd]);
+
+  const resetCrop = useCallback(() => {
+    if (!imageDimensions) return;
+    const defaultSize = Math.min(imageDimensions.width, imageDimensions.height, 600);
+    setCropSettings({
+      width: defaultSize,
+      height: defaultSize,
+      positionX: (imageDimensions.width - defaultSize) / 2,
+      positionY: (imageDimensions.height - defaultSize) / 2,
+      aspectRatio: null,
+    });
+  }, [imageDimensions]);
+
   return (
     <>
       <SEOHeaders 
         title="Free Online Image Editor - Resize, Crop, Rotate & Convert Images"
-        description="Edit high-resolution images online with our free tool. Resize, crop, rotate, and convert to JPEG, PNG, WebP, or PDF with advanced perspective and square cropping."
-        keywords={[
-          'image editor online free', 'resize high resolution images', 'crop image online tool', 'rotate image free', 'convert image to pdf online', 
-          'image compressor free', 'optimize images for web', 'batch image resizer', 'SEO image optimization', 'convert jpg to png free', 
-          'png to webp converter online', 'free photo editing tool', 'resize images for social media', 'compress jpg online', 'image format converter free', 
-          'online image resizer high quality', 'photo cropper free', 'web image optimizer tool', 'edit large images online', 'free image conversion tool',
-          'perspective crop tool', 'square crop online', 'zoom image editor'
-        ]}
+        description="Edit high-resolution images online with our free tool. Resize, crop, rotate, and convert to JPEG, PNG, WebP, AVIF, HEIC, or PDF with advanced rectangle cropping."
+        keywords={['image editor online free', 'resize high resolution images', 'crop image online tool', 'rotate image free', 'convert image to pdf online', 'image compressor free', 'optimize images for web', 'batch image resizer', 'SEO image optimization', 'convert jpg to png free', 'png to webp converter online', 'free photo editing tool', 'resize images for social media', 'compress jpg online', 'image format converter free', 'online image resizer high quality', 'photo cropper free', 'web image optimizer tool', 'edit large images online', 'free image conversion tool', 'rectangle crop tool', 'zoom image editor', 'convert to avif', 'convert to heic']}
         canonicalUrl="https://pdfcircle.com/image-tools"
       />
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">
-          Free Online Image Editor - Resize, Crop, Rotate & Convert
-        </h1>
+      <div className="max-w-6xl mx-auto px-4 py-6">
+        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Free Online Image Editor - Resize, Crop, Rotate & Convert</h1>
         <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
-        <div className="bg-white rounded-xl shadow-lg p-4">
+        <div className="bg-white rounded-xl shadow-lg p-6">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-gray-800">Crop and Rotate Your Image</h2>
-              <div className="flex gap-2 mb-4">
-                <button
-                  onClick={() => setCropMode('perspective')}
-                  className={`px-3 py-1 rounded-lg ${cropMode === 'perspective' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  Perspective
-                </button>
-                <button
-                  onClick={() => setCropMode('square')}
-                  className={`px-3 py-1 rounded-lg ${cropMode === 'square' ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                >
-                  <Square className="w-4 h-4 inline mr-1" />Square
-                </button>
-                <select
-                  value={zoom}
-                  onChange={e => setZoom(parseFloat(e.target.value))}
-                  className="px-3 py-1 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                >
-                  {ZOOM_LEVELS.map(level => (
-                    <option key={level} value={level}>{(level * 100)}%</option>
-                  ))}
-                </select>
-              </div>
-              <div
-                ref={cropContainerRef}
-                className="relative overflow-auto touch-none select-none"
-                style={{ maxHeight: '70vh' }}
-                onMouseMove={handleDragMove}
-                onMouseUp={handleDragEnd}
-                onMouseLeave={handleDragEnd}
-                onTouchMove={handleDragMove}
-                onTouchEnd={handleDragEnd}
-                onTouchCancel={handleDragEnd}
-              >
-                <img
-                  ref={imgRef}
-                  src={cropImageSrc}
-                  alt="Image to crop and rotate"
-                  onLoad={handleImageLoad}
-                  className="max-w-full max-h-[70vh]"
-                  style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-                />
-                {points.length === 4 && (
-                  <>
-                    <svg
-                      className="absolute inset-0 pointer-events-none"
-                      width={imgRef.current?.width || 0}
-                      height={imgRef.current?.height || 0}
-                      style={{ transform: `scale(${zoom})`, transformOrigin: 'top left' }}
-                    >
-                      <polygon
-                        points={points.map(p => `${p.x},${p.y}`).join(' ')}
-                        fill="rgba(79, 70, 229, 0.3)"
-                        stroke="rgba(79, 70, 229, 1)"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                    {points.map((point, i) => (
-                      <div
-                        key={i}
-                        className="absolute w-6 h-6 bg-indigo-600 rounded-full -translate-x-1/2 -translate-y-1/2 touch-none cursor-move"
-                        style={{ left: `${point.x * zoom}px`, top: `${point.y * zoom}px` }}
-                        onMouseDown={e => handleDragStart(e, i)}
-                        onTouchStart={e => handleDragStart(e, i)}
-                      />
-                    ))}
-                    <div
-                      className="absolute w-6 h-6 bg-green-600 rounded-full -translate-x-1/2 -translate-y-1/2 touch-none flex items-center justify-center cursor-pointer"
-                      style={{
-                        left: `${((points[0].x + points[1].x) / 2) * zoom}px`,
-                        top: `${(points[0].y - 30) * zoom}px`
-                      }}
-                      onMouseDown={e => handleDragStart(e, 'rotate')}
-                      onTouchStart={e => handleDragStart(e, 'rotate')}
-                    >
-                      <RotateCw className="w-4 h-4 text-white" />
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-full md:w-1/3 bg-gray-800 p-4 rounded-lg text-white space-y-4">
+                <h2 className="text-lg font-semibold">Crop Rectangle</h2>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <input type="number" value={Math.round(cropSettings.width)} onChange={(e) => {
+                      const newWidth = Math.max(50, +e.target.value);
+                      setCropSettings(prev => ({
+                        ...prev,
+                        width: newWidth,
+                        height: prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : prev.height,
+                      }));
+                    }} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Width" min="50" />
+                    <input type="number" value={Math.round(cropSettings.height)} onChange={(e) => {
+                      const newHeight = Math.max(50, +e.target.value);
+                      setCropSettings(prev => ({
+                        ...prev,
+                        height: newHeight,
+                        width: prev.aspectRatio ? newHeight * parseAspectRatio(prev.aspectRatio) : prev.width,
+                      }));
+                    }} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Height" min="50" />
+                  </div>
+                  <select value={cropSettings.aspectRatio || 'Freeform'} onChange={(e) => {
+                    const value = e.target.value === 'Freeform' ? null : e.target.value;
+                    setCropSettings(prev => ({
+                      ...prev,
+                      aspectRatio: value,
+                      height: value ? prev.width / parseAspectRatio(value) : prev.height,
+                    }));
+                  }} className="w-full p-2 bg-gray-700 text-white rounded">
+                    {ASPECT_RATIOS.map(ratio => <option key={ratio.value || 'Freeform'} value={ratio.value || 'Freeform'}>{ratio.label}</option>)}
+                  </select>
+                  <div>
+                    <h3 className="text-sm font-medium">Crop Position</h3>
+                    <div className="flex gap-2">
+                      <input type="number" value={Math.round(cropSettings.positionX)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position X" min="0" />
+                      <input type="number" value={Math.round(cropSettings.positionY)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionY: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.height - prev.height : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position Y" min="0" />
                     </div>
-                  </>
-                )}
+                  </div>
+                  <button onClick={resetCrop} className="w-full bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Reset</button>
+                </div>
               </div>
-              <div className="flex justify-end gap-2">
-                <button
-                  onClick={() => {
-                    setShowCropModal(false);
-                    setCropImageSrc(null);
-                    setCropImageIndex(null);
-                    setPoints([]);
-                    setRotation(0);
-                    setZoom(1);
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+              <div className="w-full md:w-2/3 relative overflow-hidden">
+                <div
+                  ref={cropContainerRef}
+                  className="relative overflow-auto touch-none select-none"
+                  style={{ maxHeight: '80vh', userSelect: 'none' }}
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCropComplete}
-                  disabled={loading}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-50"
-                >
-                  {loading ? (
-                    <><Loader2 className="w-5 h-5 animate-spin mr-2" />Cropping...</>
-                  ) : (
-                    <><Crop className="w-5 h-5 mr-2" />Apply Crop</>
+                  <img
+                    ref={imgRef}
+                    src={cropImageSrc}
+                    alt="Image to crop"
+                    onLoad={handleImageLoad}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ width: '100%', height: 'auto' }}
+                  />
+                  {imageDimensions && scale > 0 && (
+                    <div
+                      className={`absolute border-2 border-indigo-500 bg-indigo-500/30 cursor-move ${isDragging || isResizing ? 'opacity-75' : ''}`}
+                      style={{
+                        width: `${cropSettings.width * scale}px`,
+                        height: `${cropSettings.height * scale}px`,
+                        left: `${cropSettings.positionX * scale}px`,
+                        top: `${cropSettings.positionY * scale}px`,
+                        touchAction: 'none',
+                      }}
+                      onMouseDown={handleDragStart}
+                      onTouchStart={handleDragStart}
+                    >
+                      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className={`border border-indigo-500 border-opacity-50 ${i % 3 === 2 ? 'border-r-0' : ''} ${i >= 6 ? 'border-b-0' : ''}`} />
+                        ))}
+                      </div>
+                      <div
+                        className="absolute -top-2 -left-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nwse-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'tl')}
+                        onTouchStart={(e) => handleResizeStart(e, 'tl')}
+                      />
+                      <div
+                        className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nesw-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'tr')}
+                        onTouchStart={(e) => handleResizeStart(e, 'tr')}
+                      />
+                      <div
+                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nesw-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'bl')}
+                        onTouchStart={(e) => handleResizeStart(e, 'bl')}
+                      />
+                      <div
+                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nwse-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'br')}
+                        onTouchStart={(e) => handleResizeStart(e, 'br')}
+                      />
+                    </div>
                   )}
-                </button>
+                </div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <button onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Cancel</button>
+                  <button onClick={handleCropComplete} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-50">
+                    {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />Cropping...</> : <><Crop className="w-5 h-5 mr-2" />Apply Crop</>}
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -684,23 +580,32 @@ export function ImageTools() {
               {images.length === 0 ? (
                 <div>
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Edit</h2>
-                  <div
-                    {...getRootProps()}
-                    className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
-                  >
+                  <div {...getRootProps()} className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}>
                     <input {...getInputProps()} />
                     <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Drag & drop or tap to select'}</p>
-                    <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, GIF, SVG (Max 15MB)</p>
+                    <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB)</p>
+                  </div>
+                  <div className="mt-4 text-sm text-gray-600">
+                    <p>Related Tools: 
+                      <a href="/pdf-tools" className="text-indigo-600 hover:underline" title="PDF Editing Tools">PDF Tools</a> | 
+                      <a href="/pdf-tools?tab=compress" className="text-indigo-600 hover:underline" title="Image Compression Tool">Compressor pdf</a> | 
+                      <a href="/pdf-tools?tab=create" className="text-indigo-600 hover:underline" title="File Format Converter">Create pdf</a> | 
+                      <a href="/pdf-tools?tab=to-images" className="text-indigo-600 hover:underline" title="File Format Converter">pdf to image</a> | 
+                      <a href="/pdf-tools?tab=watermark" className="text-indigo-600 hover:underline" title="File Format Converter">watermark on pdf</a>
+                    </p>
+                    <p className="mt-2">Learn More: 
+                      <a href="https://developers.google.com/speed/docs/insights/OptimizeImages" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Google's Image Optimization Guide">Google Image Optimization</a> | 
+                      <a href="https://www.smashingmagazine.com/2021/03/complete-guide-image-optimization-website-performance/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Smashing Magazine Image Optimization">Smashing Magazine Guide</a> | 
+                      <a href="https://web.dev/learn/images/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Web.dev Image Best Practices">Web.dev Images</a>
+                    </p>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-gray-800">Preview and Edit Your Images</h2>
-                    <button onClick={resetImages} className="text-gray-500 hover:text-gray-700">
-                      <X className="w-5 h-5" />
-                    </button>
+                    <button onClick={resetImages} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
                   </div>
                   {loading && (
                     <div className="text-center">
@@ -717,109 +622,56 @@ export function ImageTools() {
                         convertedImage={convertedImages[index]}
                         convertedBlob={convertedBlobs[index]}
                         onRemove={removeImage}
-                        onCrop={() => {
-                          setCropImageSrc(image.preview);
-                          setCropImageIndex(index);
-                          setShowCropModal(true);
-                        }}
+                        onCrop={() => { setCropImageSrc(image.preview); setCropImageIndex(index); setShowCropModal(true); }}
                         onDownload={handleDownload}
                         formatFileSize={formatFileSize}
                       />
                     ))}
                   </div>
-                  {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-                      {error}
-                    </div>
-                  )}
+                  {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
                   <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
                       <h2 className="text-sm font-medium text-gray-700">Image Conversion Settings</h2>
                       <Settings2 className="w-5 h-5 text-gray-400" />
                     </div>
-                    <select
-                      value={settings.format}
-                      onChange={e => setSettings(prev => ({ ...prev, format: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none"
-                    >
-                      {FORMAT_OPTIONS.map(o => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
+                    <select value={settings.format} onChange={e => setSettings(prev => ({ ...prev, format: e.target.value }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none">
+                      {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                     <div className="flex gap-2">
                       {['quality', 'size'].map(mode => (
-                        <button
-                          key={mode}
-                          onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' }))}
-                          className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                        >
+                        <button key={mode} onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' }))} className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                           {mode === 'quality' ? 'Quality' : 'Size'}
                         </button>
                       ))}
                     </div>
                     {settings.mode === 'quality' ? (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          Quality: {settings.quality}%
-                        </label>
-                        <input
-                          type="range"
-                          min="1"
-                          max="100"
-                          value={settings.quality}
-                          onChange={e => setSettings(prev => ({ ...prev, quality: +e.target.value }))}
-                          className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
-                        />
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Quality: {settings.quality}%</label>
+                        <input type="range" min="1" max="100" value={settings.quality} onChange={e => setSettings(prev => ({ ...prev, quality: +e.target.value }))} className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600" />
                       </div>
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         {SIZE_OPTIONS.map(size => (
-                          <button
-                            key={size}
-                            onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))}
-                            className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-                          >
+                          <button key={size} onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))} className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
                             {size < 1 ? `${size * 1000}KB` : `${size}MB`}
                           </button>
                         ))}
                       </div>
                     )}
-                    <div className="grid grid-cols-2 gap-4">
-                      <input
-                        type="number"
-                        value={settings.width || ''}
-                        onChange={e => setSettings(prev => ({ ...prev, width: e.target.value ? +e.target.value : null }))}
-                        placeholder="Width"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
-                      />
-                      <input
-                        type="number"
-                        value={settings.height || ''}
-                        onChange={e => setSettings(prev => ({ ...prev, height: e.target.value ? +e.target.value : null }))}
-                        placeholder="Height"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
-                      />
+                    <div className="grid grid-cols-3 gap-4">
+                      <input type="number" value={settings.width || ''} onChange={e => setSettings(prev => ({ ...prev, width: e.target.value ? +e.target.value : null }))} placeholder={getPlaceholder('width')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200" />
+                      <input type="number" value={settings.height || ''} onChange={e => setSettings(prev => ({ ...prev, height: e.target.value ? +e.target.value : null }))} placeholder={getPlaceholder('height')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200" />
+                      <select value={settings.unit} onChange={e => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none">
+                        {UNIT_OPTIONS.map(unit => <option key={unit} value={unit}>{unit.toUpperCase()}</option>)}
+                      </select>
                     </div>
                     <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={settings.maintainAspectRatio}
-                        onChange={e => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                      />
+                      <input type="checkbox" checked={settings.maintainAspectRatio} onChange={e => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
                       <span className="ml-2 text-sm text-gray-700">Maintain aspect ratio</span>
                     </label>
                     <div className="flex gap-3">
-                      <button
-                        onClick={handleConversion}
-                        disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)}
-                        className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
-                      >
-                        {loading ? (
-                          <><Loader2 className="w-5 h-5 animate-spin mr-2" />Converting...</>
-                        ) : (
-                          <>{settings.format === 'pdf' ? <FileText className="w-5 h-5 mr-2" /> : <ImageIcon className="w-5 h-5 mr-2" />}Convert</>
-                        )}
+                      <button onClick={handleConversion} disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)} className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center">
+                        {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />Converting...</> : <>{settings.format === 'pdf' ? <FileText className="w-5 h-5 mr-2" /> : <ImageIcon className="w-5 h-5 mr-2" />}Convert</>}
                       </button>
                     </div>
                   </div>

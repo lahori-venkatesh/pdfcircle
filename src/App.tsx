@@ -1,11 +1,10 @@
 import { PropsWithChildren } from 'react';
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect,  } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  FileUp, Image, FileText, FilePlus, FileDown, Split, FileCode2, Search, 
-  Minimize2, Menu, X, Camera, Mail, Lock, Eye, EyeOff, LogOut, Images,
-  Shield, ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-  Globe, Award, Code, Pencil, Stamp, Type, Eraser, Wand2, Sun, Moon, ArrowUp
+  FileUp, Image, FileText, FilePlus,  Split,  Menu, X,  LogOut, Images,
+   ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
+   Pencil, Stamp,  Eraser, Wand2, Sun, Moon, ArrowUp
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
@@ -25,7 +24,7 @@ import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
 
 // ScrollToTop component (unchanged)
-const ScrollToTop = ({ children }) => {
+const ScrollToTop = ({ children }: PropsWithChildren<{}>) => {
   const location = useLocation();
 
   useEffect(() => {
@@ -34,8 +33,12 @@ const ScrollToTop = ({ children }) => {
 
   return <>{children}</>;
 };
-
-function SecurityFeature({ icon: Icon, title, description }) {
+interface SecurityFeatureProps {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+}
+function SecurityFeature({ icon: Icon, title, description }: SecurityFeatureProps) {
   return (
     <div className="flex items-start space-x-4 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-200 dark:border-gray-700">
       <div className="flex-shrink-0 w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
@@ -48,8 +51,11 @@ function SecurityFeature({ icon: Icon, title, description }) {
     </div>
   );
 }
-
-function FAQItem({ question, answer }) {
+interface FAQItemProps {
+  question: string;
+  answer: string;
+}
+function FAQItem({ question, answer }: FAQItemProps){
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -71,8 +77,13 @@ function FAQItem({ question, answer }) {
     </div>
   );
 }
-
-function FeatureCard({ icon: Icon, title, description, to }) {
+interface FeatureCardProps {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+  to: string;
+}
+function FeatureCard({ icon: Icon, title, description, to }: FeatureCardProps) {
   return (
     <Link to={to} onClick={() => window.scrollTo(0, 0)} className="block">
       <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
@@ -85,8 +96,12 @@ function FeatureCard({ icon: Icon, title, description, to }) {
     </Link>
   );
 }
-
-function StepCard({ number, title, description }) {
+interface StepCardProps {
+  number: number;
+  title: string;
+  description: string;
+}
+function StepCard({ number, title, description }: StepCardProps) {
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex items-center space-x-4 hover:shadow-xl transition-shadow duration-300">
       <div className="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
@@ -119,7 +134,7 @@ function HomePage() {
 
       {/* Hero Section with H1 and Two Buttons */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497493292307-31c376b6e479?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('hero.png')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
@@ -159,85 +174,85 @@ function HomePage() {
               icon={Image} 
               title={t('features.imageReduction.title', 'Image Reduction')} 
               description={t('features.imageReduction.description', 'Reduce image file size without losing quality.')} 
-              to="" // No link
+              to="/image-tools " // No link
             />
             <FeatureCard 
               icon={FileUp} 
               title={t('features.imageToPdf.title', 'Image to PDF')} 
               description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} 
-              to="" // No link
+              to="/pdf-tools?tab=create " // No link
             />
             <FeatureCard 
               icon={Images} 
               title={t('features.pdfToImages.title', 'PDF to Images')} 
               description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} 
-              to="" // No link
+              to="/pdf-tools?tab=to-images" // No link
             />
             <FeatureCard 
               icon={Eraser} 
               title={t('features.removeBackground.title', 'Remove Background')} 
               description={t('features.removeBackground.description', 'Erase backgrounds from images effortlessly.')} 
-              to="" // No link
+              to="/background-remover " // No link
             />
             <FeatureCard 
               icon={Wand2} 
               title={t('features.digitalEnhancer.title', 'Digital Enhancer')} 
               description={t('features.digitalEnhancer.description', 'Enhance image quality with one click.')} 
-              to="" // No link
+              to="/digital-enhancer" // No link
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.compressPdf.title', 'Compress PDF')} 
               description={t('features.compressPdf.description', 'Shrink PDF files for easier sharing.')} 
-              to="" // No link
+              to="/pdf-tools?tab=compress" // No link
             />
             <FeatureCard 
               icon={FilePlus} 
               title={t('features.mergePdfs.title', 'Merge PDFs')} 
               description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} 
-              to="" // No link
+              to="/pdf-tools?tab=merge" // No link
             />
             <FeatureCard 
               icon={Split} 
               title={t('features.splitPdf.title', 'Split PDF')} 
               description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} 
-              to="" // No link
+              to="/pdf-tools?tab=split" // No link
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.pdfToWord.title', 'PDF to Word')} 
               description={t('features.pdfToWord.description', 'Convert PDFs to editable Word documents.')} 
-              to="" // No link
+              to="/pdf-tools?tab=to-word" // No link
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.pdfToExcel.title', 'PDF to Excel')} 
               description={t('features.pdfToExcel.description', 'Extract data from PDFs to Excel sheets.')} 
-              to="" // No link
+              to="/pdf-tools?tab=to-excel" // No link
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.wordToPdf.title', 'Word to PDF')} 
               description={t('features.wordToPdf.description', 'Convert Word documents to PDFs easily.')} 
-              to="" // No link
+              to="/pdf-tools?tab=word-to-pdf" // No link
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.excelToPdf.title', 'Excel to PDF')} 
               description={t('features.excelToPdf.description', 'Turn Excel files into PDFs quickly.')} 
-              to="" // No link
+              to="/pdf-tools?tab=excel-to-pdf" // No link
             />
             <FeatureCard 
               icon={Pencil} 
               title={t('features.editPdf.title', 'Edit PDF')} 
               description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} 
-              to="" // No link
+              to="/pdf-tools?tab=edit" // No link
             />
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
               description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
-              to="" // No link
+              to="/pdf-tools?tab=watermark" // No link
             />
           </div>
         </div>
@@ -390,7 +405,7 @@ let setAuthModalOpen: (open: boolean) => void;
 let setAuthMode: (mode: string) => void;
 
 function Layout({ children }: PropsWithChildren<{}>) {
-  const { t } = useTranslation();
+  const {  } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -402,7 +417,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
   setAuthMode = setAuthModeState;
 
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);
-  const openAuthModal = (mode) => {
+  const openAuthModal = (mode: string) => {
     setAuthMode(mode);
     setAuthModalOpen(true);
     setMobileMenuOpen(false);

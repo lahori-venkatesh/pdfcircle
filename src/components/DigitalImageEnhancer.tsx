@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader2, X, Crop, RotateCw, Wand2 } from 'lucide-react';
+import { Upload, Download, Loader2, X, Crop, Wand2 } from 'lucide-react';
 import { AdComponent } from './AdComponent';
 import { SEOHeaders } from './SEOHeaders';
 
@@ -27,7 +27,9 @@ interface Enhancement {
   saturation: number;
 }
 
-interface Point {
+interface CropState {
+  width: number;
+  height: number;
   x: number;
   y: number;
 }
@@ -47,13 +49,10 @@ interface OpenCV {
   split: (src: any, dst: any) => void;
   merge: (src: any, dst: any) => void;
   filter2D: (src: any, dst: any, ddepth: number, kernel: any) => void;
-  getPerspectiveTransform: (src: any, dst: any) => any;
-  warpPerspective: (src: any, dst: any, transform: any, dsize: any) => void;
   COLOR_RGBA2RGB: number;
   COLOR_RGB2HSV: number;
   COLOR_HSV2RGB: number;
   CV_32F: number;
-  CV_32FC2: number;
 }
 
 declare global {
@@ -103,10 +102,10 @@ export function DigitalImageEnhancer() {
   const [error, setError] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
-  const [points, setPoints] = useState<Point[]>([]);
-  const [rotation, setRotation] = useState(0);
-  const [isDragging, setIsDragging] = useState<number | null>(null);
-  const [isRotating, setIsRotating] = useState(false);
+  const [cropState, setCropState] = useState<CropState>({ width: 0, height: 0, x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
+  const [isResizing, setIsResizing] = useState<string | null>(null);
   const [enhancements, setEnhancements] = useState<Enhancement>(defaultEnhancements);
   const [quality, setQuality] = useState(80);
   const [fileSize, setFileSize] = useState<number | null>(null);
@@ -160,70 +159,33 @@ export function DigitalImageEnhancer() {
     return await blobToDataURL(resizedBlob);
   }, [dataURLtoBlob, blobToDataURL]);
 
-  const applyManualCrop = useCallback(async (imageSrc: string, points: Point[]): Promise<string> => {
+  const applyCrop = useCallback(async (imageSrc: string, crop: CropState): Promise<string> => {
     const image = await createImageBitmap(dataURLtoBlob(imageSrc));
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d')!;
-    canvas.width = image.width;
-    canvas.height = image.height;
-    ctx.drawImage(image, 0, 0);
+    
+    canvas.width = crop.width;
+    canvas.height = crop.height;
 
     const scaleX = image.width / (imgRef.current?.width || image.width);
     const scaleY = image.height / (imgRef.current?.height || image.height);
-    const scaledPoints = points.map((p) => ({ x: p.x * scaleX, y: p.y * scaleY }));
-    const sortedPoints = [...scaledPoints];
-    sortedPoints.sort((a, b) => a.y - b.y);
-    const top = sortedPoints.slice(0, 2).sort((a, b) => a.x - b.x);
-    const bottom = sortedPoints.slice(2).sort((a, b) => a.x - b.x);
-    const orderedPoints = [top[0], top[1], bottom[1], bottom[0]];
 
-    const src = window.cv.matFromImageData(ctx.getImageData(0, 0, image.width, image.height));
-    const a4Width = 595;
-    const a4Height = 842;
-    const dstPoints = new window.cv.Mat(4, 1, window.cv.CV_32FC2 || 5);
-    dstPoints.data32F.set([0, 0, a4Width - 1, 0, a4Width - 1, a4Height - 1, 0, a4Height - 1]);
-    const srcPoints = new window.cv.Mat(4, 1, window.cv.CV_32FC2 || 5);
-    srcPoints.data32F.set(orderedPoints.flatMap((p) => [p.x, p.y]));
-    const transform = window.cv.getPerspectiveTransform(srcPoints, dstPoints);
-    const warped = new window.cv.Mat();
-    canvas.width = a4Width;
-    canvas.height = a4Height;
-    window.cv.warpPerspective(src, warped, transform, { width: a4Width, height: a4Height });
+    ctx.drawImage(
+      image,
+      crop.x * scaleX,
+      crop.y * scaleY,
+      crop.width * scaleX,
+      crop.height * scaleY,
+      0,
+      0,
+      crop.width,
+      crop.height
+    );
 
-    let hasNonZeroPixels = false;
-    for (let i = 0; i < warped.rows; i += Math.max(1, Math.floor(warped.rows / 10))) {
-      for (let j = 0; j < warped.cols; j += Math.max(1, Math.floor(warped.cols / 10))) {
-        const pixel = warped.ucharPtr(i, j);
-        if (pixel[0] !== 0 || pixel[1] !== 0 || pixel[2] !== 0) {
-          hasNonZeroPixels = true;
-          break;
-        }
-      }
-      if (hasNonZeroPixels) break;
-    }
-
-    if (!hasNonZeroPixels) {
-      src.delete();
-      srcPoints.delete();
-      dstPoints.delete();
-      transform.delete();
-      warped.delete();
-      throw new Error('Perspective transform resulted in an empty image');
-    }
-
-    window.cv.imshow(canvas, warped);
     const croppedBlob = await new Promise<Blob>((resolve) => {
       canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', 1.0);
     });
-    const croppedDataURL = await blobToDataURL(croppedBlob);
-
-    src.delete();
-    srcPoints.delete();
-    dstPoints.delete();
-    transform.delete();
-    warped.delete();
-
-    return croppedDataURL;
+    return await blobToDataURL(croppedBlob);
   }, [dataURLtoBlob, blobToDataURL]);
 
   const preprocessImage = useCallback(async (imageSrc: string): Promise<string> => {
@@ -268,88 +230,169 @@ export function DigitalImageEnhancer() {
   }, [resizeImage, preprocessImage]);
 
   const handleImageLoad = useCallback(() => {
-    if (imgRef.current && cropContainerRef.current) {
+    if (imgRef.current) {
       const { width, height } = imgRef.current;
-      const cropWidth = width * 0.8;
-      const cropHeight = height * 0.8;
-      const cropX = (width - cropWidth) / 2;
-      const cropY = (height - cropHeight) / 2;
-      setPoints([
-        { x: cropX, y: cropY },
-        { x: cropX + cropWidth, y: cropY },
-        { x: cropX + cropWidth, y: cropY + cropHeight },
-        { x: cropX, y: cropY + cropHeight },
-      ]);
+      setCropState({
+        width: Math.min(183, width),
+        height: Math.min(95, height),
+        x: 28,
+        y: 13,
+      });
     }
   }, []);
 
-  const getPositionFromEvent = useCallback((e: React.MouseEvent | React.TouchEvent, rect: DOMRect) => {
+  const handleCropChange = useCallback((key: keyof CropState, value: number) => {
+    setCropState((prev) => {
+      const newState = { ...prev, [key]: value };
+      if (imgRef.current) {
+        const maxWidth = imgRef.current.width;
+        const maxHeight = imgRef.current.height;
+        
+        newState.width = Math.min(newState.width, maxWidth);
+        newState.height = Math.min(newState.height, maxHeight);
+        newState.x = Math.max(0, Math.min(newState.x, maxWidth - newState.width));
+        newState.y = Math.max(0, Math.min(newState.y, maxHeight - newState.height));
+      }
+      return newState;
+    });
+  }, []);
+
+  const getPositionFromEvent = useCallback((e: MouseEvent | TouchEvent, rect: DOMRect) => {
     const isTouch = 'touches' in e;
     const clientX = isTouch ? e.touches[0].clientX : e.clientX;
     const clientY = isTouch ? e.touches[0].clientY : e.clientY;
     const x = clientX - rect.left;
     const y = clientY - rect.top;
-    return { 
-      x: Math.max(0, Math.min(x, rect.width)), 
-      y: Math.max(0, Math.min(y, rect.height)) 
-    };
+    return { x, y };
   }, []);
 
-  const handleStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, index: number | 'rotate') => {
+  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
-    if (index === 'rotate') {
-      setIsRotating(true);
-    } else {
-      setIsDragging(index);
+    if (!cropContainerRef.current) return;
+
+    const rect = cropContainerRef.current.getBoundingClientRect();
+    const { x, y } = getPositionFromEvent(e as unknown as MouseEvent | TouchEvent, rect);
+
+    if (
+      x >= cropState.x &&
+      x <= cropState.x + cropState.width &&
+      y >= cropState.y &&
+      y <= cropState.y + cropState.height
+    ) {
+      setIsDragging(true);
+      setDragStart({ x: x - cropState.x, y: y - cropState.y });
     }
-  }, []);
+  }, [cropState, getPositionFromEvent]);
 
-  const handleMove = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    if (!cropContainerRef.current || (isDragging === null && !isRotating)) return;
+  const handleDragMove = useCallback((e: MouseEvent | TouchEvent) => {
+    if (!cropContainerRef.current) return;
     e.preventDefault();
-    
+
     const rect = cropContainerRef.current.getBoundingClientRect();
     const { x, y } = getPositionFromEvent(e, rect);
 
-    if (isRotating) {
-      const center = points.reduce(
-        (acc, p) => ({ x: acc.x + p.x / 4, y: acc.y + p.y / 4 }),
-        { x: 0, y: 0 }
-      );
-      const angle = Math.atan2(y - center.y, x - center.x) - Math.PI / 2;
-      const newRotation = (angle * 180) / Math.PI;
-      setRotation(newRotation);
+    if (isDragging && dragStart) {
+      const newX = x - dragStart.x;
+      const newY = y - dragStart.y;
 
-      const newPoints = points.map((p) => {
-        const dx = p.x - center.x;
-        const dy = p.y - center.y;
-        const radius = Math.sqrt(dx * dx + dy * dy);
-        const currentAngle = Math.atan2(dy, dx);
-        const newAngle = currentAngle + (newRotation * Math.PI) / 180;
+      setCropState((prev) => {
+        const maxWidth = imgRef.current?.width || 0;
+        const maxHeight = imgRef.current?.height || 0;
+
+        const constrainedX = Math.max(0, Math.min(newX, maxWidth - prev.width));
+        const constrainedY = Math.max(0, Math.min(newY, maxHeight - prev.height));
+
         return {
-          x: center.x + radius * Math.cos(newAngle),
-          y: center.y + radius * Math.sin(newAngle),
+          ...prev,
+          x: constrainedX,
+          y: constrainedY,
         };
       });
-      setPoints(newPoints);
-    } else if (isDragging !== null) {
-      const newPoints = [...points];
-      newPoints[isDragging] = { x, y };
-      setPoints(newPoints);
-    }
-  }, [isDragging, isRotating, points]);
+    } else if (isResizing) {
+      setCropState((prev) => {
+        const maxWidth = imgRef.current?.width || 0;
+        const maxHeight = imgRef.current?.height || 0;
+        let newState = { ...prev };
 
-  const handleEnd = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+        if (isResizing === 'top-left') {
+          const newWidth = prev.width + (prev.x - x);
+          const newHeight = prev.height + (prev.y - y);
+          const newX = x;
+          const newY = y;
+
+          newState.width = Math.max(10, Math.min(newWidth, maxWidth));
+          newState.height = Math.max(10, Math.min(newHeight, maxHeight));
+          newState.x = Math.max(0, Math.min(newX, prev.x + prev.width - 10));
+          newState.y = Math.max(0, Math.min(newY, prev.y + prev.height - 10));
+        } else if (isResizing === 'top-right') {
+          const newWidth = x - prev.x;
+          const newHeight = prev.height + (prev.y - y);
+          const newY = y;
+
+          newState.width = Math.max(10, Math.min(newWidth, maxWidth - prev.x));
+          newState.height = Math.max(10, Math.min(newHeight, maxHeight));
+          newState.y = Math.max(0, Math.min(newY, prev.y + prev.height - 10));
+        } else if (isResizing === 'bottom-left') {
+          const newWidth = prev.width + (prev.x - x);
+          const newHeight = y - prev.y;
+          const newX = x;
+
+          newState.width = Math.max(10, Math.min(newWidth, maxWidth));
+          newState.height = Math.max(10, Math.min(newHeight, maxHeight - prev.y));
+          newState.x = Math.max(0, Math.min(newX, prev.x + prev.width - 10));
+        } else if (isResizing === 'bottom-right') {
+          const newWidth = x - prev.x;
+          const newHeight = y - prev.y;
+
+          newState.width = Math.max(10, Math.min(newWidth, maxWidth - prev.x));
+          newState.height = Math.max(10, Math.min(newHeight, maxHeight - prev.y));
+        }
+
+        return newState;
+      });
+    }
+  }, [isDragging, dragStart, isResizing, getPositionFromEvent]);
+
+  const handleDragEnd = useCallback((e: MouseEvent | TouchEvent) => {
     e.preventDefault();
-    setIsDragging(null);
-    setIsRotating(false);
+    setIsDragging(false);
+    setIsResizing(null);
+    setDragStart(null);
   }, []);
 
+  const handleResizeStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, corner: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(corner);
+  }, []);
+
+  // Attach event listeners manually with passive: false
+  useEffect(() => {
+    const container = cropContainerRef.current;
+    if (!container || !showCropModal) return;
+
+    container.addEventListener('mousemove', handleDragMove, { passive: false });
+    container.addEventListener('mouseup', handleDragEnd, { passive: false });
+    container.addEventListener('mouseleave', handleDragEnd, { passive: false });
+    container.addEventListener('touchmove', handleDragMove, { passive: false });
+    container.addEventListener('touchend', handleDragEnd, { passive: false });
+    container.addEventListener('touchcancel', handleDragEnd, { passive: false });
+
+    return () => {
+      container.removeEventListener('mousemove', handleDragMove);
+      container.removeEventListener('mouseup', handleDragEnd);
+      container.removeEventListener('mouseleave', handleDragEnd);
+      container.removeEventListener('touchmove', handleDragMove);
+      container.removeEventListener('touchend', handleDragEnd);
+      container.removeEventListener('touchcancel', handleDragEnd);
+    };
+  }, [handleDragMove, handleDragEnd, showCropModal]);
+
   const handleCropComplete = useCallback(async () => {
-    if (!cropImageSrc || points.length !== 4) return;
+    if (!cropImageSrc) return;
     setLoading(true);
     try {
-      const croppedSrc = await applyManualCrop(cropImageSrc, points);
+      const croppedSrc = await applyCrop(cropImageSrc, cropState);
       const preprocessedSrc = await preprocessImage(croppedSrc);
       setImage({
         raw: cropImageSrc,
@@ -360,15 +403,14 @@ export function DigitalImageEnhancer() {
       });
       setShowCropModal(false);
       setCropImageSrc(null);
-      setPoints([]);
-      setRotation(0);
+      setCropState({ width: 0, height: 0, x: 0, y: 0 });
       setError(null);
     } catch (err) {
       setError('Cropping/Preprocessing failed: ' + (err as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [cropImageSrc, points, applyManualCrop, preprocessImage]);
+  }, [cropImageSrc, cropState, applyCrop, preprocessImage]);
 
   const handleAutoEnhance = useCallback(async (imageSrc: string, isInitial: boolean = false) => {
     if (!cvReady || !window.cv) {
@@ -564,95 +606,140 @@ export function DigitalImageEnhancer() {
         {showCropModal && cropImageSrc && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-              <h2 className="text-lg font-semibold mb-4">Crop and Rotate Your Image</h2>
+              <h2 className="text-lg font-semibold mb-4">Crop Your Image</h2>
               <div
                 ref={cropContainerRef}
                 className="relative w-full h-full overflow-auto touch-none select-none"
-                onMouseMove={handleMove}
-                onMouseUp={handleEnd}
-                onMouseLeave={handleEnd}
-                onTouchMove={handleMove}
-                onTouchEnd={handleEnd}
-                onTouchCancel={handleEnd}
               >
                 <img
                   ref={imgRef}
                   src={cropImageSrc}
-                  alt="Image to crop and rotate"
+                  alt="Image to crop"
                   onLoad={handleImageLoad}
-                  className="w-auto h-auto max-w-full max-h-[70vh]"
+                  className="w-full h-auto max-h-[70vh]"
                 />
-                {points.length === 4 && (
-                  <>
-                    <svg
-                      className="absolute top-0 left-0 pointer-events-none"
-                      width={imgRef.current?.width || 0}
-                      height={imgRef.current?.height || 0}
-                    >
-                      <polygon
-                        points={points.map((p) => `${p.x},${p.y}`).join(' ')}
-                        fill="rgba(79, 70, 229, 0.3)"
-                        stroke="rgba(79, 70, 229, 1)"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                    {points.map((point, index) => (
-                      <div
-                        key={index}
-                        className="absolute w-6 h-6 bg-indigo-600 rounded-full cursor-move touch-none"
-                        style={{
-                          left: `${point.x}px`,
-                          top: `${point.y}px`,
-                          transform: 'translate(-50%, -50%)',
-                        }}
-                        onMouseDown={(e) => handleStart(e, index)}
-                        onTouchStart={(e) => handleStart(e, index)}
-                      />
-                    ))}
-                    <div
-                      className="absolute w-6 h-6 bg-green-600 rounded-full cursor-pointer touch-none flex items-center justify-center"
-                      style={{
-                        left: `${(points[0].x + points[1].x) / 2}px`,
-                        top: `${points[0].y - 30}px`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                      onMouseDown={(e) => handleStart(e, 'rotate')}
-                      onTouchStart={(e) => handleStart(e, 'rotate')}
-                    >
-                      <RotateCw className="w-4 h-4 text-white" />
+                {cropState.width > 0 && cropState.height > 0 && (
+                  <div
+                    className={`absolute border-2 border-blue-500 border-dashed cursor-move ${isDragging || isResizing ? 'opacity-75' : ''}`}
+                    style={{
+                      left: `${cropState.x}px`,
+                      top: `${cropState.y}px`,
+                      width: `${cropState.width}px`,
+                      height: `${cropState.height}px`,
+                    }}
+                    onMouseDown={handleDragStart}
+                    onTouchStart={handleDragStart}
+                  >
+                    <div className="absolute inset-0 grid grid-cols-3 grid-rows-3">
+                      {[...Array(8)].map((_, index) => (
+                        <div
+                          key={index}
+                          className={`border border-blue-500 border-opacity-50 ${
+                            index % 3 === 2 ? 'border-r-0' : ''
+                          } ${index >= 6 ? 'border-b-0' : ''}`}
+                        />
+                      ))}
                     </div>
-                  </>
+                    <div
+                      className="absolute -top-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nwse-resize"
+                      onMouseDown={(e) => handleResizeStart(e, 'top-left')}
+                      onTouchStart={(e) => handleResizeStart(e, 'top-left')}
+                    />
+                    <div
+                      className="absolute -top-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-nesw-resize"
+                      onMouseDown={(e) => handleResizeStart(e, 'top-right')}
+                      onTouchStart={(e) => handleResizeStart(e, 'top-right')}
+                    />
+                    <div
+                      className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-500 rounded-full cursor-nesw-resize"
+                      onMouseDown={(e) => handleResizeStart(e, 'bottom-left')}
+                      onTouchStart={(e) => handleResizeStart(e, 'bottom-left')}
+                    />
+                    <div
+                      className="absolute -bottom-2 -right-2 w-4 h-4 bg-blue-500 rounded-full cursor-nwse-resize"
+                      onMouseDown={(e) => handleResizeStart(e, 'bottom-right')}
+                      onTouchStart={(e) => handleResizeStart(e, 'bottom-right')}
+                    />
+                  </div>
                 )}
               </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  onClick={() => {
-                    setShowCropModal(false);
-                    setCropImageSrc(null);
-                    setPoints([]);
-                    setRotation(0);
-                  }}
-                  className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleCropComplete}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                      Cropping...
-                    </>
-                  ) : (
-                    <>
-                      <Crop className="w-5 h-5 mr-2" />
-                      Apply Crop
-                    </>
-                  )}
-                </button>
+              <div className="flex mt-4 gap-4">
+                <div className="flex-1">
+                  <h3 className="text-sm font-medium mb-2">Crop Options</h3>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block text-sm">Width (px)</label>
+                      <input
+                        type="number"
+                        value={Math.round(cropState.width)}
+                        onChange={(e) => handleCropChange('width', Number(e.target.value))}
+                        className="w-full border rounded px-2 py-1"
+                        min="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm">Height (px)</label>
+                      <input
+                        type="number"
+                        value={Math.round(cropState.height)}
+                        onChange={(e) => handleCropChange('height', Number(e.target.value))}
+                        className="w-full border rounded px-2 py-1"
+                        min="10"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm">Position X (px)</label>
+                      <input
+                        type="number"
+                        value={Math.round(cropState.x)}
+                        onChange={(e) => handleCropChange('x', Number(e.target.value))}
+                        className="w-full border rounded px-2 py-1"
+                        min="0"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm">Position Y (px)</label>
+                      <input
+                        type="number"
+                        value={Math.round(cropState.y)}
+                        onChange={(e) => handleCropChange('y', Number(e.target.value))}
+                        className="w-full border rounded px-2 py-1"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-end">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        setShowCropModal(false);
+                        setCropImageSrc(null);
+                        setCropState({ width: 0, height: 0, x: 0, y: 0 });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleCropComplete}
+                      className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 flex items-center"
+                      disabled={loading}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          Cropping...
+                        </>
+                      ) : (
+                        <>
+                          <Crop className="w-5 h-5 mr-2" />
+                          Crop Image
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -807,9 +894,15 @@ export function DigitalImageEnhancer() {
             )}
           </div>
 
-          {/* High-Quality SEO Links */}
           <div className="mt-8">
             <h2 className="text-lg font-semibold mb-4">Useful Resources for Image Enhancement</h2>
+            <p>Related Tools: 
+                      <a href="/pdf-tools" className="text-indigo-600 hover:underline" title="PDF Editing Tools">PDF Tools</a> | 
+                      <a href="/pdf-tools?tab=compress" className="text-indigo-600 hover:underline" title="Image Compression Tool">Compressor pdf</a> | 
+                      <a href="/pdf-tools?tab=create" className="text-indigo-600 hover:underline" title="File Format Converter">Create pdf</a> | 
+                      <a href="/pdf-tools?tab=to-images" className="text-indigo-600 hover:underline" title="File Format Converter">pdf to image</a> | 
+                      <a href="/pdf-tools?tab=watermark" className="text-indigo-600 hover:underline" title="File Format Converter">watermark on pdf</a>
+            </p> 
             <ul className="list-disc pl-5 space-y-2 text-gray-700 dark:text-gray-300">
               <li>
                 <a href="https://www.adobe.com/products/photoshop.html" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline">
