@@ -1,20 +1,36 @@
 [build]
-  command = "npm run build" # Matches your Netlify build command
-  publish = "dist" # Matches your publish directory
-  base = "/" # Explicitly set base directory to root
+  command = "npm run build"
+  publish = "dist"
 
+# 👉 Cache images in the root of dist (like hero.png, apple-touch-icon.png)
 [[headers]]
-  # Set headers for all image files in the publish directory
-  for = "/dist/*.(png|jpg|jpeg|gif|webp|svg)"
-
+  for = "/*.(png|jpg|jpeg|gif|webp|svg)"
   [headers.values]
-    Cache-Control = "public, max-age=2592000" # Cache for 30 days (2592000 seconds)
+    Cache-Control = "public, max-age=2592000"
 
+# 👉 Cache images in /assets/
+[[headers]]
+  for = "/assets/*.(png|jpg|jpeg|gif|webp|svg)"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# 👉 Cache images in /icons/
+[[headers]]
+  for = "/icons/*.(png|jpg|jpeg|gif|webp|svg)"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# 👉 Cache images in /splashscreen/
+[[headers]]
+  for = "/splashscreen/*.(png|jpg|jpeg|gif|webp|svg)"
+  [headers.values]
+    Cache-Control = "public, max-age=2592000"
+
+# SPA fallback
 [[redirects]]
-  # Ensure SPA routing works for React (optional, only if needed)
   from = "/*"
   to = "/index.html"
   status = 200
 
 [functions]
-  directory = "netlify/functions" # Matches your functions directory
+  directory = "netlify/functions"
