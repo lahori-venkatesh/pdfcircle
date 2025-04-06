@@ -138,7 +138,7 @@ function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-            {t('hero.title', 'Transform Your PDFs and Images with Free Online Tools')}
+            {t('hero.title', 'Convert PDFs & Images Free Online')}
            </h1>
            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
             {t('hero.subtitle', 'Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.')}
@@ -167,7 +167,7 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-          {t('features.title', 'Unlock Powerful PDF and Image Tools in One Place')}
+          {t('features.title', 'Free PDF Conversion & Image Editing Tools')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <FeatureCard 
@@ -399,8 +399,9 @@ function HomePage() {
       </section>
       <noscript>
         <h1>Transform Your PDFs and Images with Free Online Tools</h1>
-        <h2>Unlock Powerful PDF and Image Tools in One Place</h2>
-        <p>Compress, convert, and edit PDFs and images online for free with pdfCircle.</p>
+        <p>Transform PDFs and images with pdfCircle’s free, secure tools. Convert, compress, and unlock powerful editing features online.</p>
+        <h2>Unlock Powerful PDF Converter and Image Editing Tools</h2>
+        <p>Explore free tools for <a href="https://pdfcircle.com/pdf-tools">PDF conversion</a> and <a href="https://pdfcircle.com/image-tools">image editing</a>.</p>
       </noscript>
     </>
   );

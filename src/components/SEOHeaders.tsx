@@ -22,7 +22,7 @@ export function SEOHeaders({
   const defaultCanonicalUrl = canonicalUrl || `${baseUrl}${location.pathname.replace(/\/+$/, '')}`;
 
   // Optimized defaults
-  const defaultTitle = 'Transform PDFs & Images | pdfCircle';
+  const defaultTitle = 'pdfCircle | Free Document & Image Converter Tools';
   const defaultDescription = 'Transform PDFs and images with pdfCircle’s free, secure tools. Convert, compress, and unlock powerful editing features.';
   const defaultKeywords = [
     'pdfcircle', 'free pdf tools', 'free image tools', 'pdf converter', 'image editor',
