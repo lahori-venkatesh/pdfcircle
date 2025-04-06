@@ -1,26 +1,15 @@
-import { defineConfig, Plugin } from 'vite';
+import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// Custom plugin to handle server configuration
-const customServerConfig: Plugin = {
-  name: 'custom-server-config',
-  configureServer(server) {
+// Custom plugin for image caching headers in dev server
+const imageCachingPlugin = {
+  name: 'image-caching',
+  configureServer(server: any) {
     server.middlewares.use((req, res, next) => {
-      // Set caching headers for image files during development
       if (/\.(png|jpg|jpeg|gif|webp|ico)$/i.test(req.url || '')) {
         res.setHeader('Cache-Control', 'public, max-age=31536000'); // 1 year
         res.setHeader('Expires', new Date(Date.now() + 31536000 * 1000).toUTCString());
-      }
-      // Prevent directory-like access by returning 403 for non-asset requests
-      if (
-        req.url &&
-        !/\.\w+$/.test(req.url) &&
-        req.url !== '/' &&
-        !req.url.startsWith('/@')
-      ) {
-        res.statusCode = 403;
-        res.end('403 Forbidden');
       }
       next();
     });
@@ -32,7 +21,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*', 'screenshots/*', 'js/opencv.min.js'],
+      includeAssets: ['icons/*', 'screenshots/*'],
       manifest: {
         name: 'PdfCircle - Document & Image Converter Tools',
         short_name: 'PdfCircle',
@@ -45,19 +34,17 @@ export default defineConfig({
         icons: [
           { src: '/icons/icon-72x72.png', sizes: '72x72', type: 'image/png', purpose: 'any maskable' },
           { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
         ],
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
         runtimeCaching: [
           {
-            urlPattern: /\.(png|jpg|jpeg|gif|webp)$/i,
+            urlPattern: /^https:\/\/docs\.opencv\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
-              cacheName: 'image-cache',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1 year
+              cacheName: 'opencv-cache',
+              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 5 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
@@ -66,7 +53,17 @@ export default defineConfig({
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'static-resources',
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 }, // 2 days
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 },
+            },
+          },
+          // Add image caching for production consistency
+          {
+            urlPattern: /\.(png|jpg|jpeg|gif|webp|ico)$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'image-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 365 }, // 1 year
+              cacheableResponse: { statuses: [0, 200] },
             },
           },
         ],
@@ -75,7 +72,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
       },
     }),
-    customServerConfig, // Add the custom plugin here
+    imageCachingPlugin, // Add plugin for dev server image caching
   ],
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
@@ -101,10 +98,7 @@ export default defineConfig({
       output: {
         entryFileNames: 'assets/[name].[hash].js',
         chunkFileNames: 'assets/[name].[hash].js',
-        assetFileNames: ({ name }) =>
-          /\.(png|jpg|jpeg|gif|webp)$/i.test(name)
-            ? 'assets/images/[name].[hash].[ext]'
-            : 'assets/[name].[hash].[ext]',
+        assetFileNames: 'assets/[name].[hash].[ext]', // Simplified for consistency
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-pdf': ['pdf-lib', 'jspdf', 'pdfjs-dist'],
