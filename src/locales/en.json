@@ -11,140 +11,144 @@
     "lightMode": "Light Mode"
   },
   "hero": {
-    "title": " pdfCircle Transform Your Documents & Images",
-    "subtitle": "pdfCircle is Professional-grade tools for all your document and image needs. Fast, secure, and completely free.",
-    "getStarted": "Get Started"
+    "title": "Transform Your PDFs and Images with Free Online Tools",
+    "subtitle": "Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.",
+    "getStarted": "Start Converting Now",
+    "learnMore": "Learn More About Our Tools"
   },
   "features": {
-    "title": "Everything You Need in One Place in pdfCircle",
-    "imageReduction": {
-      "title": "Image Size Reduction",
-      "description": "Quickly compress and convert images without losing quality"
-    },
-    "imageToPdf": {
-      "title": "Image to PDF",
-      "description": "pdfCircle can Convert your images into professional PDF documents"
-    },
-    "pdfToImages": {
-      "title": "PDF to Images",
-      "description": "pdfCircle can Extract images from PDF files with ease"
-    },
-    "removeBackground": {
-      "title": "Background Remover",
-      "description": "pdfCircle Remove backgrounds from images instantly"
-    },
-    "digitalEnhancer": {
-      "title": "Digital Image Enhancer",
-      "description": "pdfcircle Enhance image quality using advanced technology"
-    },
-    "compressPdf": {
-      "title": "Compress PDF",
-      "description": "Reduce PDF file size while maintaining quality"
-    },
-    "mergePdfs": {
-      "title": "Merge PDFs",
-      "description": "Combine multiple PDF files into one document"
-    },
-    "splitPdf": {
-      "title": "Split PDF",
-      "description": "Divide PDF files into separate documents"
-    },
-    "pdfToWord": {
-      "title": "PDF to Word",
-      "description": "Convert PDF files to editable Word documents"
-    },
-    "pdfToExcel": {
-      "title": "PDF to Excel",
-      "description": "Transform PDF tables into Excel spreadsheets"
-    },
-    "wordToPdf": {
-      "title": "Word to PDF",
-      "description": "Convert Word documents to PDF format"
-    },
-    "excelToPdf": {
-      "title": "Excel to PDF",
-      "description": "Create PDFs from Excel spreadsheets"
-    },
-    "editPdf": {
-      "title": "Edit PDF",
-      "description": "Modify and annotate PDF documents"
-    },
-    "addWatermark": {
-      "title": "Add Watermark",
-      "description": "Protect your PDFs with custom watermarks"
-    }
+  "title": "Unlock Powerful PDF and Image Tools in One Place",
+  "imageReduction": {
+    "title": "Shrink Images Without Losing Quality",
+    "description": "Easily reduce image file sizes for faster loading and sharing while maintaining crystal-clear quality with our free online tools."
   },
+  "imageToPdf": {
+    "title": "Convert Images to PDFs Instantly",
+    "description": "Turn your photos and graphics into professional PDF documents quickly and securely using pdfCircle’s free converter."
+  },
+  "pdfToImages": {
+    "title": "Extract Images from PDFs with Ease",
+    "description": "Pull high-quality images out of any PDF file effortlessly with our reliable and free online extraction tools."
+  },
+  "removeBackground": {
+    "title": "Remove Backgrounds from Images",
+    "description": "Clean up your photos by removing backgrounds instantly, providing a sleek and professional look."
+  },
+  "digitalEnhancer": {
+    "title": "Enhance Images Like a Pro",
+    "description": "Boost your image quality with advanced digital enhancement tools, all available for free on pdfCircle."
+  },
+  "compressPdf": {
+    "title": "Compress PDFs for Easy Sharing",
+    "description": "Reduce PDF file sizes without sacrificing quality, making them ideal for email and online storage with our free tools."
+  },
+  "mergePdfs": {
+    "title": "Merge Multiple PDFs Seamlessly",
+    "description": "Combine several PDF documents into one with our secure and free online merging tool, saving you time and effort."
+  },
+  "splitPdf": {
+    "title": "Split Large PDFs into Smaller Files",
+    "description": "Divide oversized PDF documents into manageable parts using our fast and free splitting tool, perfect for organization."
+  },
+  "pdfToWord": {
+    "title": "Convert PDFs to Word Documents",
+    "description": "Transform your PDFs into editable Word files quickly and accurately with pdfCircle’s free conversion tools."
+  },
+  "pdfToExcel": {
+    "title": "Extract Data from PDFs to Excel",
+    "description": "Convert PDF tables and data into Excel spreadsheets effortlessly with our secure and free online solution."
+  },
+  "wordToPdf": {
+    "title": "Turn Word Docs into PDFs Easily",
+    "description": "Convert your Word documents to high-quality PDFs in seconds using our reliable and free online converter."
+  },
+  "excelToPdf": {
+    "title": "Create PDFs from Excel Spreadsheets",
+    "description": "Effortlessly convert your Excel files into professional PDFs with our fast and free online tools."
+  },
+  "editPdf": {
+    "title": "Edit PDFs with Precision",
+    "description": "Modify and annotate your PDF documents easily with our free online editing tools, ensuring perfect results every time."
+  },
+  "addWatermark": {
+    "title": "Protect PDFs with Custom Watermarks",
+    "description": "Safeguard your documents by adding custom watermarks using our secure and free PDF protection tools."
+  }
+},
   "howItWorks": {
-    "title": "How pdfCircle Works",
-    "step1": {
-      "title": "Upload Your File",
-      "description": "Select the image or PDF you want to process"
-    },
-    "step2": {
-      "title": "Choose Your Tool",
-      "description": "Pick from our wide range of processing options"
-    },
-    "step3": {
-      "title": "Download",
-      "description": "Get your processed file in seconds"
-    }
+  "title": "How pdfCircle Makes Document Processing Simple",
+  "step1": {
+    "title": "Upload Your File in Seconds",
+    "description": "Drag and drop or select your PDF or image file to start transforming it with our free online tools."
+  },
+  "step2": {
+    "title": "Choose Your Perfect Tool",
+    "description": "Pick from a wide range of options like PDF conversion, image enhancement, and compression—all free and secure."
+  },
+  "step3": {
+    "title": "Download Your Improved File",
+    "description": "Get your processed document or image instantly, ready to use with our fast and reliable service."
+  },
+  "seeAllTools": "Explore All Our Tools",
+  "exploreExternal": "Check Out More PDF Solutions"
+ },
+  "security": {
+  "title": "Trust pdfCircle for Secure Document and Image Processing",
+  "subtitle": "Your privacy is our priority with cutting-edge security features.",
+  "localProcessing": {
+    "title": "Local Processing for Privacy",
+    "description": "Process your files directly on your device for maximum security, perfect for sensitive PDFs and images."
+  },
+  "endToEnd": {
+    "title": "End-to-End Encryption for Safety",
+    "description": "Protect your data during transfers with advanced encryption, ensuring secure PDF and image handling."
+  },
+  "noStorage": {
+    "title": "No File Storage, Ever",
+    "description": "We delete your files immediately after processing, keeping your documents and images safe."
+  },
+  "updates": {
+    "title": "Regular Security Updates",
+    "description": "Stay protected with constant improvements to our free online tools and services."
+  },
+  "connection": {
+    "title": "Secure Connections with SSL/TLS",
+    "description": "All data transfers are safeguarded with HTTPS, ensuring your PDF and image files are secure."
+  },
+  "verified": {
+    "title": "Trusted by Thousands",
+    "description": "Our tools are certified secure, making us a top choice for free online document processing."
+  },
+  "learnMore": "Learn More About Our Security"
+ },
+ "faq": {
+  "title": "Your Questions About pdfCircle, Answered",
+  "subtitle": "Find clear answers to common queries about our free tools.",
+  "free": {
+    "question": "Are Your Tools Really Free to Use?",
+    "answer": "Yes! All our core PDF and image conversion tools are completely free, with no hidden costs or subscriptions."
+  },
+  "fileSize": {
+    "question": "What’s the Largest File I Can Process?",
+    "answer": "You can upload files up to 100MB for free, perfect for most PDF compression and image conversion needs."
+  },
+  "fileHandling": {
+    "question": "How Do You Handle My Files?",
+    "answer": "Your PDFs and images are processed securely on your device and deleted immediately, ensuring total privacy."
+  },
+  "formats": {
+    "question": "Which File Formats Do You Support?",
+    "answer": "We support PDF, JPG, PNG, Word, Excel, and more, making us your all-in-one solution for document and image tools."
+  },
+  "account": {
+    "question": "Do I Need to Create an Account?",
+    "answer": "No account is required for most features, but signing up unlocks extra benefits for PDF and image processing."
   },
   "security": {
-    "title": "pdfCircle has Your Security You Can Trust",
-    "subtitle": "Your privacy and data security are our top priorities",
-    "localProcessing": {
-      "title": "Local Processing",
-      "description": "Files are processed on your device when possible"
-    },
-    "endToEnd": {
-      "title": "End-to-End Encryption",
-      "description": "Secure file transfers with advanced encryption"
-    },
-    "noStorage": {
-      "title": "No File Storage",
-      "description": "We don't keep copies of your files"
-    },
-    "updates": {
-      "title": "Regular Updates",
-      "description": "Constant security improvements"
-    },
-    "connection": {
-      "title": "Secure Connection",
-      "description": "Protected with SSL/TLS encryption"
-    },
-    "verified": {
-      "title": "Verified Processing",
-      "description": "Trusted by thousands of users"
-    }
-  },
-  "faq": {
-    "title": "Frequently Asked Questions",
-    "subtitle": "Got questions? We have answers!",
-    "free": {
-      "question": "Is it really free?",
-      "answer": "Yes, all our core features are completely free to use!"
-    },
-    "fileSize": {
-      "question": "What’s the maximum file size?",
-      "answer": "We support files up to 100MB for free users."
-    },
-    "fileHandling": {
-      "question": "How are my files handled?",
-      "answer": "Files are processed securely and not stored on our servers."
-    },
-    "formats": {
-      "question": "What file formats are supported?",
-      "answer": "We support PDF, JPG, PNG, Word, Excel, and more!"
-    },
-    "account": {
-      "question": "Do I need an account?",
-      "answer": "No account is required for basic features."
-    },
-    "security": {
-      "question": "Is my data secure?",
-      "answer": "Yes, we use encryption and local processing to ensure security."
-    }
-  },
+    "question": "How Secure Are My Documents?",
+    "answer": "Your files are protected with end-to-end encryption and local processing, making pdfCircle a safe choice for online tools."
+  }
+ },
   "footer": {
     "description": "The pdfCircle Ultimate All-in-One Solution for PDF and Image Conversion, Compression, and Editing",
     "quickLinks": "Quick Links",
@@ -157,9 +161,9 @@
     "copyright": "© {{year}} pdfCircle. All rights reserved."
   },
   "seo": {
-    "home": {
-      "title": "PDFcircle | Free Online PDF & Image Tools - Convert, Compress, Merge, Enhance",
-      "description": "Use PDFcircle, the all-in-one free online tool for PDF and image processing. Easily convert, compress, merge, and enhance your files at no cost"
-    }
+   "home": {
+    "title": "pdfCircle | Free Online PDF and Image Conversion Tools",
+    "description": "Transform your PDFs and images with pdfCircle’s free, secure online tools. Convert, compress, merge, and enhance files easily—no cost, no hassle."
+   }
   }
 }

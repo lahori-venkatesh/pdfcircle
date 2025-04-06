@@ -137,26 +137,26 @@ function HomePage() {
         <div className="absolute inset-0 bg-[url('hero.png')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-              {t('hero.title', 'Free Tools for Converting and Enhancing Documents')}
-            </h1>
-            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
-              {t('hero.subtitle', 'Transform your PDFs and images with pdfCircle’s fast, secure, and free tools.')}
-            </p>
+           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
+            {t('hero.title', 'Transform Your PDFs and Images with Free Online Tools')}
+           </h1>
+           <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
+            {t('hero.subtitle', 'Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.')}
+           </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
                 className="inline-block bg-white text-indigo-600 dark:bg-indigo-400 dark:text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-500 transition-colors duration-300 shadow-lg"
               >
-                {t('hero.getStarted', 'Get Started')}
+               {t('hero.getStarted', 'Start Converting Now')}
               </Link>
               <Link
                 to="/about"
                 onClick={() => window.scrollTo(0, 0)}
                 className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-800 transition-colors duration-300 shadow-lg"
               >
-                {t('hero.learnMore', 'Learn More About Us')}
+                {t('hero.learnMore', 'Learn More About Our Tools')}
               </Link>
             </div>
           </div>
@@ -167,7 +167,7 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('features.title', 'Everything You Need in One Place')}
+          {t('features.title', 'Unlock Powerful PDF and Image Tools in One Place')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <FeatureCard 
@@ -262,7 +262,7 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('howItWorks.title', 'How It Works')}
+          {t('howItWorks.title', 'How pdfCircle Makes Document Processing Simple')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StepCard

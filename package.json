@@ -16,6 +16,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@imgly/background-removal": "^1.4.5",
     "@supabase/supabase-js": "^2.39.3",
+    "@upscalerjs/esrgan-medium": "^1.0.0-beta.13",
     "browser-image-compression": "^2.0.2",
     "docx": "^9.3.0",
     "exceljs": "^4.4.0",
@@ -45,7 +46,8 @@
     "react-virtualized": "^9.22.6",
     "react-webcam": "^7.2.0",
     "sanitize-filename": "^1.6.3",
-    "sharp": "^0.33.2"
+    "sharp": "^0.33.2",
+    "upscaler": "^1.0.0-beta.19"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",

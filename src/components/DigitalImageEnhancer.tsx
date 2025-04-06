@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader2, X, Crop, Wand2 } from 'lucide-react';
+import { Upload, Download, Loader2, X, Crop, Wand2, Sliders } from 'lucide-react';
 import { AdComponent } from './AdComponent';
 import { SEOHeaders } from './SEOHeaders';
+import Upscaler from 'upscaler';
 
 // Debounce utility function
 const debounce = <F extends (...args: any[]) => void>(func: F, wait: number) => {
@@ -25,6 +26,7 @@ interface Enhancement {
   brightness: number;
   contrast: number;
   saturation: number;
+  quality: number;
 }
 
 interface CropState {
@@ -38,6 +40,7 @@ const defaultEnhancements: Enhancement = {
   brightness: 100,
   contrast: 100,
   saturation: 100,
+  quality: 80
 };
 
 interface OpenCV {
@@ -107,21 +110,62 @@ export function DigitalImageEnhancer() {
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const [enhancements, setEnhancements] = useState<Enhancement>(defaultEnhancements);
-  const [quality, setQuality] = useState(80);
   const [fileSize, setFileSize] = useState<number | null>(null);
   const [cvReady, setCvReady] = useState(false);
+  const [upscalerReady, setUpscalerReady] = useState(false);
+  const [upscaler, setUpscaler] = useState<any>(null);
+  const [enhancementMode, setEnhancementMode] = useState<'basic' | 'ai'>('basic');
+  const [aiEnhancementLevel, setAiEnhancementLevel] = useState<number>(2);
+  const [showAdvancedControls, setShowAdvancedControls] = useState(false);
+  
   const initializedRef = useRef(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const cropContainerRef = useRef<HTMLDivElement | null>(null);
 
+  // Initialize OpenCV and UpscalerJS
   useEffect(() => {
     if (!initializedRef.current) {
       initializedRef.current = true;
+      
+      // Initialize OpenCV
       initOpenCV()
         .then(() => setCvReady(true))
         .catch((err) => setError('Failed to load OpenCV: ' + err.message));
+      
+      // Initialize UpscalerJS with default scale factor
+      try {
+        const upscalerInstance = new Upscaler({
+          model: '@upscalerjs/esrgan-medium', // Use ESRGAN medium model for good quality/performance balance
+          scale: 2 // Default scale factor
+        });
+        setUpscaler(upscalerInstance);
+        setUpscalerReady(true);
+      } catch (err) {
+        setError('Failed to initialize UpscalerJS: ' + (err as Error).message);
+      }
     }
   }, []);
+
+  // Create a new upscaler instance when the AI enhancement level changes
+  useEffect(() => {
+    if (enhancementMode === 'ai') {
+      try {
+        // Create a new upscaler instance with the selected scale factor
+        const upscalerInstance = new Upscaler({
+          model: '@upscalerjs/esrgan-medium',
+          scale: aiEnhancementLevel // Use the selected enhancement level
+        });
+        setUpscaler(upscalerInstance);
+        
+        // If we already have an image, re-enhance it with the new scale factor
+        if (image?.preprocessed) {
+          handleAiEnhance(image.preprocessed);
+        }
+      } catch (err) {
+        setError('Failed to update UpscalerJS: ' + (err as Error).message);
+      }
+    }
+  }, [aiEnhancementLevel]);
 
   const dataURLtoBlob = useCallback((dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
@@ -412,7 +456,86 @@ export function DigitalImageEnhancer() {
     }
   }, [cropImageSrc, cropState, applyCrop, preprocessImage]);
 
-  const handleAutoEnhance = useCallback(async (imageSrc: string, isInitial: boolean = false) => {
+  // AI-based image enhancement using UpscalerJS
+  const handleAiEnhance = useCallback(async (imageSrc: string) => {
+    if (!upscalerReady || !upscaler) {
+      setError('AI image enhancement not ready.');
+      return;
+    }
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+      // Process the image with UpscalerJS
+      // No need to configure here - we create a new instance with the correct scale factor in the useEffect
+      const enhancedImageSrc = await upscaler.upscale(imageSrc);
+      
+      // Apply basic enhancements after AI upscaling
+      const enhancedImage = await createImageBitmap(dataURLtoBlob(enhancedImageSrc));
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d')!;
+      canvas.width = enhancedImage.width;
+      canvas.height = enhancedImage.height;
+      ctx.drawImage(enhancedImage, 0, 0);
+      
+      // Apply brightness, contrast, and saturation adjustments
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      
+      const brightnessAdjust = (enhancements.brightness - 100) / 100 * 255;
+      const contrastFactor = enhancements.contrast / 100;
+      const saturationFactor = enhancements.saturation / 100;
+      
+      for (let i = 0; i < data.length; i += 4) {
+        // Apply brightness
+        data[i] = Math.min(255, Math.max(0, data[i] + brightnessAdjust));
+        data[i+1] = Math.min(255, Math.max(0, data[i+1] + brightnessAdjust));
+        data[i+2] = Math.min(255, Math.max(0, data[i+2] + brightnessAdjust));
+        
+        // Apply contrast
+        const r = data[i];
+        const g = data[i+1];
+        const b = data[i+2];
+        
+        data[i] = Math.min(255, Math.max(0, (r - 128) * contrastFactor + 128));
+        data[i+1] = Math.min(255, Math.max(0, (g - 128) * contrastFactor + 128));
+        data[i+2] = Math.min(255, Math.max(0, (b - 128) * contrastFactor + 128));
+        
+        // Apply saturation (simplified approach)
+        const avg = (data[i] + data[i+1] + data[i+2]) / 3;
+        data[i] = Math.min(255, Math.max(0, avg + (data[i] - avg) * saturationFactor));
+        data[i+1] = Math.min(255, Math.max(0, avg + (data[i+1] - avg) * saturationFactor));
+        data[i+2] = Math.min(255, Math.max(0, avg + (data[i+2] - avg) * saturationFactor));
+      }
+      
+      ctx.putImageData(imageData, 0, 0);
+      
+      // Convert to blob with quality setting
+      const finalBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', enhancements.quality / 100);
+      });
+      
+      const sizeInKB = finalBlob.size / 1024;
+      setFileSize(sizeInKB);
+      
+      const finalDataURL = await blobToDataURL(finalBlob);
+      
+      setImage((prev) => ({
+        ...prev!,
+        enhanced: finalDataURL,
+        fullEnhanced: finalDataURL,
+      }));
+      
+    } catch (err) {
+      setError('AI Enhancement failed: ' + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [upscalerReady, upscaler, enhancements, dataURLtoBlob, blobToDataURL]);
+
+  // Basic image enhancement using OpenCV
+  const handleBasicEnhance = useCallback(async (imageSrc: string, isInitial: boolean = false) => {
     if (!cvReady || !window.cv) {
       setError('Image processing not ready.');
       return;
@@ -493,7 +616,7 @@ export function DigitalImageEnhancer() {
 
       window.cv.imshow(canvas, finalDst);
       const enhancedBlob = await new Promise<Blob>((resolve) => {
-        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', quality / 100);
+        canvas.toBlob((blob) => resolve(blob!), 'image/jpeg', enhancements.quality / 100);
       });
 
       const sizeInKB = enhancedBlob.size / 1024;
@@ -517,11 +640,20 @@ export function DigitalImageEnhancer() {
       if (channels && !channels.isDeleted()) channels.delete();
       if (sharpDst && !sharpDst.isDeleted()) sharpDst.delete();
     }
-  }, [cvReady, enhancements, quality, dataURLtoBlob, blobToDataURL]);
+  }, [cvReady, enhancements, dataURLtoBlob, blobToDataURL]);
 
-  const debouncedHandleAutoEnhance = useMemo(
-    () => debounce((imageSrc: string) => handleAutoEnhance(imageSrc), 300),
-    [handleAutoEnhance]
+  // Handle enhancement based on selected mode
+  const handleEnhance = useCallback(async (imageSrc: string, isInitial: boolean = false) => {
+    if (enhancementMode === 'ai') {
+      await handleAiEnhance(imageSrc);
+    } else {
+      await handleBasicEnhance(imageSrc, isInitial);
+    }
+  }, [enhancementMode, handleAiEnhance, handleBasicEnhance]);
+
+  const debouncedHandleEnhance = useMemo(
+    () => debounce((imageSrc: string) => handleEnhance(imageSrc), 300),
+    [handleEnhance]
   );
 
   const handleDownload = useCallback(() => {
@@ -534,17 +666,33 @@ export function DigitalImageEnhancer() {
 
   const handleEnhancementChange = useCallback((key: keyof Enhancement, value: number) => {
     setEnhancements((prev) => ({ ...prev, [key]: value }));
-    if (image && cvReady) {
-      debouncedHandleAutoEnhance(image.preprocessed);
+    if (image && (cvReady || upscalerReady)) {
+      debouncedHandleEnhance(image.preprocessed);
     }
-  }, [image, cvReady, debouncedHandleAutoEnhance]);
+  }, [image, cvReady, upscalerReady, debouncedHandleEnhance]);
 
   const handleQualityChange = useCallback((value: number) => {
-    setQuality(value);
+    handleEnhancementChange('quality', value);
+  }, [handleEnhancementChange]);
+
+  const handleEnhancementModeChange = useCallback((mode: 'basic' | 'ai') => {
+    setEnhancementMode(mode);
     if (image?.preprocessed) {
-      debouncedHandleAutoEnhance(image.preprocessed);
+      // Reset enhancements to default when changing modes
+      setEnhancements(defaultEnhancements);
+      // Apply the new enhancement mode
+      if (mode === 'ai') {
+        handleAiEnhance(image.preprocessed);
+      } else {
+        handleBasicEnhance(image.preprocessed);
+      }
     }
-  }, [image, debouncedHandleAutoEnhance]);
+  }, [image, handleAiEnhance, handleBasicEnhance]);
+
+  const handleAiEnhancementLevelChange = useCallback((value: number) => {
+    setAiEnhancementLevel(value);
+    // The useEffect will handle creating a new upscaler instance and re-enhancing the image
+  }, []);
 
   const handleReset = useCallback(() => {
     setEnhancements(defaultEnhancements);
@@ -570,14 +718,17 @@ export function DigitalImageEnhancer() {
     setError(null);
     setLoading(false);
     setFileSize(null);
+    setEnhancementMode('basic');
+    setAiEnhancementLevel(2);
+    setShowAdvancedControls(false);
   }, []);
 
-  if (!cvReady) {
+  if (!cvReady && !upscalerReady) {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 flex items-center justify-center min-h-[200px]">
         <div className="flex flex-col items-center gap-2">
           <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
-          <p className="text-gray-600 text-sm">Loading image processing library...</p>
+          <p className="text-gray-600 text-sm">Loading image processing libraries...</p>
         </div>
       </div>
     );
@@ -820,51 +971,108 @@ export function DigitalImageEnhancer() {
 
                 <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-medium">Enhancement Controls</h2>
+                    <h2 className="text-sm font-medium">Enhancement Mode</h2>
                     <button
-                      onClick={() => {
-                        setEnhancements(defaultEnhancements);
-                        if (cvReady && image) handleAutoEnhance(image.preprocessed);
-                      }}
-                      className="text-indigo-600 hover:text-indigo-700 text-sm"
+                      onClick={() => setShowAdvancedControls(!showAdvancedControls)}
+                      className="text-indigo-600 hover:text-indigo-700 text-sm flex items-center"
                     >
-                      Reset
+                      <Sliders className="w-4 h-4 mr-1" />
+                      {showAdvancedControls ? 'Hide Advanced Controls' : 'Show Advanced Controls'}
                     </button>
                   </div>
 
-                  {(['brightness', 'contrast', 'saturation'] as const).map((key) => (
-                    <div key={key}>
+                  <div className="flex gap-4 mb-4">
+                    <button
+                      onClick={() => handleEnhancementModeChange('basic')}
+                      className={`flex-1 py-2 px-4 rounded-lg ${
+                        enhancementMode === 'basic'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      Basic Enhancement
+                    </button>
+                    <button
+                      onClick={() => handleEnhancementModeChange('ai')}
+                      className={`flex-1 py-2 px-4 rounded-lg ${
+                        enhancementMode === 'ai'
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                      }`}
+                    >
+                      AI Enhancement
+                    </button>
+                  </div>
+
+                  {enhancementMode === 'ai' && (
+                    <div>
                       <label className="block text-sm font-medium mb-1">
-                        {key.charAt(0).toUpperCase() + key.slice(1)}: {enhancements[key]}%
+                        AI Enhancement Level: {aiEnhancementLevel}x
                       </label>
                       <input
                         type="range"
-                        min="0"
-                        max="200"
-                        value={enhancements[key]}
-                        onChange={(e) => handleEnhancementChange(key, Number(e.target.value))}
+                        min="1"
+                        max="4"
+                        step="1"
+                        value={aiEnhancementLevel}
+                        onChange={(e) => handleAiEnhancementLevelChange(Number(e.target.value))}
                         className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
                       />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Higher values provide better quality but may take longer to process
+                      </p>
                     </div>
-                  ))}
+                  )}
 
-                  <div>
-                    <label className="block text-sm font-medium mb-1">
-                      Quality Level: {quality}% {fileSize ? `(~${fileSize.toFixed(2)} KB)` : ''}
-                    </label>
-                    <input
-                      type="range"
-                      min="10"
-                      max="100"
-                      value={quality}
-                      onChange={(e) => handleQualityChange(Number(e.target.value))}
-                      className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
-                    />
-                  </div>
+                  {showAdvancedControls && (
+                    <>
+                      <div className="pt-2 border-t border-gray-200">
+                        <h3 className="text-sm font-medium mb-3">Image Adjustments</h3>
+                        {(['brightness', 'contrast', 'saturation'] as const).map((key) => (
+                          <div key={key} className="mb-3">
+                            <label className="block text-sm font-medium mb-1">
+                              {key.charAt(0).toUpperCase() + key.slice(1)}: {enhancements[key]}%
+                            </label>
+                            <input
+                              type="range"
+                              min="0"
+                              max="200"
+                              value={enhancements[key]}
+                              onChange={(e) => handleEnhancementChange(key, Number(e.target.value))}
+                              className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
+                            />
+                          </div>
+                        ))}
+
+                        <div className="mb-3">
+                          <label className="block text-sm font-medium mb-1">
+                            Quality Level: {enhancements.quality}% {fileSize ? `(~${fileSize.toFixed(2)} KB)` : ''}
+                          </label>
+                          <input
+                            type="range"
+                            min="10"
+                            max="100"
+                            value={enhancements.quality}
+                            onChange={(e) => handleQualityChange(Number(e.target.value))}
+                            className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end">
+                        <button
+                          onClick={handleReset}
+                          className="text-indigo-600 hover:text-indigo-700 text-sm"
+                        >
+                          Reset to Default
+                        </button>
+                      </div>
+                    </>
+                  )}
 
                   <div className="flex items-center justify-between pt-4">
                     <button
-                      onClick={() => handleAutoEnhance(image.preprocessed)}
+                      onClick={() => handleEnhance(image.preprocessed)}
                       className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:bg-gray-400"
                       disabled={loading}
                     >
@@ -876,7 +1084,7 @@ export function DigitalImageEnhancer() {
                       ) : (
                         <>
                           <Wand2 className="w-5 h-5 mr-2" />
-                          Auto Enhance
+                          Enhance Image
                         </>
                       )}
                     </button>
