@@ -1,32 +1,44 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  base = "/"
 
-# 👉 Cache images in the root of dist (like hero.png, apple-touch-icon.png)
+# 🔁 Root-level images like /hero.png or /apple-touch-icon.png
 [[headers]]
   for = "/*.(png|jpg|jpeg|gif|webp|svg)"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+    Expires = "Thu, 31 Dec 2099 23:59:59 GMT"
 
-# 👉 Cache images in /assets/
+# 🔁 Images inside /assets folder (used by Vite after build)
 [[headers]]
   for = "/assets/*.(png|jpg|jpeg|gif|webp|svg)"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+    Expires = "Thu, 31 Dec 2099 23:59:59 GMT"
 
-# 👉 Cache images in /icons/
+# 🔁 Images inside /icons folder
 [[headers]]
   for = "/icons/*.(png|jpg|jpeg|gif|webp|svg)"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+    Expires = "Thu, 31 Dec 2099 23:59:59 GMT"
 
-# 👉 Cache images in /splashscreen/
+# 🔁 Images inside /splashscreen folder
 [[headers]]
   for = "/splashscreen/*.(png|jpg|jpeg|gif|webp|svg)"
   [headers.values]
     Cache-Control = "public, max-age=2592000"
+    Expires = "Thu, 31 Dec 2099 23:59:59 GMT"
 
-# SPA fallback
+# 🔁 Optional: Cache JS and CSS files (helps performance scores)
+[[headers]]
+  for = "/*.(js|css)"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    Expires = "Thu, 31 Dec 2099 23:59:59 GMT"
+
+# 🔁 Redirect everything to index.html for React SPA
 [[redirects]]
   from = "/*"
   to = "/index.html"
