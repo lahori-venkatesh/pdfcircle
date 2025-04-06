@@ -397,6 +397,11 @@ function HomePage() {
           </div>
         </div>
       </section>
+      <noscript>
+        <h1>Transform Your PDFs and Images with Free Online Tools</h1>
+        <h2>Unlock Powerful PDF and Image Tools in One Place</h2>
+        <p>Compress, convert, and edit PDFs and images online for free with pdfCircle.</p>
+      </noscript>
     </>
   );
 }
