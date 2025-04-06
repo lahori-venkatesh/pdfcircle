@@ -1,0 +1,20 @@
+[build]
+  command = "npm run build" # Matches your Netlify build command
+  publish = "dist" # Matches your publish directory
+  base = "/" # Explicitly set base directory to root
+
+[[headers]]
+  # Set headers for all image files in the publish directory
+  for = "/dist/*.(png|jpg|jpeg|gif|webp|svg)"
+
+  [headers.values]
+    Cache-Control = "public, max-age=2592000" # Cache for 30 days (2592000 seconds)
+
+[[redirects]]
+  # Ensure SPA routing works for React (optional, only if needed)
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "netlify/functions" # Matches your functions directory
