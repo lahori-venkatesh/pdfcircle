@@ -92,7 +92,7 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-pdf': ['pdf-lib', 'jspdf', 'pdfjs-dist'],
           'vendor-ui': ['lucide-react', '@dnd-kit/core'],
-          'vendor-imgly': ['@imgly/background-removal']
+          
         }
       }
     },

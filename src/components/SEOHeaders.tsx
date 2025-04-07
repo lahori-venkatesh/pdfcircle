@@ -15,7 +15,7 @@ export function SEOHeaders({
   description, 
   keywords = [],
   canonicalUrl,
-  ogImage = 'https://www.pdfcircle.com/apple-touch-icon.png',
+  ogImage = 'https://www.pdfcircle.com/apple-touch-icon.webp',
 }: SEOProps) {
   const location = useLocation();
   const baseUrl = 'https://pdfcircle.com/';

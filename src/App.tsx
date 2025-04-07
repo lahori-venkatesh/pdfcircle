@@ -134,7 +134,7 @@ function HomePage() {
 
       {/* Hero Section with H1 and Two Buttons */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('/hero.png')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
@@ -397,12 +397,7 @@ function HomePage() {
           </div>
         </div>
       </section>
-      <noscript>
-        <h1>Transform Your PDFs and Images with Free Online Tools</h1>
-        <p>Transform PDFs and images with pdfCircle’s free, secure tools. Convert, compress, and unlock powerful editing features online.</p>
-        <h2>Unlock Powerful PDF Converter and Image Editing Tools</h2>
-        <p>Explore free tools for <a href="https://pdfcircle.com/pdf-tools">PDF conversion</a> and <a href="https://pdfcircle.com/image-tools">image editing</a>.</p>
-      </noscript>
+      
     </>
   );
 }
