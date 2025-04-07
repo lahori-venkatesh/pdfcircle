@@ -1,17 +1,14 @@
 import { PropsWithChildren } from 'react';
-import React, { useState, useCallback, useEffect,  } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
-  FileUp, Image, FileText, FilePlus,  Split,  Menu, X,  LogOut, Images,
-   ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-   Pencil, Stamp,  Eraser, Wand2, Sun, Moon, ArrowUp
+  FileUp, Image, FileText, FilePlus, Split, Menu, X, LogOut, Images,
+  ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
+  Pencil, Stamp, Sun, Moon, ArrowUp
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
 import { PDFTools } from './components/PDFTools';
-import { HTMLToPDF } from './components/HTMLToPDF';
-import { DigitalImageEnhancer } from './components/DigitalImageEnhancer';
-import { BackgroundRemover } from './components/BackgroundRemover';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { Contact } from './components/Contact';
@@ -33,6 +30,7 @@ const ScrollToTop = ({ children }: PropsWithChildren<{}>) => {
 
   return <>{children}</>;
 };
+
 interface SecurityFeatureProps {
   icon: React.ComponentType<any>;
   title: string;
@@ -51,6 +49,7 @@ function SecurityFeature({ icon: Icon, title, description }: SecurityFeatureProp
     </div>
   );
 }
+
 interface FAQItemProps {
   question: string;
   answer: string;
@@ -77,6 +76,7 @@ function FAQItem({ question, answer }: FAQItemProps){
     </div>
   );
 }
+
 interface FeatureCardProps {
   icon: React.ComponentType<any>;
   title: string;
@@ -96,6 +96,7 @@ function FeatureCard({ icon: Icon, title, description, to }: FeatureCardProps) {
     </Link>
   );
 }
+
 interface StepCardProps {
   number: number;
   title: string;
@@ -126,15 +127,15 @@ function HomePage() {
         keywords={[
           'pdfcircle', 'pdf converter', 'image converter', 'compress pdf', 'convert pdf to jpg', 'free pdf tools',
           'pdf compression', 'image optimization', 'online document tools', 'secure file conversion', 'pdf to word',
-          'pdf to excel', 'image resize', 'image to pdf', 'ocr pdf', 'merge pdf', 'split pdf', 'background remover',
-          'html to pdf', 'digital enhancer', 'free online tools', 'pdf editing', 'image enhancement'
+          'pdf to excel', 'image resize', 'image to pdf', 'ocr pdf', 'merge pdf', 'split pdf', 
+          'free online tools', 'pdf editing'
         ]}
         canonicalUrl="https://pdfcircle.com/"
       />
 
       {/* Hero Section with H1 and Two Buttons */}
       <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('/hero.webp')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
@@ -174,85 +175,50 @@ function HomePage() {
               icon={Image} 
               title={t('features.imageReduction.title', 'Image Reduction')} 
               description={t('features.imageReduction.description', 'Reduce image file size without losing quality.')} 
-              to="/image-tools " // No link
+              to="/image-tools"
             />
             <FeatureCard 
               icon={FileUp} 
               title={t('features.imageToPdf.title', 'Image to PDF')} 
               description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} 
-              to="/pdf-tools?tab=create " // No link
+              to="/pdf-tools?tab=create"
             />
             <FeatureCard 
               icon={Images} 
               title={t('features.pdfToImages.title', 'PDF to Images')} 
               description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} 
-              to="/pdf-tools?tab=to-images" // No link
-            />
-            <FeatureCard 
-              icon={Eraser} 
-              title={t('features.removeBackground.title', 'Remove Background')} 
-              description={t('features.removeBackground.description', 'Erase backgrounds from images effortlessly.')} 
-              to="/background-remover " // No link
-            />
-            <FeatureCard 
-              icon={Wand2} 
-              title={t('features.digitalEnhancer.title', 'Digital Enhancer')} 
-              description={t('features.digitalEnhancer.description', 'Enhance image quality with one click.')} 
-              to="/digital-enhancer" // No link
+              to="/pdf-tools?tab=to-images"
             />
             <FeatureCard 
               icon={FileText} 
               title={t('features.compressPdf.title', 'Compress PDF')} 
               description={t('features.compressPdf.description', 'Shrink PDF files for easier sharing.')} 
-              to="/pdf-tools?tab=compress" // No link
+              to="/pdf-tools?tab=compress"
             />
             <FeatureCard 
               icon={FilePlus} 
               title={t('features.mergePdfs.title', 'Merge PDFs')} 
               description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} 
-              to="/pdf-tools?tab=merge" // No link
+              to="/pdf-tools?tab=merge"
             />
             <FeatureCard 
               icon={Split} 
               title={t('features.splitPdf.title', 'Split PDF')} 
               description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} 
-              to="/pdf-tools?tab=split" // No link
+              to="/pdf-tools?tab=split"
             />
-            <FeatureCard 
-              icon={FileText} 
-              title={t('features.pdfToWord.title', 'PDF to Word')} 
-              description={t('features.pdfToWord.description', 'Convert PDFs to editable Word documents.')} 
-              to="/pdf-tools?tab=to-word" // No link
-            />
-            <FeatureCard 
-              icon={FileText} 
-              title={t('features.pdfToExcel.title', 'PDF to Excel')} 
-              description={t('features.pdfToExcel.description', 'Extract data from PDFs to Excel sheets.')} 
-              to="/pdf-tools?tab=to-excel" // No link
-            />
-            <FeatureCard 
-              icon={FileText} 
-              title={t('features.wordToPdf.title', 'Word to PDF')} 
-              description={t('features.wordToPdf.description', 'Convert Word documents to PDFs easily.')} 
-              to="/pdf-tools?tab=word-to-pdf" // No link
-            />
-            <FeatureCard 
-              icon={FileText} 
-              title={t('features.excelToPdf.title', 'Excel to PDF')} 
-              description={t('features.excelToPdf.description', 'Turn Excel files into PDFs quickly.')} 
-              to="/pdf-tools?tab=excel-to-pdf" // No link
-            />
+            
             <FeatureCard 
               icon={Pencil} 
               title={t('features.editPdf.title', 'Edit PDF')} 
               description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} 
-              to="/pdf-tools?tab=edit" // No link
+              to="/pdf-tools?tab=edit"
             />
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
               description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
-              to="/pdf-tools?tab=watermark" // No link
+              to="/pdf-tools?tab=watermark"
             />
           </div>
         </div>
@@ -281,7 +247,6 @@ function HomePage() {
               description={t('howItWorks.step3.description', 'Get your processed file instantly and securely.')}
             />
           </div>
-          {/* Internal and External Links */}
           <div className="text-center mt-8">
             <Link
               to="/pdf-tools"
@@ -397,7 +362,6 @@ function HomePage() {
           </div>
         </div>
       </section>
-      
     </>
   );
 }
@@ -406,13 +370,12 @@ let setAuthModalOpen: (open: boolean) => void;
 let setAuthMode: (mode: string) => void;
 
 function Layout({ children }: PropsWithChildren<{}>) {
-  const {  } = useTranslation();
   const { user, signOut } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpenState] = useState(false);
   const [authMode, setAuthModeState] = useState('signup');
-  const [isVisible, setIsVisible] = useState(false); // State for scroll button visibility
+  const [isVisible, setIsVisible] = useState(false);
 
   setAuthModalOpen = setAuthModalOpenState;
   setAuthMode = setAuthModeState;
@@ -428,7 +391,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
     setMobileMenuOpen(false);
   };
 
-  // Handle scroll to show/hide the button
   const handleScroll = useCallback(() => {
     if (window.scrollY > 300) {
       setIsVisible(true);
@@ -437,7 +399,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
     }
   }, []);
 
-  // Scroll to top function
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -445,7 +406,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
     });
   };
 
-  // Add scroll event listener
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -467,7 +427,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
                 <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
                 <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
-                <Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Digital Enhancer</Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
@@ -508,7 +467,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
               <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
               <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
               <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
-              <Link to="/digital-enhancer" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Digital Enhancer</Link>
               <button
                 onClick={toggleTheme}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -546,7 +504,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
       {children}
 
-      {/* Scroll to Top Button */}
       <button
         onClick={scrollToTop}
         className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'} transition-transform duration-300`}
@@ -571,7 +528,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-white">Home</Link></li>
                 <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">Image Tools</Link></li>
                 <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">PDF Tools</Link></li>
-                <li><Link to="/digital-enhancer" onClick={scrollToTop} className="text-gray-400 hover:text-white">Digital Enhancer</Link></li>
               </ul>
             </div>
             <div>
@@ -610,9 +566,6 @@ function App() {
                 <Route path="/" element={<HomePage />} />
                 <Route path="/image-tools" element={<ImageTools />} />
                 <Route path="/pdf-tools" element={<PDFTools />} />
-                <Route path="/html-to-pdf" element={<HTMLToPDF />} />
-                <Route path="/digital-enhancer" element={<DigitalImageEnhancer />} />
-                <Route path="/background-remover" element={<BackgroundRemover />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />

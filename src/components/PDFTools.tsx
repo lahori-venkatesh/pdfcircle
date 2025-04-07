@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images, Pencil, Stamp, Minimize2, Type, FileCode2 } from 'lucide-react';
+import { FileText, FilePlus, Split, Images, Pencil, Stamp, Minimize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -9,10 +9,6 @@ import { MergePDF } from './pdf/MergePDF';
 import { SplitPDF } from './pdf/SplitPDF';
 import { PDFToImages } from './pdf/PDFToImages';
 import { CompressPDF } from './pdf/CompressPDF';
-import { PDFToExcel } from './pdf/PDFToExcel';
-import { PDFToWord } from './pdf/PDFToWord';
-import { WordToPDF } from './pdf/WordToPDF';
-import { ExcelToPDF } from './pdf/ExcelToPDF';
 import { EditPDF } from './pdf/EditPDF';
 import { WatermarkPDF } from './pdf/WatermarkPDF';
 
@@ -24,10 +20,6 @@ const tabs = [
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
   { id: 'compress', label: 'Compress PDF', icon: Minimize2 },
-  { id: 'to-word', label: 'PDF to Word', icon: Type },
-  { id: 'to-excel', label: 'PDF to Excel', icon: FileText },
-  { id: 'word-to-pdf', label: 'Word to PDF', icon: FileCode2 },
-  { id: 'excel-to-pdf', label: 'Excel to PDF', icon: FileText },
 ];
 
 export function PDFTools() {
@@ -44,10 +36,6 @@ export function PDFTools() {
       case 'watermark': return <WatermarkPDF />;
       case 'to-images': return <PDFToImages />;
       case 'compress': return <CompressPDF />;
-      case 'to-excel': return <PDFToExcel />;
-      case 'to-word': return <PDFToWord />;
-      case 'word-to-pdf': return <WordToPDF />;
-      case 'excel-to-pdf': return <ExcelToPDF />;
       default: return <CreatePDF />;
     }
   };
@@ -56,7 +44,7 @@ export function PDFTools() {
     <>
       <SEOHeaders 
         title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
-        description={t('seo.pdfTools.description', 'Merge, split, compress, and convert PDFs to Excel, Word, JPG, or from Word/Excel to PDF with pdfCircle’s free online tools. No sign-up needed.')}
+        description={t('seo.pdfTools.description', 'Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.')}
         keywords={[
           'pdfcircle',
           'free online pdf merger tool',
@@ -69,10 +57,6 @@ export function PDFTools() {
           'reduce pdf size online free',
           'pdf compressor free online',
           'pdf to image converter free',
-          'pdf to excel converter online',
-          'pdf to word converter free tool',
-          'word to pdf converter online free',
-          'excel to pdf converter free online',
           'edit pdf online free no sign up',
           'add watermark to pdf free online',
           'free pdf merge and split tool',
@@ -81,10 +65,6 @@ export function PDFTools() {
           'merge multiple pdfs online free',
           'split pdf pages free online',
           'compress large pdf online free',
-          'convert pdf to word free online',
-          'pdf to excel free online tool',
-          'word to pdf free converter',
-          'excel to pdf online free tool',
           'free pdf editing tool online',
           'pdf watermark adder free',
           'merge pdf documents online free',
@@ -92,9 +72,6 @@ export function PDFTools() {
           'reduce pdf file size free tool',
           'pdf compression online free',
           'convert pdf to image free online',
-          'pdf to word online free converter',
-          'word to pdf online free tool',
-          'excel to pdf free converter',
           'free online pdf editor tool',
           'add watermark pdf online free',
           'merge pdfs free online tool',
@@ -105,10 +82,7 @@ export function PDFTools() {
           'pdf splitter online free fast',
           'reduce pdf size free online',
           'pdf compressor online free tool',
-          'pdf to image free converter',
-          'pdf to excel online free tool',
-          'word to pdf free online converter',
-          'excel to pdf online free fast'
+          'pdf to image free converter'
         ]}
         canonicalUrl="https://pdfcircle.com/pdf-tools"
       />

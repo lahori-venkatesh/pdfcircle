@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader2, X, FileText, Eraser } from 'lucide-react';
+import { Upload, Download, Loader2, X, FileText } from 'lucide-react';
 import { DndContext, rectIntersection, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { SortableImage } from './SortableImage';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
-import * as backgroundRemoval from '@imgly/background-removal';
 
 interface ImageItem {
   id: string;

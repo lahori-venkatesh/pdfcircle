@@ -1,19 +1,41 @@
-
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { PDFDocument, PDFImage, PDFName, PDFDict } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileText } from 'lucide-react';
+import imageCompression from 'browser-image-compression';
 
+// Constants
+const QUALITY_PRESETS = {
+  MAXIMUM: { quality: 90, maxSizeMB: 0.8, maxWidthOrHeight: 1000, targetReduction: 0.10 },
+  HIGH: { quality: 80, maxSizeMB: 0.4, maxWidthOrHeight: 700, targetReduction: 0.25 },
+  MEDIUM: { quality: 60, maxSizeMB: 0.2, maxWidthOrHeight: 500, targetReduction: 0.45 },
+  LOW: { quality: 40, maxSizeMB: 0.05, maxWidthOrHeight: 300, targetReduction: 0.65 },
+  MINIMUM: { quality: 20, maxSizeMB: 0.025, maxWidthOrHeight: 150, targetReduction: 0.75 },
+};
+
+// Types
+interface PDFFile {
+  file: File;
+  preview?: string;
+}
+
+interface PreviewSizes {
+  original: number | null;
+  compressed: number | null;
+}
+
+// CompressPDF Component
 export function CompressPDF() {
-  const [files, setFiles] = useState([]);
+  const [files, setFiles] = useState<PDFFile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState(null);
-  const [result, setResult] = useState(null);
-  const [resultBlob, setResultBlob] = useState(null);
-  const [previewSize, setPreviewSize] = useState({ original: null, compressed: null });
+  const [progress, setProgress] = useState<number>(0);
+  const [error, setError] = useState<string | null>(null);
+  const [result, setResult] = useState<string | null>(null);
+  const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [quality, setQuality] = useState<number>(80);
+  const [previewSize, setPreviewSize] = useState<PreviewSizes>({ original: null, compressed: null });
 
-  // Handle file drop
-  const onDrop = useCallback((acceptedFiles) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 1) {
       setError('Please select only one PDF file');
       return;
@@ -37,7 +59,58 @@ export function CompressPDF() {
     multiple: false,
   });
 
-  // Compress PDF by calling the backend API
+  const resetFiles = useCallback(() => {
+    files.forEach((file) => file.preview && URL.revokeObjectURL(file.preview));
+    if (result) URL.revokeObjectURL(result);
+    setFiles([]);
+    setResult(null);
+    setResultBlob(null);
+    setError(null);
+    setPreviewSize({ original: null, compressed: null });
+    setProgress(0);
+  }, [files, result]);
+
+  const subsetFonts = async (pdfDoc: PDFDocument) => {
+    const fontDicts = pdfDoc.context.enumerateIndirectObjects()
+      .filter(([_, obj]) => obj instanceof PDFDict && obj.get(PDFName.of('Type')) === PDFName.of('Font'))
+      .map(([ref, obj]) => ({ ref, dict: obj as PDFDict }));
+
+    for (const { dict } of fontDicts) {
+      if (dict.has(PDFName.of('FontDescriptor'))) {
+        const fontDescriptor = dict.get(PDFName.of('FontDescriptor')) as PDFDict;
+        fontDescriptor?.delete(PDFName.of('FontFile'));
+        fontDescriptor?.delete(PDFName.of('FontFile2'));
+        fontDescriptor?.delete(PDFName.of('FontFile3'));
+      }
+    }
+  };
+
+  const compressPDFImages = async (pdfDoc: PDFDocument, preset: typeof QUALITY_PRESETS[keyof typeof QUALITY_PRESETS], aggressive = false) => {
+    for (let i = 0; i < pdfDoc.getPageCount(); i++) {
+      const page = pdfDoc.getPage(i);
+      const images = (page.node.get(PDFName.of('XObject')) as PDFDict)?.asMap() || new Map();
+      for (const [name, xObject] of images) {
+        if (xObject instanceof PDFImage) {
+          const imageData = (xObject as any).decode();
+          if (imageData) {
+            const compressionOptions = {
+              maxSizeMB: aggressive ? preset.maxSizeMB / 2 : preset.maxSizeMB,
+              maxWidthOrHeight: aggressive ? Math.floor(preset.maxWidthOrHeight * 0.5) : preset.maxWidthOrHeight,
+              useWebWorker: true,
+              fileType: 'image/jpeg',
+              initialQuality: aggressive ? preset.quality / 100 * 0.5 : preset.quality / 100,
+            };
+            const imageFile = new File([imageData], 'image.jpg', { type: 'image/jpeg' });
+            const compressedImage = await imageCompression(imageFile, compressionOptions);
+            const compressedBytes = new Uint8Array(await compressedImage.arrayBuffer());
+            const embeddedImage = await pdfDoc.embedJpg(compressedBytes);
+            page.node.setXObject(name, embeddedImage.ref);
+          }
+        }
+      }
+    }
+  };
+
   const handleCompressPDF = async () => {
     if (files.length !== 1) {
       setError('Please select one PDF file');
@@ -50,47 +123,48 @@ export function CompressPDF() {
 
     try {
       const file = files[0].file;
-      const formData = new FormData();
-      formData.append('pdf', file);
+      const pdfBytes = await file.arrayBuffer();
+      let pdfDoc = await PDFDocument.load(pdfBytes);
+      const preset = Object.values(QUALITY_PRESETS).find(p => p.quality === quality) || QUALITY_PRESETS.HIGH;
 
-      // Simulate progress (since backend doesn't stream progress)
-      setProgress(25);
+      await compressPDFImages(pdfDoc, preset);
+      pdfDoc.setTitle('');
+      pdfDoc.setAuthor('');
+      pdfDoc.setSubject('');
+      pdfDoc.setKeywords([]);
+      pdfDoc.setProducer('');
+      pdfDoc.setCreator('');
+      const catalog = pdfDoc.context.lookup(pdfDoc.context.trailerInfo.Root);
+      if (catalog instanceof PDFDict) catalog.delete(PDFName.of('Metadata'));
+      await subsetFonts(pdfDoc);
 
-      const response = await fetch('http://localhost:3000/api/compress-pdf', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.REACT_APP_API_KEY}`,
-        },
-        body: formData,
-      });
-
+      let compressedBytes = await pdfDoc.save({ useObjectStreams: true });
+      let compressionRatio = (file.size - compressedBytes.length) / file.size;
       setProgress(50);
 
-      if (!response.ok) {
-        throw new Error('Failed to compress PDF');
+      if (compressionRatio < preset.targetReduction * 0.8) {
+        pdfDoc = await PDFDocument.load(pdfBytes);
+        await compressPDFImages(pdfDoc, preset, true);
+        await subsetFonts(pdfDoc);
+        compressedBytes = await pdfDoc.save({ useObjectStreams: true });
       }
 
-      const blob = await response.blob();
-      const compressedSize = blob.size;
-      const newResult = URL.createObjectURL(blob);
-
       setProgress(75);
-
+      const compressedBlob = new Blob([compressedBytes], { type: 'application/pdf' });
+      const newResult = URL.createObjectURL(compressedBlob);
       setResult(newResult);
-      setResultBlob(blob);
-      setPreviewSize({ original: file.size, compressed: compressedSize });
+      setResultBlob(compressedBlob);
+      setPreviewSize({ original: file.size, compressed: compressedBytes.length });
       setProgress(100);
     } catch (err) {
-      console.error('Compression error:', err);
-      setError(err.message || 'Unknown error');
+      setError(err instanceof Error ? `Failed to compress: ${err.message}` : 'Unknown error');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle download of compressed file
   const handleDownload = () => {
-    if (!resultBlob) return;
+    if (!resultBlob || !result) return;
     const link = document.createElement('a');
     link.href = result;
     link.download = 'compressed.pdf';
@@ -99,20 +173,7 @@ export function CompressPDF() {
     document.body.removeChild(link);
   };
 
-  // Reset state
-  const resetFiles = useCallback(() => {
-    files.forEach((file) => file.preview && URL.revokeObjectURL(file.preview));
-    if (result) URL.revokeObjectURL(result);
-    setFiles([]);
-    setResult(null);
-    setResultBlob(null);
-    setError(null);
-    setPreviewSize({ original: null, compressed: null });
-    setProgress(0);
-  }, [files, result]);
-
-  // Format file size for display
-  const formatFileSize = (bytes) => {
+  const formatFileSize = (bytes: number | null) => {
     if (bytes === null) return 'Processing...';
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -121,11 +182,9 @@ export function CompressPDF() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  // Calculate reduction percentage
   const calculateReduction = () => {
     if (!previewSize.original || !previewSize.compressed) return 0;
-    const reduction = ((previewSize.original - previewSize.compressed) / previewSize.original) * 100;
-    return Math.round(reduction);
+    return Math.round(((previewSize.original - previewSize.compressed) / previewSize.original) * 100);
   };
 
   return (
@@ -158,6 +217,24 @@ export function CompressPDF() {
           </div>
 
           <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Quality Preset</label>
+              <select
+                value={quality}
+                onChange={(e) => setQuality(Number(e.target.value))}
+                className="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              >
+                <option value={90}>Maximum Quality (~10% Reduction)</option>
+                <option value={80}>High Quality (~25% Reduction)</option>
+                <option value={60}>Medium Quality (~45% Reduction)</option>
+                <option value={40}>Low Quality (~65% Reduction)</option>
+                <option value={20}>Minimum Quality (~75% Reduction)</option>
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Select a quality preset to determine compression level. Results vary based on PDF content.
+              </p>
+            </div>
+
             {loading && (
               <div className="w-full bg-gray-200 rounded-full h-2.5">
                 <div
@@ -189,9 +266,7 @@ export function CompressPDF() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
           )}
 
           <div className="flex gap-3">
@@ -228,4 +303,57 @@ export function CompressPDF() {
     </div>
   );
 }
-  
+
+// Placeholder Components for Other Tools
+function PlaceholderTool({ name }: { name: string }) {
+  return (
+    <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-6 rounded-lg text-center">
+      <FileText className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold mb-2">{name} Coming Soon!</h3>
+      <p>We're working on bringing you this feature. Stay tuned!</p>
+    </div>
+  );
+}
+
+// PDFTools Main Component
+export default function PDFTools() {
+  const [activeTab, setActiveTab] = useState('compress');
+
+  const tabs = [
+    { id: 'compress', label: 'Compress PDF', component: <CompressPDF /> },
+    { id: 'merge', label: 'Merge PDFs', component: <PlaceholderTool name="PDF Merge" /> },
+    { id: 'split', label: 'Split PDF', component: <PlaceholderTool name="PDF Split" /> },
+    { id: 'to-word', label: 'PDF to Word', component: <PlaceholderTool name="PDF to Word" /> },
+    { id: 'to-excel', label: 'PDF to Excel', component: <PlaceholderTool name="PDF to Excel" /> },
+    { id: 'word-to-pdf', label: 'Word to PDF', component: <PlaceholderTool name="Word to PDF" /> },
+    { id: 'excel-to-pdf', label: 'Excel to PDF', component: <PlaceholderTool name="Excel to PDF" /> },
+    { id: 'edit', label: 'Edit PDF', component: <PlaceholderTool name="PDF Edit" /> },
+    { id: 'watermark', label: 'Add Watermark', component: <PlaceholderTool name="Add Watermark" /> },
+    { id: 'to-images', label: 'PDF to Images', component: <PlaceholderTool name="PDF to Images" /> },
+    { id: 'create', label: 'Image to PDF', component: <PlaceholderTool name="Image to PDF" /> },
+  ];
+
+  return (
+    <div className="max-w-4xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">PDF Tools</h1>
+      <div className="flex flex-wrap gap-2 mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              activeTab === tab.id
+                ? 'bg-indigo-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div>
+        {tabs.find((tab) => tab.id === activeTab)?.component}
+      </div>
+    </div>
+  );
+}

@@ -19,59 +19,37 @@
   "features": {
   "title": "Unlock Powerful PDF and Image Tools in One Place",
   "imageReduction": {
-    "title": "Shrink Images Without Losing Quality",
+    "title": "image size reduce & converion",
     "description": "Easily reduce image file sizes for faster loading and sharing while maintaining crystal-clear quality with our free online tools."
   },
   "imageToPdf": {
-    "title": "Convert Images to PDFs Instantly",
+    "title": "image to PDF Converter",
     "description": "Turn your photos and graphics into professional PDF documents quickly and securely using pdfCircle’s free converter."
   },
   "pdfToImages": {
-    "title": "Extract Images from PDFs with Ease",
+    "title": "PDF to Images Extractor",
     "description": "Pull high-quality images out of any PDF file effortlessly with our reliable and free online extraction tools."
   },
-  "removeBackground": {
-    "title": "Remove Backgrounds from Images",
-    "description": "Clean up your photos by removing backgrounds instantly, providing a sleek and professional look."
-  },
-  "digitalEnhancer": {
-    "title": "Enhance Images Like a Pro",
-    "description": "Boost your image quality with advanced digital enhancement tools, all available for free on pdfCircle."
-  },
+  
+ 
   "compressPdf": {
-    "title": "Compress PDFs for Easy Sharing",
+    "title": "Compress PDFs",
     "description": "Reduce PDF file sizes without sacrificing quality, making them ideal for email and online storage with our free tools."
   },
   "mergePdfs": {
-    "title": "Merge Multiple PDFs Seamlessly",
+    "title": "Merge Multiple PDFs ",
     "description": "Combine several PDF documents into one with our secure and free online merging tool, saving you time and effort."
   },
   "splitPdf": {
-    "title": "Split Large PDFs into Smaller Files",
+    "title": "Split PDFs into Smaller Files",
     "description": "Divide oversized PDF documents into manageable parts using our fast and free splitting tool, perfect for organization."
   },
-  "pdfToWord": {
-    "title": "Convert PDFs to Word Documents",
-    "description": "Transform your PDFs into editable Word files quickly and accurately with pdfCircle’s free conversion tools."
-  },
-  "pdfToExcel": {
-    "title": "Extract Data from PDFs to Excel",
-    "description": "Convert PDF tables and data into Excel spreadsheets effortlessly with our secure and free online solution."
-  },
-  "wordToPdf": {
-    "title": "Turn Word Docs into PDFs Easily",
-    "description": "Convert your Word documents to high-quality PDFs in seconds using our reliable and free online converter."
-  },
-  "excelToPdf": {
-    "title": "Create PDFs from Excel Spreadsheets",
-    "description": "Effortlessly convert your Excel files into professional PDFs with our fast and free online tools."
-  },
   "editPdf": {
-    "title": "Edit PDFs with Precision",
+    "title": "Edit PDFs",
     "description": "Modify and annotate your PDF documents easily with our free online editing tools, ensuring perfect results every time."
   },
   "addWatermark": {
-    "title": "Protect PDFs with Custom Watermarks",
+    "title": "PDFs with Watermarks",
     "description": "Safeguard your documents by adding custom watermarks using our secure and free PDF protection tools."
   }
 },
