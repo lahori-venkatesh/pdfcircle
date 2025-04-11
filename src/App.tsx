@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { 
   FileUp, Image, FileText, FilePlus, Split, Menu, X, LogOut, Images,
   ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-  Pencil, Stamp, Sun, Moon, ArrowUp
+   Stamp, Sun, Moon, ArrowUp
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
@@ -148,7 +148,7 @@ function HomePage() {
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block bg-white text-indigo-600 dark:bg-indigo-400 dark:text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-500 transition-colors duration-300 shadow-lg"
+                className="inline-block bg-white text-indigo-600 dark:bg-white dark: text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-200 transition-colors duration-300 shadow-lg"
               >
                {t('hero.getStarted', 'Start Converting Now')}
               </Link>
@@ -208,12 +208,6 @@ function HomePage() {
               to="/pdf-tools?tab=split"
             />
             
-            <FeatureCard 
-              icon={Pencil} 
-              title={t('features.editPdf.title', 'Edit PDF')} 
-              description={t('features.editPdf.description', 'Modify PDFs with our editing tools.')} 
-              to="/pdf-tools?tab=edit"
-            />
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
@@ -418,8 +412,8 @@ function Layout({ children }: PropsWithChildren<{}>) {
           <div className="flex items-center justify-between h-full">
             <div className="flex-shrink-0">
               <Link to="/" onClick={scrollToTop} className="flex items-center space-x-2">
-                <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-indigo-600" />
-                <span className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-600">pdfCircle</span>
+                <FileText className="w-7 h-7 sm:w-8 sm:h-8 text-indigo-600 dark:text-white" />
+                <span className="text-xl sm:text-2xl font-bold text-indigo-600 dark:text-white">pdfCircle</span>
               </Link>
             </div>
             <div className="hidden sm:flex items-center justify-center flex-1 px-8">
@@ -456,8 +450,11 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 </>
               )}
             </div>
-            <button className="sm:hidden text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white" onClick={toggleMobileMenu}>
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            <button className="sm:hidden text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white" onClick={toggleMobileMenu}
+            aria-label={mobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu">
+              {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-8 h-8" />}
             </button>
           </div>
         </nav>
@@ -550,7 +547,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
         </div>
       </footer>
 
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode as "signup" | "login" | "forgot-password"} />
     </div>
   );
 }

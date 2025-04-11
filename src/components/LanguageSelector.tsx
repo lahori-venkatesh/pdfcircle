@@ -46,7 +46,8 @@ export function LanguageSelector() {
     <div className="relative">
       <button
         onClick={toggleDropdown}
-        className="flex items-center space-x-2 text-gray-400 hover:text-white"
+        className="flex items-center space-x-2 text-white hover:text-gray-300"
+        aria-label={`Select language: ${languages[currentLanguage as keyof typeof languages]?.nativeName}`}
       >
         <Globe className="w-5 h-5" />
         <span>{languages[currentLanguage as keyof typeof languages]?.nativeName}</span>

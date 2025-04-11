@@ -2,14 +2,17 @@ import sanitizeFilename from 'sanitize-filename';
 import mime from 'mime-types';
 import path from 'path-browserify';
 
-// Maximum file size in bytes (5MB)
-export const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Maximum file size in bytes (15MB as per your previous setup, adjusted from 5MB to match)
+export const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 // Allowed file types
 export const ALLOWED_IMAGE_TYPES = [
   'image/jpeg',
   'image/png',
-  'image/webp'
+  'image/webp',
+  'image/svg+xml', // Added back from your original code
+  'image/avif',
+  'image/heic',
 ];
 
 export const ALLOWED_PDF_TYPES = ['application/pdf'];
@@ -24,16 +27,16 @@ export function validateFile(file: File, allowedTypes: string[]): FileValidation
   if (file.size > MAX_FILE_SIZE) {
     return {
       isValid: false,
-      error: `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`
+      error: `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`,
     };
   }
 
-  // Check file type
-  const mimeType = mime.lookup(file.name) || file.type;
-  if (!allowedTypes.includes(mimeType)) {
+  // Check file type using mime-types for more robust detection
+  const detectedMimeType = mime.lookup(file.name) || file.type;
+  if (!allowedTypes.includes(detectedMimeType)) {
     return {
       isValid: false,
-      error: `File type not allowed. Supported types: ${allowedTypes.join(', ')}`
+      error: `File type not allowed. Supported types: ${allowedTypes.join(', ')}`,
     };
   }
 
@@ -42,7 +45,7 @@ export function validateFile(file: File, allowedTypes: string[]): FileValidation
   if (sanitizedName !== file.name) {
     return {
       isValid: false,
-      error: 'Invalid characters in filename'
+      error: 'Invalid characters in filename. Only alphanumeric characters, underscores, and hyphens are allowed.',
     };
   }
 
@@ -50,7 +53,7 @@ export function validateFile(file: File, allowedTypes: string[]): FileValidation
 }
 
 // Generate secure Blob URLs with expiration
-export function createSecureObjectURL(blob: Blob, expirationMs = 5 * 60 * 1000): string {
+export function createSecureObjectURL(blob: Blob, expirationMs: number = 5 * 60 * 1000): string {
   const url = URL.createObjectURL(blob);
   
   // Automatically revoke the URL after expiration
@@ -66,14 +69,15 @@ export function createSecureObjectURL(blob: Blob, expirationMs = 5 * 60 * 1000):
 }
 
 // Sanitize and validate file download name
-export function getSafeDownloadFilename(filename: string, defaultName = 'download'): string {
+export function getSafeDownloadFilename(filename: string, defaultName: string = 'download'): string {
   const sanitized = sanitizeFilename(filename);
   if (!sanitized) return defaultName;
 
-  // Ensure the extension is preserved
-  const ext = path.extname(filename);
+  // Ensure the extension is preserved and valid
+  const ext = path.extname(filename).toLowerCase();
   const base = path.basename(sanitized, ext);
-  return `${base}${ext}`;
+  const validExt = ext ? ext : '.jpg'; // Default to .jpg if no extension
+  return `${base}${validExt}`;
 }
 
 // Create a secure download link
@@ -117,7 +121,6 @@ export async function downloadFromUrl(url: string, filename: string): Promise<vo
     const blob = await response.blob();
     const link = createSecureDownloadLink(blob, filename);
     
-    // Use a Promise to handle the download completion
     return new Promise<void>((resolve, reject) => {
       link.onclick = () => {
         setTimeout(resolve, 1000); // Give the browser time to start the download
@@ -130,7 +133,7 @@ export async function downloadFromUrl(url: string, filename: string): Promise<vo
     });
   } catch (error) {
     console.error('Error downloading file:', error);
-    throw new Error('Failed to download file');
+    throw new Error('Failed to download file: ' + (error instanceof Error ? error.message : String(error)));
   }
 }
 

@@ -1,12 +1,14 @@
 import React, { useState, useCallback } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader2, X, FileText } from 'lucide-react';
+import { Upload, Download, Loader2, X, FileText, Plus, Image as ImageIcon, Settings, Crop } from 'lucide-react';
 import { DndContext, rectIntersection, KeyboardSensor, PointerSensor, TouchSensor, useSensor, useSensors, DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { SortableImage } from './SortableImage';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
+import JSZip from 'jszip';
+import { Link } from 'react-router-dom'; // Assuming you're using react-router-dom for internal links
 
 interface ImageItem {
   id: string;
@@ -20,6 +22,24 @@ interface CreateFileSizes {
   estimated: number | null;
   final: number | null;
 }
+
+interface PageSize {
+  width: number;
+  height: number;
+}
+
+const PAGE_SIZES: Record<string, PageSize> = {
+  'Fit': { width: 0, height: 0 }, // Will be set dynamically based on image
+  'A4': { width: 595.28, height: 841.89 }, // A4 in points (1/72 inch)
+  'US Letter': { width: 612, height: 792 }, // US Letter in points
+};
+
+const MARGINS: Record<string, number> = {
+  'No Margin': 0,
+  'Small Margin': 20,
+  'Big Margin': 50,
+  'Custom': 0, // Will be set by user input
+};
 
 export function CreatePDF() {
   const { saveOperation } = useOperationsCache();
@@ -35,6 +55,12 @@ export function CreatePDF() {
     estimated: null,
     final: null,
   });
+  const [orientation, setOrientation] = useState<'Portrait' | 'Landscape'>('Portrait');
+  const [pageSize, setPageSize] = useState<string>('A4');
+  const [margin, setMargin] = useState<string>('Small Margin');
+  const [customMargin, setCustomMargin] = useState<number>(20);
+  const [mergePDF, setMergePDF] = useState<boolean>(true);
+  const [showNewConversion, setShowNewConversion] = useState<boolean>(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -99,8 +125,6 @@ export function CreatePDF() {
     setResultBlob(null);
     if (validFiles.length > 0) setError(null);
   }, [createQualityLevel]);
-
-  
 
   const resetBackgroundRemoval = (imageId: string) => {
     setImages(prev => prev.map(img => {
@@ -167,74 +191,148 @@ export function CreatePDF() {
     setError(null);
 
     try {
-      const pdfDoc = await PDFDocument.create();
+      if (mergePDF) {
+        const pdfDoc = await PDFDocument.create();
 
-      for (const image of images) {
-        const imageBytes = await image.file.arrayBuffer();
-        const img = new Image();
-        img.src = URL.createObjectURL(new Blob([imageBytes], { type: image.file.type }));
+        for (const image of images) {
+          const imageBytes = await image.file.arrayBuffer();
+          const img = new Image();
+          img.src = URL.createObjectURL(new Blob([imageBytes], { type: image.file.type }));
 
-        await new Promise((resolve) => {
-          img.onload = resolve;
-        });
+          await new Promise((resolve) => {
+            img.onload = resolve;
+          });
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        if (!ctx) throw new Error('Failed to get canvas context');
+          let pdfImage = await pdfDoc.embedJpg(await fetch(URL.createObjectURL(new Blob([imageBytes], { type: image.file.type }))).then(res => res.arrayBuffer()));
+          const page = pdfDoc.addPage();
+          const size = PAGE_SIZES[pageSize];
+          let pageWidth, pageHeight;
 
-        canvas.width = img.width;
-        canvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
+          if (pageSize === 'Fit') {
+            pageWidth = img.width;
+            pageHeight = img.height;
+          } else {
+            pageWidth = orientation === 'Portrait' ? size.width : size.height;
+            pageHeight = orientation === 'Portrait' ? size.height : size.width;
+          }
 
-        const quality = createQualityLevel / 100;
-        const compressedImageData = canvas.toDataURL('image/jpeg', quality);
-        const compressedImageBytes = await fetch(compressedImageData).then(res => res.blob()).then(blob => blob.arrayBuffer());
+          page.setSize(pageWidth, pageHeight);
 
-        let pdfImage = await pdfDoc.embedJpg(compressedImageBytes);
-        const page = pdfDoc.addPage();
-        const { width, height } = page.getSize();
-        const aspectRatio = pdfImage.width / pdfImage.height;
+          const marginSize = margin === 'Custom' ? customMargin : MARGINS[margin];
+          const drawWidth = pageWidth - (2 * marginSize);
+          const drawHeight = pageHeight - (2 * marginSize);
+          const aspectRatio = pdfImage.width / pdfImage.height;
 
-        let drawWidth = width - 40;
-        let drawHeight = drawWidth / aspectRatio;
+          let finalWidth = drawWidth;
+          let finalHeight = drawHeight;
 
-        if (drawHeight > height - 40) {
-          drawHeight = height - 40;
-          drawWidth = drawHeight * aspectRatio;
+          if (drawWidth / drawHeight > aspectRatio) {
+            finalWidth = drawHeight * aspectRatio;
+          } else {
+            finalHeight = drawWidth / aspectRatio;
+          }
+
+          page.drawImage(pdfImage, {
+            x: (pageWidth - finalWidth) / 2,
+            y: (pageHeight - finalHeight) / 2,
+            width: finalWidth,
+            height: finalHeight,
+          });
+
+          URL.revokeObjectURL(img.src);
         }
 
-        page.drawImage(pdfImage, {
-          x: (width - drawWidth) / 2,
-          y: (height - drawHeight) / 2,
-          width: drawWidth,
-          height: drawHeight,
+        const pdfBytes = await pdfDoc.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+
+        if (result) revokeBlobUrl(result);
+        const newResult = createSecureObjectURL(blob);
+        setResult(newResult);
+        setResultBlob(blob);
+
+        setCreateFileSizes(prev => ({
+          ...prev,
+          final: pdfBytes.length,
+        }));
+
+        saveOperation({
+          type: 'create_pdf',
+          metadata: {
+            filename: 'document.pdf',
+            fileSize: pdfBytes.length,
+            settings: { imageCount: images.length, qualityLevel: createQualityLevel, orientation, pageSize, margin, mergePDF }
+          },
+          preview: createSecureObjectURL(blob)
         });
+      } else {
+        const zip = new JSZip();
+        for (const image of images) {
+          const pdfDoc = await PDFDocument.create();
+          const imageBytes = await image.file.arrayBuffer();
+          let pdfImage = await pdfDoc.embedJpg(await fetch(URL.createObjectURL(new Blob([imageBytes], { type: image.file.type }))).then(res => res.arrayBuffer()));
+          const page = pdfDoc.addPage();
+          const size = PAGE_SIZES[pageSize];
+          let pageWidth, pageHeight;
 
-        URL.revokeObjectURL(img.src);
+          if (pageSize === 'Fit') {
+            const img = new Image();
+            img.src = URL.createObjectURL(new Blob([imageBytes], { type: image.file.type }));
+            await new Promise((resolve) => { img.onload = resolve; });
+            pageWidth = img.width;
+            pageHeight = img.height;
+          } else {
+            pageWidth = orientation === 'Portrait' ? size.width : size.height;
+            pageHeight = orientation === 'Portrait' ? size.height : size.width;
+          }
+
+          page.setSize(pageWidth, pageHeight);
+
+          const marginSize = margin === 'Custom' ? customMargin : MARGINS[margin];
+          const drawWidth = pageWidth - (2 * marginSize);
+          const drawHeight = pageHeight - (2 * marginSize);
+          const aspectRatio = pdfImage.width / pdfImage.height;
+
+          let finalWidth = drawWidth;
+          let finalHeight = drawHeight;
+
+          if (drawWidth / drawHeight > aspectRatio) {
+            finalWidth = drawHeight * aspectRatio;
+          } else {
+            finalHeight = drawWidth / aspectRatio;
+          }
+
+          page.drawImage(pdfImage, {
+            x: (pageWidth - finalWidth) / 2,
+            y: (pageHeight - finalHeight) / 2,
+            width: finalWidth,
+            height: finalHeight,
+          });
+
+          const pdfBytes = await pdfDoc.save();
+          zip.file(`${image.file.name.replace(/\.[^/.]+$/, "")}.pdf`, pdfBytes);
+        }
+
+        const zipBlob = await zip.generateAsync({ type: 'blob' });
+        if (result) revokeBlobUrl(result);
+        const newResult = createSecureObjectURL(zipBlob);
+        setResult(newResult);
+        setResultBlob(zipBlob);
+
+        setCreateFileSizes(prev => ({
+          ...prev,
+          final: zipBlob.size,
+        }));
+
+        saveOperation({
+          type: 'create_pdf_zip',
+          metadata: {
+            filename: 'documents.zip',
+            fileSize: zipBlob.size,
+            settings: { imageCount: images.length, qualityLevel: createQualityLevel, orientation, pageSize, margin, mergePDF }
+          },
+          preview: createSecureObjectURL(zipBlob)
+        });
       }
-
-      const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
-      if (result) revokeBlobUrl(result);
-      const newResult = createSecureObjectURL(blob);
-      setResult(newResult);
-      setResultBlob(blob);
-
-      setCreateFileSizes(prev => ({
-        ...prev,
-        final: pdfBytes.length,
-      }));
-
-      saveOperation({
-        type: 'create_pdf',
-        metadata: {
-          filename: 'document.pdf',
-          fileSize: pdfBytes.length,
-          settings: { imageCount: images.length, qualityLevel: createQualityLevel }
-        },
-        preview: createSecureObjectURL(blob)
-      });
     } catch (err) {
       setError('Error creating PDF. Please try again.');
       console.error(err);
@@ -247,10 +345,11 @@ export function CreatePDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'document.pdf');
+      const link = createSecureDownloadLink(resultBlob, mergePDF ? 'document.pdf' : 'documents.zip');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setShowNewConversion(true); // Show new conversion button after download
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');
@@ -270,6 +369,12 @@ export function CreatePDF() {
     setResultBlob(null);
     setError(null);
     setCreateFileSizes({ original: null, estimated: null, final: null });
+    setOrientation('Portrait');
+    setPageSize('A4');
+    setMargin('Small Margin');
+    setCustomMargin(20);
+    setMergePDF(true);
+    setShowNewConversion(false);
   }, [images, result]);
 
   const formatFileSize = (bytes: number | null) => {
@@ -298,6 +403,25 @@ export function CreatePDF() {
     }
   };
 
+  const handleNewConversion = () => {
+    resetFiles();
+  };
+
+  const handleAddMoreImages = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.onchange = (e) => {
+      const files = (e.target as HTMLInputElement).files;
+      if (files) {
+        const fileList = Array.from(files);
+        onDrop(fileList);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="space-y-6">
       <div
@@ -306,27 +430,39 @@ export function CreatePDF() {
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
-        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600">
+        <Upload className="w-12 h-12 dark:text-white text-gray-400 mx-auto mb-4" />
+        <p className="text-gray-600 dark:text-white">
           {isDragActive ? 'Drop the images here' : 'Drag & drop images here, or tap to select'}
         </p>
-        <p className="text-sm text-gray-500 mt-2">Supports images (JPEG, PNG, WebP)</p>
+        <p className="text-sm text-gray-500 dark:text-white  mt-2">Supports images (JPEG, PNG, WebP)</p>
       </div>
 
       {images.length > 0 && (
         <>
           <div className="mt-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">
+              <h3 className="text-lg font-semibold dark:text-white  text-gray-800">
                 Selected Images ({images.length}/30)
               </h3>
-              <button
-                onClick={resetFiles}
-                className="text-gray-500 hover:text-gray-700"
-                title="Remove all images"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleAddMoreImages}
+                  className="relative bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-700 transition-colors"
+                  title="Add more images"
+                >
+                  <Plus className="w-5 h-5" />
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                    {Math.max(0, 30 - images.length)}
+                  </span>
+                </button>
+                <button
+                  onClick={resetFiles}
+                  className="text-gray-500 dark:text-white hover:text-gray-700"
+                  title="Remove all images"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
             <DndContext
               sensors={sensors}
@@ -347,7 +483,6 @@ export function CreatePDF() {
                         onRemove={handleRemoveImage}
                         index={idx}
                       />
-                      
                     </div>
                   ))}
                 </div>
@@ -369,6 +504,65 @@ export function CreatePDF() {
                 onChange={(e) => handleQualityChange(Number(e.target.value))}
                 className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-white">Orientation</label>
+              <select
+                value={orientation}
+                onChange={(e) => setOrientation(e.target.value as 'Portrait' | 'Landscape')}
+                className="w-full p-3 border border-gray-300 dark:text-white dark:bg-gray-700 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="Portrait">Portrait</option>
+                <option value="Landscape">Landscape</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-white">Page Size</label>
+              <select
+                value={pageSize}
+                onChange={(e) => setPageSize(e.target.value)}
+                className="w-full p-3 border border-gray-300 dark:text-white dark:bg-gray-700 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="Fit">Fit to Image</option>
+                <option value="A4">A4</option>
+                <option value="US Letter">US Letter</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-white">Margin</label>
+              <select
+                value={margin}
+                onChange={(e) => setMargin(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 dark:text-white dark:bg-gray-700 focus:ring-indigo-500 focus:border-transparent"
+              >
+                <option value="No Margin">No Margin</option>
+                <option value="Small Margin">Small Margin</option>
+                <option value="Big Margin">Big Margin</option>
+                <option value="Custom">Custom</option>
+              </select>
+              {margin === 'Custom' && (
+                <input
+                  type="number"
+                  min="0"
+                  value={customMargin}
+                  onChange={(e) => setCustomMargin(Number(e.target.value))}
+                  className="w-full p-3 mt-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter margin in points"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={mergePDF}
+                onChange={(e) => setMergePDF(e.target.checked)}
+                className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+              />
+              <label className="text-sm text-gray-700 dark:text-white">Merge all images into one PDF</label>
             </div>
 
             <div className="bg-gray-50 p-4 dark:bg-gray-800 rounded-lg space-y-2">
@@ -403,11 +597,11 @@ export function CreatePDF() {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
             <button
               onClick={handleCreatePDF}
               disabled={loading}
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              className="flex-1 min-w-[48%] bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -425,15 +619,54 @@ export function CreatePDF() {
             {result && (
               <button
                 onClick={handleDownload}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                className="flex-1 min-w-[48%] bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
               >
                 <Download className="w-5 h-5 mr-2" />
-                Download PDF
+                Download {mergePDF ? 'PDF' : 'ZIP'}
+              </button>
+            )}
+
+            {showNewConversion && (
+              <button
+                onClick={handleNewConversion}
+                className="flex-1 min-w-[48%] bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+              >
+                New Conversion
               </button>
             )}
           </div>
         </>
       )}
+
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More Image Tools</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <ImageIcon className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Image Size Reduce</span>
+          </Link>
+          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <Settings className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Image Conversion</span>
+          </Link>
+          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Image to PDF</span>
+          </Link>
+          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <Crop className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Crop Image</span>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

@@ -26,7 +26,7 @@ export function SEOHeaders({
   const defaultDescription = 'Transform PDFs and images with pdfCircle’s free, secure tools. Convert, compress, and unlock powerful editing features.';
   const defaultKeywords = [
     'pdfcircle', 'free pdf tools', 'free image tools', 'pdf converter', 'image editor',
-    'compress pdf', 'merge pdf', 'split pdf', 'image to pdf', 'pdf to word'
+    'compress pdf', 'merge pdf', 'split pdf', 'image to pdf', 'pdf to word','edit pdf', 'pdf','compress pdf document', 'compress pdf doc', 'pdf a converter', 'pdf format converter', 'convert to pdf format', 'convert to pdf converter', 'convert on pdf' , 'merge pdf', 'combine pdf', 'i love pdf', 'ilove pdf', 'pdf compress', 'convert pdf to jpg', 'convert','file converter', 'free file converter', 'document converter', 'file changer', 'pdf converter', 'online converter', 'pdf converter online free', 'file to pdf', 'convert file to pdf free', 'file conversion software', 'convert document to pdf', 'free pdf convertor', 'document to pdf', 'image converter', 'free converter', 'best file converter', 'pdf circle', 'pdf divider', 'pdf converter for free', 'converting files to pdf', 'pdf format converter', 'merge and edit pdf', 'pdf converter from jpg', 'merge and compress pdf', 'combine and compress pdf', 'jpg to pdf', 'png to pdf',
   ].concat(keywords);
   const uniqueKeywords = [...new Set(defaultKeywords)].join(', ');
 

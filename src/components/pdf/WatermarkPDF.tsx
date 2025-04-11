@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Loader2, X, Stamp, Type, Image as ImageIcon } from 'lucide-react';
+import { Upload, Download,Edit, Images, Minimize2,SplitSquareVertical, Merge, Loader2,Settings,Crop,FileText, X, Stamp, Type, Image as ImageIcon } from 'lucide-react';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
 import { validateFile, ALLOWED_PDF_TYPES, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
-
+import { Link } from 'react-router-dom';
 interface PDFFile {
   file: File;
   preview?: string;
@@ -210,33 +210,33 @@ export function WatermarkPDF() {
       >
         <input {...getInputProps()} />
         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-white">
           {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here, or tap to select'}
         </p>
-        <p className="text-sm text-gray-500 mt-2">Supports PDF files</p>
+        <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports PDF files</p>
       </div>
 
       {files.length > 0 && (
         <>
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800">Selected File</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Selected File</h3>
               <button
                 onClick={resetFiles}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-white"
                 title="Remove file"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-gray-700">{files[0].file.name}</span>
+            <div className="bg-gray-50 p-3 rounded-lg dark:bg-gray-800">
+              <span className="text-gray-700 dark:text-white">{files[0].file.name}</span>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-white">
                 Watermark Type
               </label>
               <div className="flex gap-4">
@@ -253,13 +253,13 @@ export function WatermarkPDF() {
                 </button>
                 <button
                   onClick={() => setSettings(prev => ({ ...prev, type: 'image' }))}
-                  className={`flex items-center px-4 py-2 rounded-lg ${
+                  className={`flex items-center px-4 py-2 dark:bg-gray-800 dark:bg-indigo-6 rounded-lg ${
                     settings.type === 'image'
                       ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-gray-100 text-gray-700 dark:text-white hover:bg-gray-200'
                   }`}
                 >
-                  <ImageIcon className="w-5 h-5 mr-2" />
+                  <ImageIcon className="w-5 h-5 mr-2 dark:text-white" />
                   Image
                 </button>
               </div>
@@ -421,6 +421,71 @@ export function WatermarkPDF() {
           </div>
         </>
       )}
+      <div className="mt-6">
+         <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image & PDF Tools</h3>
+         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <ImageIcon className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Size Reduce</span>
+           </Link>
+           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <Settings className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Conversion</span>
+           </Link>
+           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+             <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image to PDF</span>
+           </Link>
+           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <Crop className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
+          </Link>
+          <Link to="/pdf-tools?tab=create" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+                        <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                          <FileText className="w-6 h-6 text-indigo-600" />
+                        </div>
+                        <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Create PDF</span>
+          </Link>
+          <Link to="/pdf-tools?tab=watermark" className="group flex items-center p-4 border border-gray-300 rounded-lg   hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Edit className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Watermark PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=split" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <SplitSquareVertical className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Split PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=merge" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Merge className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Merge PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=compress" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Minimize2 className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Compress PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=to-images" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Images className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">PDF to Images</span>
+            </Link>
+          </div>
+       </div>
     </div>
   );
 }

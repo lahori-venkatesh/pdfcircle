@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images, Pencil, Stamp, Minimize2 } from 'lucide-react';
+import { FileText, FilePlus, Split, Images,  Stamp, Minimize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -9,14 +9,12 @@ import { MergePDF } from './pdf/MergePDF';
 import { SplitPDF } from './pdf/SplitPDF';
 import { PDFToImages } from './pdf/PDFToImages';
 import { CompressPDF } from './pdf/CompressPDF';
-import { EditPDF } from './pdf/EditPDF';
 import { WatermarkPDF } from './pdf/WatermarkPDF';
 
 const tabs = [
   { id: 'create', label: 'Create PDF', icon: FileText },
   { id: 'merge', label: 'Merge PDFs', icon: FilePlus },
   { id: 'split', label: 'Split PDF', icon: Split },
-  { id: 'edit', label: 'Edit PDF', icon: Pencil },
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
   { id: 'compress', label: 'Compress PDF', icon: Minimize2 },
@@ -32,7 +30,6 @@ export function PDFTools() {
       case 'create': return <CreatePDF />;
       case 'merge': return <MergePDF />;
       case 'split': return <SplitPDF />;
-      case 'edit': return <EditPDF />;
       case 'watermark': return <WatermarkPDF />;
       case 'to-images': return <PDFToImages />;
       case 'compress': return <CompressPDF />;
@@ -44,7 +41,7 @@ export function PDFTools() {
     <>
       <SEOHeaders 
         title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
-        description={t('seo.pdfTools.description', 'Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.')}
+        description={t('seo.pdfTools.description', ' Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.')}
         keywords={[
           'pdfcircle',
           'free online pdf merger tool',
@@ -94,7 +91,7 @@ export function PDFTools() {
             {t('pdfTools.title', 'Free Online PDF Tools')}
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            {t('pdfTools.subtitle', 'Effortlessly merge, split, compress, and convert your PDFs with pdfCircle’s secure, no-sign-up tools.')}
+            {t('pdfTools.subtitle', 'Effortlessly Create PDFs, add watermarks on PDFs, merge, split, compress, and convert your PDFs with pdfCircle’s secure, no-sign-up tools.')}
           </p>
         </section>
 

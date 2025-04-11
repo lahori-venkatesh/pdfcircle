@@ -1,14 +1,26 @@
 import React, { useState, useCallback, useRef, memo, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, Image as ImageIcon, Loader2, X, Crop, Settings2, FileText } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Minimize2, Images, Edit } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
-
+import JSZip from 'jszip';
+import { Link } from 'react-router-dom'; 
 // Interfaces
 interface PreviewImage { file: File; preview: string; }
-interface ConversionSettings { mode: 'size' | 'quality'; targetSize: number | null; quality: number; format: string; width: number | null; height: number | null; maintainAspectRatio: boolean; unit: 'px' | 'in' | 'cm' | 'mm'; }
+interface ConversionSettings { 
+  mode: 'size' | 'quality' | 'custom';
+  targetSize: number | null; 
+  quality: number; 
+  format: string; 
+  width: number | null; 
+  height: number | null; 
+  maintainAspectRatio: boolean; 
+  unit: 'px' | 'in' | 'cm' | 'mm'; 
+  addWatermark: boolean; 
+  watermarkText: string; 
+}
 interface FormatOption { value: string; label: string; mimeType: string; }
 interface CropSettings { width: number; height: number; positionX: number; positionY: number; aspectRatio: string | null; }
 
@@ -21,6 +33,7 @@ const FORMAT_OPTIONS: FormatOption[] = [
   { value: 'pdf', label: 'PDF', mimeType: 'application/pdf' },
   { value: 'avif', label: 'AVIF', mimeType: 'image/avif' },
   { value: 'heic', label: 'HEIC', mimeType: 'image/heic' },
+  { value: 'ico', label: 'ICO', mimeType: 'image/x-icon' },
 ];
 const SIZE_OPTIONS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2];
 const UNIT_OPTIONS = ['px', 'in', 'cm', 'mm'];
@@ -31,36 +44,45 @@ const ASPECT_RATIOS = [
   { label: '16:9', value: '16:9' },
   { label: '3:2', value: '3:2' },
 ];
+const MAX_RECOMMENDED_SIZE = 15 * 1024 * 1024; // 15MB
+const MAX_IMAGES = 3; // Limit to 3 images in batch mode
 
 // Utility Functions
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
 const parseAspectRatio = (ratio: string | null): number => ratio ? Number(ratio.split(':')[0]) / Number(ratio.split(':')[1]) : 1;
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+};
 
 // Memoized Image Preview Component
-const ImagePreview = memo(({ image, index, convertedImage, convertedBlob, onRemove, onCrop, onDownload, formatFileSize }: {
-  image: PreviewImage; index: number; convertedImage?: string; convertedBlob?: Blob; onRemove: (index: number) => void;
-  onCrop: (index: number) => void; onDownload: (index: number) => void; formatFileSize: (bytes: number) => string;
+const ImagePreview = memo(({ image, index, convertedSize, onRemove, onCrop, onDownload }: {
+  image: PreviewImage; index: number; convertedSize?: number; onRemove: (index: number) => void;
+  onCrop: (index: number) => void; onDownload: (index: number) => void;
 }) => (
-  <div className="relative">
-    <img src={image.preview} alt={`Image preview ${index}`} className="w-full aspect-square object-contain rounded-lg bg-gray-100" />
-    <button onClick={() => onRemove(index)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1"><X className="w-4 h-4" /></button>
-    <button onClick={() => onCrop(index)} className="absolute bottom-10 right-2 bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center"><Crop className="w-4 h-4 mr-1" />Crop</button>
-    <p className="mt-2 text-sm text-gray-500">Original: {formatFileSize(image.file.size)}</p>
-    {convertedImage && (
-      <div className="mt-2">
-        <img src={convertedImage} alt={`Converted image ${index}`} className="w-full aspect-square object-contain rounded-lg bg-gray-100" />
-        <p className="mt-2 text-sm text-gray-500">Converted: {convertedBlob ? formatFileSize(convertedBlob.size) : 'N/A'}</p>
-        <button onClick={() => onDownload(index)} className="mt-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"><Download className="w-5 h-5 mr-2" />Download</button>
-      </div>
-    )}
+  <div className="relative p-4 bg-gray-100 rounded-lg shadow-md">
+    <button onClick={() => onRemove(index)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700">
+      <Trash2 className="w-4 h-4" />
+    </button>
+    <p className="text-sm text-gray-700">Filename: {image.file.name}</p>
+    <p className="text-sm text-gray-500">Original Size: {formatFileSize(image.file.size)}</p>
+    {convertedSize && <p className="text-sm text-green-600">Converted Size: {formatFileSize(convertedSize)}</p>}
+    <div className="mt-2 flex justify-between flex-wrap gap-2">
+      <button onClick={() => onCrop(index)} className="bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center"><Crop className="w-4 h-4 mr-1" />Crop</button>
+      {convertedSize && (
+        <button onClick={() => onDownload(index)} className="bg-green-600 text-white rounded-lg px-2 py-1 flex items-center"><Download className="w-4 h-4 mr-1" />Download</button>
+      )}
+    </div>
   </div>
 ));
 
 export function ImageTools() {
   const { saveOperation } = useOperationsCache();
   const [images, setImages] = useState<PreviewImage[]>([]);
-  const [convertedImages, setConvertedImages] = useState<string[]>([]);
-  const [convertedBlobs, setConvertedBlobs] = useState<Blob[]>([]);
+  const [convertedBlobs, setConvertedBlobs] = useState<{ blob: Blob; originalName: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCropModal, setShowCropModal] = useState(false);
@@ -72,8 +94,23 @@ export function ImageTools() {
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
   const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
   const [scale, setScale] = useState(1);
+  const [showDropdown, setShowDropdown] = useState(false);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const cropContainerRef = useRef<HTMLDivElement | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [settings, setSettings] = useState<ConversionSettings>({
+    mode: 'quality',
+    targetSize: null,
+    quality: 80,
+    format: 'jpeg',
+    width: null,
+    height: null,
+    maintainAspectRatio: true,
+    unit: 'px',
+    addWatermark: false,
+    watermarkText: 'Sample Watermark',
+  });
 
   const dataURLtoBlob = useCallback((dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
@@ -93,27 +130,34 @@ export function ImageTools() {
     }), []);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    const currentImageCount = images.length;
+    const allowedNewImages = Math.max(0, MAX_IMAGES - currentImageCount);
     const newImages = acceptedFiles
+      .slice(0, allowedNewImages) // Limit to remaining allowed images
       .filter(file => validateFile(file, ALLOWED_IMAGE_TYPES).isValid)
-      .map(file => ({ file, preview: createSecureObjectURL(file) }));
+      .map(file => {
+        if (file.size > MAX_RECOMMENDED_SIZE) {
+          setError(`File ${file.name} exceeds recommended limit of ${formatFileSize(MAX_RECOMMENDED_SIZE)}. Performance may be affected.`);
+        }
+        return { file, preview: createSecureObjectURL(file) };
+      });
 
-    if (newImages.length !== acceptedFiles.length) setError('Some files were rejected due to invalid type');
+    if (newImages.length !== acceptedFiles.length) setError(`Some files were rejected due to invalid type or exceeding the ${MAX_IMAGES}-image limit`);
     if (fileRejections.length > 0) {
       const rejectionErrors = fileRejections.map(rejection => `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`).join('; ');
       setError(`Upload failed: ${rejectionErrors}`);
     }
 
     setImages(prev => [...prev, ...newImages]);
-    setConvertedImages([]);
     setConvertedBlobs([]);
-    if (!fileRejections.length) setError(null);
-  }, []);
+    if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
+  }, [images]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.avif', '.heic'] },
-    maxFiles: 0,
-    maxSize: 15 * 1024 * 1024,
+    maxFiles: MAX_IMAGES,
+    maxSize: MAX_RECOMMENDED_SIZE,
   });
 
   const handleImageLoad = useCallback(() => {
@@ -152,45 +196,25 @@ export function ImageTools() {
     return blobToDataURL(await new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 1)));
   }, [blobToDataURL]);
 
-  const handleCropComplete = useCallback(async () => {
-    if (!cropImageSrc || cropImageIndex === null || !imageDimensions) {
-      setError('Invalid crop selection');
-      return;
-    }
+  const addWatermarkToImage = async (blob: Blob, watermarkText: string): Promise<Blob> => {
+    const img = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
 
-    setLoading(true);
-    try {
-      const croppedSrc = await applyCrop(cropImageSrc, cropSettings);
-      const croppedBlob = dataURLtoBlob(croppedSrc);
-      const croppedFile = new File([croppedBlob], images[cropImageIndex]?.file.name || 'cropped.jpg', { type: 'image/jpeg' });
+    if (!ctx) throw new Error('Canvas context unavailable');
 
-      setImages(prev => {
-        const newImages = [...prev];
-        revokeBlobUrl(newImages[cropImageIndex].preview);
-        newImages[cropImageIndex] = { file: croppedFile, preview: croppedSrc };
-        return newImages;
-      });
+    canvas.width = img.width;
+    canvas.height = img.height;
 
-      setShowCropModal(false);
-      setCropImageSrc(null);
-      setCropImageIndex(null);
-    } catch (err) {
-      setError(`Cropping failed: ${(err as Error).message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [cropImageSrc, cropImageIndex, images, applyCrop, dataURLtoBlob, cropSettings, imageDimensions]);
+    ctx.drawImage(img, 0, 0);
 
-  const [settings, setSettings] = useState<ConversionSettings>({
-    mode: 'quality',
-    targetSize: null,
-    quality: 80,
-    format: 'jpeg',
-    width: null,
-    height: null,
-    maintainAspectRatio: true,
-    unit: 'px',
-  });
+    ctx.font = '30px Arial';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.textAlign = 'center';
+    ctx.fillText(watermarkText, canvas.width / 2, canvas.height - 30);
+
+    return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob!), 'image/jpeg'));
+  };
 
   const createPDF = useCallback(async (preview: string, settings: ConversionSettings): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
@@ -204,10 +228,6 @@ export function ImageTools() {
       img.src = preview;
     });
 
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Failed to get canvas context');
-
     let width = settings.width || img.width;
     let height = settings.height || img.height;
     if (settings.maintainAspectRatio) {
@@ -220,12 +240,7 @@ export function ImageTools() {
     width = width * pixelRatio;
     height = height * pixelRatio;
 
-    canvas.width = width;
-    canvas.height = height;
-    ctx.drawImage(img, 0, 0, width, height);
-
-    const imgData = canvas.toDataURL('image/jpeg', settings.quality / 100);
-    pdf.addImage(imgData, 'JPEG', 0, 0, pdf.internal.pageSize.getWidth(), pdf.internal.pageSize.getHeight(), undefined, 'FAST');
+    pdf.addImage(preview, 'JPEG', 0, 0, width, height);
     return pdf.output('blob');
   }, []);
 
@@ -245,6 +260,35 @@ export function ImageTools() {
     });
   }, []);
 
+  const handleCropComplete = useCallback(async () => {
+    if (!cropImageSrc || cropImageIndex === null || !imageDimensions) {
+      setError('Invalid crop selection');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const croppedSrc = await applyCrop(cropImageSrc, cropSettings);
+      const croppedBlob = dataURLtoBlob(croppedSrc);
+      const croppedFile = new File([croppedBlob], images[cropImageIndex].file.name, { type: 'image/jpeg' });
+
+      setImages(prev => {
+        const newImages = [...prev];
+        revokeBlobUrl(newImages[cropImageIndex].preview);
+        newImages[cropImageIndex] = { file: croppedFile, preview: croppedSrc };
+        return newImages;
+      });
+
+      setShowCropModal(false);
+      setCropImageSrc(null);
+      setCropImageIndex(null);
+    } catch (err) {
+      setError(`Cropping failed: ${(err as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  }, [cropImageSrc, cropImageIndex, images, applyCrop, dataURLtoBlob, cropSettings, imageDimensions]);
+
   const handleConversion = useCallback(async () => {
     if (images.length === 0) {
       setError('No images selected');
@@ -254,30 +298,74 @@ export function ImageTools() {
     setLoading(true);
     setError(null);
     try {
-      const isPDF = settings.format === 'pdf';
-      const results = await Promise.all(images.map(async (image, index) => {
-        try {
-          const resultBlob = isPDF ? await createPDF(image.preview, settings) : await compressImage(image.file, settings);
-          const resultUrl = createSecureObjectURL(resultBlob);
-          saveOperation({ type: 'image_conversion', metadata: { filename: image.file.name, fileSize: resultBlob.size, format: settings.format, settings }, preview: resultUrl });
-          return { url: resultUrl, blob: resultBlob };
-        } catch (err) {
-          throw new Error(`Failed to convert image ${index + 1}: ${(err as Error).message}`);
-        }
-      }));
+      const results = await Promise.all(
+        images.map(async (image) => {
+          let resultBlob: Blob = image.file;
 
-      setConvertedImages(results.map(r => r.url));
-      setConvertedBlobs(results.map(r => r.blob));
+          if (cropImageSrc && images.findIndex(img => img.preview === cropImageSrc) === images.indexOf(image)) {
+            const croppedSrc = await applyCrop(image.preview, cropSettings);
+            resultBlob = dataURLtoBlob(croppedSrc);
+          }
+
+          if (settings.mode === 'custom' && (settings.width || settings.height)) {
+            resultBlob = await compressImage(resultBlob, {
+              ...settings,
+              maxWidthOrHeight: Math.max(settings.width || 0, settings.height || 0) * (settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906),
+            });
+          } else {
+            resultBlob = await compressImage(resultBlob, settings);
+          }
+
+          if (settings.addWatermark) {
+            resultBlob = await addWatermarkToImage(resultBlob, settings.watermarkText);
+          }
+
+          if (settings.format === 'pdf') {
+            resultBlob = await createPDF(URL.createObjectURL(resultBlob), settings);
+          }
+
+          saveOperation({
+            type: 'image_conversion',
+            metadata: {
+              filename: image.file.name,
+              fileSize: resultBlob.size,
+              format: settings.format,
+              settings,
+            },
+            preview: URL.createObjectURL(resultBlob),
+          });
+
+          return { blob: resultBlob, originalName: image.file.name };
+        })
+      );
+
+      setConvertedBlobs(results);
     } catch (err) {
-      setError((err as Error).message || 'Conversion failed');
+      setError((err as Error).message || 'File creation failed');
     } finally {
       setLoading(false);
     }
-  }, [images, settings, saveOperation, createPDF, compressImage]);
+  }, [images, settings, cropImageSrc, cropSettings, saveOperation, applyCrop, dataURLtoBlob, createPDF, addWatermarkToImage, compressImage]);
 
   const handleDownload = useCallback((index: number) => {
-    if (!convertedBlobs[index] || !settings.format) return;
-    const link = createSecureDownloadLink(convertedBlobs[index], `converted-${index}.${settings.format === 'jpeg' ? 'jpg' : settings.format}`);
+    if (!convertedBlobs[index]) return;
+    const { blob, originalName } = convertedBlobs[index];
+    const extension = settings.format === 'jpeg' ? 'jpg' : settings.format;
+    const link = createSecureDownloadLink(blob, `${originalName.split('.').slice(0, -1).join('.')}.${extension}`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [convertedBlobs, settings.format]);
+
+  const handleBatchDownloadZip = useCallback(async () => {
+    const zip = new JSZip();
+    convertedBlobs.forEach(({ blob, originalName }, index) => {
+      const extension = settings.format === 'jpeg' ? 'jpg' : settings.format;
+      zip.file(`${originalName.split('.').slice(0, -1).join('.')}.${extension}`, blob);
+    });
+
+    const content = await zip.generateAsync({ type: 'blob' });
+    const link = createSecureDownloadLink(content, 'converted_images.zip');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -285,15 +373,18 @@ export function ImageTools() {
 
   const resetImages = useCallback(() => {
     images.forEach(img => revokeBlobUrl(img.preview));
-    convertedImages.forEach(url => revokeBlobUrl(url));
     setImages([]);
-    setConvertedImages([]);
     setConvertedBlobs([]);
     setError(null);
     setShowCropModal(false);
     setCropImageSrc(null);
     setCropImageIndex(null);
-  }, [images, convertedImages]);
+  }, [images]);
+
+  const handleNewConversion = useCallback(() => {
+    resetImages();
+    setShowDropdown(false); // Ensure dropdown is closed
+  }, [resetImages]);
 
   const removeImage = useCallback((index: number) => {
     setImages(prev => {
@@ -302,14 +393,6 @@ export function ImageTools() {
       newImages.splice(index, 1);
       return newImages;
     });
-    setConvertedImages(prev => {
-      const newConverted = [...prev];
-      if (newConverted[index]) {
-        revokeBlobUrl(newConverted[index]);
-        newConverted.splice(index, 1);
-      }
-      return newConverted;
-    });
     setConvertedBlobs(prev => {
       const newBlobs = [...prev];
       newBlobs.splice(index, 1);
@@ -317,12 +400,10 @@ export function ImageTools() {
     });
   }, []);
 
-  const formatFileSize = useCallback((bytes: number): string => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
+  const handleAddMoreImages = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
   }, []);
 
   const getPlaceholder = (field: 'width' | 'height') => {
@@ -376,12 +457,8 @@ export function ImageTools() {
       let newState = { ...prev };
 
       if (isDragging) {
-        const dx = x - dragStart.x;
-        const dy = y - dragStart.y;
-        if (isDragging) {
-          newState.positionX = clamp(x - dragStart.x, 0, imageDimensions.width - prev.width);
-          newState.positionY = clamp(y - dragStart.y, 0, imageDimensions.height - prev.height);
-        }
+        newState.positionX = clamp(x - dragStart.x, 0, imageDimensions.width - prev.width);
+        newState.positionY = clamp(y - dragStart.y, 0, imageDimensions.height - prev.height);
       } else if (isResizing) {
         const sensitivity = 0.3;
         const dx = (x - dragStart.x) * sensitivity;
@@ -417,13 +494,25 @@ export function ImageTools() {
 
       return newState;
     });
-  }, [isDragging, isResizing, dragStart, imageDimensions]);
+  }, [isDragging, isResizing, dragStart, imageDimensions, getPositionFromEvent]);
 
   const handleEnd = useCallback(() => {
     setIsDragging(false);
     setIsResizing(null);
     setDragStart(null);
   }, []);
+
+  const resetCrop = useCallback(() => {
+    if (!imageDimensions) return;
+    const defaultSize = Math.min(imageDimensions.width, imageDimensions.height, 600);
+    setCropSettings({
+      width: defaultSize,
+      height: defaultSize,
+      positionX: (imageDimensions.width - defaultSize) / 2,
+      positionY: (imageDimensions.height - defaultSize) / 2,
+      aspectRatio: null,
+    });
+  }, [imageDimensions]);
 
   useEffect(() => {
     if (!showCropModal) return;
@@ -444,29 +533,26 @@ export function ImageTools() {
     };
   }, [showCropModal, handleMove, handleEnd]);
 
-  const resetCrop = useCallback(() => {
-    if (!imageDimensions) return;
-    const defaultSize = Math.min(imageDimensions.width, imageDimensions.height, 600);
-    setCropSettings({
-      width: defaultSize,
-      height: defaultSize,
-      positionX: (imageDimensions.width - defaultSize) / 2,
-      positionY: (imageDimensions.height - defaultSize) / 2,
-      aspectRatio: null,
-    });
-  }, [imageDimensions]);
+  const handleUploadSource = (source: string) => {
+    setShowDropdown(false);
+    if (source === 'device' && fileInputRef.current) {
+      fileInputRef.current.click();
+    } else {
+      setError(`Upload from ${source} is not yet implemented`);
+    }
+  };
 
   return (
     <>
       <SEOHeaders 
-        title="Free Online Image Editor - Resize, Crop, Rotate & Convert Images"
-        description="Edit high-resolution images online with our free tool. Resize, crop, rotate, and convert to JPEG, PNG, WebP, AVIF, HEIC, or PDF with advanced rectangle cropping."
-        keywords={['image editor online free', 'resize high resolution images', 'crop image online tool', 'rotate image free', 'convert image to pdf online', 'image compressor free', 'optimize images for web', 'batch image resizer', 'SEO image optimization', 'convert jpg to png free', 'png to webp converter online', 'free photo editing tool', 'resize images for social media', 'compress jpg online', 'image format converter free', 'online image resizer high quality', 'photo cropper free', 'web image optimizer tool', 'edit large images online', 'free image conversion tool', 'rectangle crop tool', 'zoom image editor', 'convert to avif', 'convert to heic']}
+        title="Free Online Image Editor - Create, Resize, Crop, Convert Images"
+        description="Create and edit high-resolution images online with our free tool. Resize, crop, convert to JPEG, PNG, WebP, PDF, ICO, and more with advanced features."
+        keywords={['image editor online free', 'create images online', 'resize high resolution images', 'crop image online tool', 'convert image to pdf', 'image compressor free', 'optimize images', 'batch image resizer', 'SEO image optimization', 'add watermark to image', 'free photo editing tool', 'online image creator']}
         canonicalUrl="https://pdfcircle.com/image-tools"
       />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Free Online Image Editor - Resize, Crop, Rotate & Convert</h1>
+        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
         <div className="bg-white rounded-xl shadow-lg p-6">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
@@ -579,34 +665,51 @@ export function ImageTools() {
             <div className="space-y-6">
               {images.length === 0 ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Edit</h2>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Create Files (Max 3)</h2>
                   <div {...getRootProps()} className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}>
-                    <input {...getInputProps()} />
-                    <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Drag & drop or tap to select'}</p>
-                    <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB)</p>
+                    <input {...getInputProps()} ref={fileInputRef} className="hidden" />
+                    <div className="relative inline-block">
+                      <button 
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 mb-4"
+                      >
+                        Choose File
+                      </button>
+                      {showDropdown && (
+                        <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                          <button onClick={() => handleUploadSource('device')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Device</button>
+                          <button onClick={() => handleUploadSource('dropbox')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dropbox</button>
+                          <button onClick={() => handleUploadSource('onedrive')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">OneDrive</button>
+                          <button onClick={() => handleUploadSource('url')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">URL</button>
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
+                    <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, 3 images)</p>
                   </div>
                   <div className="mt-4 text-sm text-gray-600">
-                    <p>Related Tools: 
-                      <a href="/pdf-tools" className="text-indigo-600 hover:underline" title="PDF Editing Tools">PDF Tools</a> | 
-                      <a href="/pdf-tools?tab=compress" className="text-indigo-600 hover:underline" title="Image Compression Tool">Compressor pdf</a> | 
-                      <a href="/pdf-tools?tab=create" className="text-indigo-600 hover:underline" title="File Format Converter">Create pdf</a> | 
-                      <a href="/pdf-tools?tab=to-images" className="text-indigo-600 hover:underline" title="File Format Converter">pdf to image</a> | 
-                      <a href="/pdf-tools?tab=watermark" className="text-indigo-600 hover:underline" title="File Format Converter">watermark on pdf</a>
-                    </p>
-                    <p className="mt-2">Learn More: 
-                      <a href="https://developers.google.com/speed/docs/insights/OptimizeImages" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Google's Image Optimization Guide">Google Image Optimization</a> | 
-                      <a href="https://www.smashingmagazine.com/2021/03/complete-guide-image-optimization-website-performance/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Smashing Magazine Image Optimization">Smashing Magazine Guide</a> | 
-                      <a href="https://web.dev/learn/images/" className="text-indigo-600 hover:underline" target="_blank" rel="noopener noreferrer" title="Web.dev Image Best Practices">Web.dev Images</a>
-                    </p>
+                    <p>How to Create Files:</p>
+                    <ul className="list-disc pl-5">
+                      <li>Select up to 3 images to upload.</li>
+                      <li>Add more images with the + button if under limit.</li>
+                      <li>Choose your desired output format and settings.</li>
+                      <li>Optionally crop or add a watermark.</li>
+                      <li>Click "Create Files" to generate new files.</li>
+                      <li>Download individually or as ZIP, then start a new conversion.</li>
+                    </ul>
                   </div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-800">Preview and Edit Your Images</h2>
-                    <button onClick={resetImages} className="text-gray-500 hover:text-gray-700"><X className="w-5 h-5" /></button>
+                    <h2 className="text-lg font-semibold text-gray-800">Preview and Create Files ({images.length}/{MAX_IMAGES})</h2>
+                    {images.length < MAX_IMAGES && (
+                      <button onClick={handleAddMoreImages} className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700">
+                        <Plus className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
+                  <input {...getInputProps()} ref={fileInputRef} className="hidden" />
                   {loading && (
                     <div className="text-center">
                       <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" />
@@ -619,66 +722,204 @@ export function ImageTools() {
                         key={index}
                         image={image}
                         index={index}
-                        convertedImage={convertedImages[index]}
-                        convertedBlob={convertedBlobs[index]}
+                        convertedSize={convertedBlobs[index]?.blob.size}
                         onRemove={removeImage}
                         onCrop={() => { setCropImageSrc(image.preview); setCropImageIndex(index); setShowCropModal(true); }}
-                        onDownload={handleDownload}
-                        formatFileSize={formatFileSize}
+                        onDownload={() => handleDownload(index)}
                       />
                     ))}
                   </div>
                   {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
                   <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
                     <div className="flex items-center justify-between">
-                      <h2 className="text-sm font-medium text-gray-700">Image Conversion Settings</h2>
+                      <h2 className="text-sm font-medium text-gray-700">File Creation Settings</h2>
                       <Settings2 className="w-5 h-5 text-gray-400" />
                     </div>
-                    <select value={settings.format} onChange={e => setSettings(prev => ({ ...prev, format: e.target.value }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none">
-                      {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    <select
+                      value={settings.format}
+                      onChange={(e) => setSettings(prev => ({ ...prev, format: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none"
+                    >
+                      {FORMAT_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
                     </select>
                     <div className="flex gap-2">
-                      {['quality', 'size'].map(mode => (
-                        <button key={mode} onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' }))} className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-                          {mode === 'quality' ? 'Quality' : 'Size'}
+                      {['quality', 'size', 'custom'].map((mode) => (
+                        <button
+                          key={mode}
+                          onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' | 'custom' }))}
+                          className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        >
+                          {mode.charAt(0).toUpperCase() + mode.slice(1)}
                         </button>
                       ))}
                     </div>
                     {settings.mode === 'quality' ? (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Quality: {settings.quality}%</label>
-                        <input type="range" min="1" max="100" value={settings.quality} onChange={e => setSettings(prev => ({ ...prev, quality: +e.target.value }))} className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600" />
+                        <input
+                          type="range"
+                          min="1"
+                          max="100"
+                          value={settings.quality}
+                          onChange={(e) => setSettings(prev => ({ ...prev, quality: +e.target.value }))}
+                          className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
+                        />
                       </div>
-                    ) : (
+                    ) : settings.mode === 'size' ? (
                       <div className="flex flex-wrap gap-2">
-                        {SIZE_OPTIONS.map(size => (
-                          <button key={size} onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))} className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                        {SIZE_OPTIONS.map((size) => (
+                          <button
+                            key={size}
+                            onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))}
+                            className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                          >
                             {size < 1 ? `${size * 1000}KB` : `${size}MB`}
                           </button>
                         ))}
                       </div>
+                    ) : (
+                      <div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <input
+                            type="number"
+                            value={settings.width || ''}
+                            onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? +e.target.value : null }))}
+                            placeholder={getPlaceholder('width')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
+                          />
+                          <input
+                            type="number"
+                            value={settings.height || ''}
+                            onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? +e.target.value : null }))}
+                            placeholder={getPlaceholder('height')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
+                          />
+                          <select
+                            value={settings.unit}
+                            onChange={(e) => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))}
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none"
+                          >
+                            {UNIT_OPTIONS.map((unit) => (
+                              <option key={unit} value={unit}>
+                                {unit.toUpperCase()}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <label className="flex items-center mt-2">
+                          <input
+                            type="checkbox"
+                            checked={settings.maintainAspectRatio}
+                            onChange={(e) => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Maintain aspect ratio</span>
+                        </label>
+                        <label className="flex items-center mt-2">
+                          <input
+                            type="checkbox"
+                            checked={settings.addWatermark}
+                            onChange={(e) => setSettings(prev => ({ ...prev, addWatermark: e.target.checked }))}
+                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Add Watermark</span>
+                        </label>
+                        {settings.addWatermark && (
+                          <input
+                            type="text"
+                            value={settings.watermarkText}
+                            onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))}
+                            placeholder="Enter watermark text"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                          />
+                        )}
+                      </div>
                     )}
-                    <div className="grid grid-cols-3 gap-4">
-                      <input type="number" value={settings.width || ''} onChange={e => setSettings(prev => ({ ...prev, width: e.target.value ? +e.target.value : null }))} placeholder={getPlaceholder('width')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200" />
-                      <input type="number" value={settings.height || ''} onChange={e => setSettings(prev => ({ ...prev, height: e.target.value ? +e.target.value : null }))} placeholder={getPlaceholder('height')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200" />
-                      <select value={settings.unit} onChange={e => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none">
-                        {UNIT_OPTIONS.map(unit => <option key={unit} value={unit}>{unit.toUpperCase()}</option>)}
-                      </select>
-                    </div>
-                    <label className="flex items-center">
-                      <input type="checkbox" checked={settings.maintainAspectRatio} onChange={e => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))} className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" />
-                      <span className="ml-2 text-sm text-gray-700">Maintain aspect ratio</span>
-                    </label>
                     <div className="flex gap-3">
-                      <button onClick={handleConversion} disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)} className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center">
-                        {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />Converting...</> : <>{settings.format === 'pdf' ? <FileText className="w-5 h-5 mr-2" /> : <ImageIcon className="w-5 h-5 mr-2" />}Convert</>}
+                      <button
+                        onClick={handleConversion}
+                        disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)}
+                        className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
+                      >
+                        {loading ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Creating...
+                          </>
+                        ) : (
+                          <>
+                            {settings.format === 'pdf' ? <FileText className="w-5 h-5 mr-2" /> : <ImageIcon className="w-5 h-5 mr-2" />}
+                            Create Files
+                          </>
+                        )}
                       </button>
                     </div>
+                    {convertedBlobs.length > 0 && (
+                      <div className="flex gap-3">
+                        <button
+                          onClick={handleBatchDownloadZip}
+                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                        >
+                          <Archive className="w-5 h-5 mr-2" /> Download ZIP
+                        </button>
+                        <button
+                          onClick={handleNewConversion}
+                          className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
+                        >
+                          <ImageIcon className="w-5 h-5 mr-2" /> New Conversion
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
             </div>
           )}
+        </div>
+
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More PDF Tools</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Link to="/pdf-tools?tab=watermark" className="group flex items-center p-4 border border-gray-300 rounded-lg   hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Edit className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Watermark PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=split" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <SplitSquareVertical className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Split PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=merge" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Merge className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Merge PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=compress" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Minimize2 className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Compress PDF</span>
+            </Link>
+            <Link to="/pdf-tools?tab=to-images" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <Images className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">PDF to Images</span>
+            </Link>
+            <Link to="/pdf-tools?tab=create" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+                <FileText className="w-6 h-6 text-indigo-600" />
+              </div>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Create PDF</span>
+            </Link>
+          </div>
         </div>
       </div>
     </>
