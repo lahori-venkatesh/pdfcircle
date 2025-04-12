@@ -1,16 +1,16 @@
-import { PropsWithChildren } from 'react';
 import React, { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { 
   FileUp, Image, FileText, FilePlus, Split, Menu, X, LogOut, Images,
   ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-   Stamp, Sun, Moon, ArrowUp
+  Stamp, Sun, Moon, ArrowUp
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
 import { PDFTools } from './components/PDFTools';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
+import { Blog } from './components/blog';
 import { Contact } from './components/Contact';
 import { AboutUs } from './components/AboutUs';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -19,8 +19,9 @@ import { AuthModal } from './components/AuthModal';
 import { SEOHeaders } from './components/SEOHeaders';
 import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
+import { PropsWithChildren } from 'react';
 
-// ScrollToTop component (unchanged)
+// ScrollToTop component
 const ScrollToTop = ({ children }: PropsWithChildren<{}>) => {
   const location = useLocation();
 
@@ -54,7 +55,7 @@ interface FAQItemProps {
   question: string;
   answer: string;
 }
-function FAQItem({ question, answer }: FAQItemProps){
+function FAQItem({ question, answer }: FAQItemProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -138,19 +139,19 @@ function HomePage() {
         <div className="absolute inset-0 bg-[url('/hero.webp')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
-           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-            {t('hero.title', 'Convert PDFs & Images Free Online')}
-           </h1>
-           <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
-            {t('hero.subtitle', 'Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.')}
-           </p>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
+              {t('hero.title', 'Convert PDFs & Images Free Online')}
+            </h1>
+            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
+              {t('hero.subtitle', 'Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.')}
+            </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block bg-white text-indigo-600 dark:bg-white dark: text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-200 transition-colors duration-300 shadow-lg"
+                className="inline-block bg-white text-indigo-600 dark:bg-white dark:text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-200 transition-colors duration-300 shadow-lg"
               >
-               {t('hero.getStarted', 'Start Converting Now')}
+                {t('hero.getStarted', 'Start Converting Now')}
               </Link>
               <Link
                 to="/about"
@@ -168,7 +169,7 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-          {t('features.title', 'Free PDF Conversion & Image Editing Tools')}
+            {t('features.title', 'Free PDF Conversion & Image Editing Tools')}
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <FeatureCard 
@@ -207,7 +208,6 @@ function HomePage() {
               description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} 
               to="/pdf-tools?tab=split"
             />
-            
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
@@ -222,7 +222,7 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-          {t('howItWorks.title', 'How pdfCircle Makes Document Processing Simple')}
+            {t('howItWorks.title', 'How pdfCircle Makes Document Processing Simple')}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StepCard
@@ -421,6 +421,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
                 <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
                 <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
+                <Link to="/blog" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Blog</Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
@@ -432,13 +433,14 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
               </button>
               {user ? (
-                <div className="flex items-center space-x-4">
-                  <span className="text-gray-600 dark:text-gray-300">{user.email}</span>
-                  <button onClick={handleSignOut} className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
-                  </button>
-                </div>
+                <button
+                  onClick={handleSignOut}
+                  className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  aria-label="Sign Out"
+                >
+                  <LogOut className="w-5 h-5 stroke-current" />
+                  <span>Sign Out</span>
+                </button>
               ) : (
                 <>
                   <button onClick={() => openAuthModal('login')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
@@ -450,10 +452,13 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 </>
               )}
             </div>
-            <button className="sm:hidden text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white" onClick={toggleMobileMenu}
-            aria-label={mobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
-            aria-expanded={mobileMenuOpen}
-            aria-controls="mobile-menu">
+            <button
+              className="sm:hidden text-gray-600 dark:text-white hover:text-gray-900 dark:hover:text-white"
+              onClick={toggleMobileMenu}
+              aria-label={mobileMenuOpen ? "Close mobile menu" : "Open mobile menu"}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+            >
               {mobileMenuOpen ? <X className="w-7 h-7" /> : <Menu className="w-8 h-8" />}
             </button>
           </div>
@@ -464,6 +469,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
               <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
               <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
               <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
+              <Link to="/blog" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Blog</Link>
               <button
                 onClick={toggleTheme}
                 className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
@@ -481,13 +487,14 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 )}
               </button>
               {user ? (
-                <>
-                  <div className="py-2 text-gray-600 dark:text-gray-300">{user.email}</div>
-                  <button onClick={handleSignOut} className="w-full flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">
-                    <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
-                  </button>
-                </>
+                <button
+                  onClick={handleSignOut}
+                  className="w-full flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-2 transition-colors"
+                  aria-label="Sign Out"
+                >
+                  <LogOut className="w-5 h-5 stroke-current" />
+                  <span>Sign Out</span>
+                </button>
               ) : (
                 <>
                   <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">Login</button>
@@ -534,6 +541,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
                 <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-white">Terms of Service</Link></li>
                 <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-white">Contact Us</Link></li>
+                <li><Link to="/blog" onClick={scrollToTop} className="text-gray-400 hover:text-white">Blog</Link></li>
               </ul>
             </div>
             <div>
@@ -564,6 +572,7 @@ function App() {
                 <Route path="/image-tools" element={<ImageTools />} />
                 <Route path="/pdf-tools" element={<PDFTools />} />
                 <Route path="/about" element={<AboutUs />} />
+                <Route path="/blog" element={<Blog />} />
                 <Route path="/privacy" element={<PrivacyPolicy />} />
                 <Route path="/terms" element={<TermsOfService />} />
                 <Route path="/contact" element={<Contact />} />

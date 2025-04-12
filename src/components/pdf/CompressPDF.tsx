@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { PDFDocument, PDFImage, PDFName, PDFDict } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Settings, Image as ImageIcon, Crop, Loader2, X, FileText } from 'lucide-react';
@@ -122,11 +122,11 @@ export function CompressPDF() {
           const imageData = (xObject as any).decode();
           if (imageData) {
             const compressionOptions = {
-              maxSizeMB: Math.max(0.005, preset.maxSizeMB * (1 - targetReduction)), // Extremely aggressive
-              maxWidthOrHeight: Math.max(50, preset.maxWidthOrHeight * (1 - targetReduction)), // Minimum size
+              maxSizeMB: Math.max(0.005, preset.maxSizeMB * (1 - targetReduction)),
+              maxWidthOrHeight: Math.max(50, preset.maxWidthOrHeight * (1 - targetReduction)),
               useWebWorker: true,
               fileType: 'image/jpeg',
-              initialQuality: Math.max(0.05, preset.quality / 100 * (1 - targetReduction)), // Lower bound
+              initialQuality: Math.max(0.05, preset.quality / 100 * (1 - targetReduction)),
               alwaysKeepResolution: false,
             };
 
@@ -201,10 +201,6 @@ export function CompressPDF() {
       setResultBlob(compressedBlob);
       setPreviewSize({ original: file.size, compressed: compressedBytes.length });
       setProgress(100);
-
-      if (compressedBytes.length >= file.size) {
-        setError('Compression resulted in no size reduction. File may already be optimized or contain incompressible data.');
-      }
     } catch (err) {
       setError(err instanceof Error ? `Failed to compress: ${err.message}` : 'Unknown error');
     } finally {
@@ -256,22 +252,22 @@ export function CompressPDF() {
           <div>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Selected File</h3>
-              <button onClick={resetFiles} className="text-gray-500 hover:text-gray-700" title="Remove file">
-                <X className="w-5 h-5 dark:text-white" />
+              <button onClick={resetFiles} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" title="Remove file">
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="bg-gray-50 p-3 rounded-lg dark:bg-gray-800">
-              <span className="text-gray-700 dark:text-white">{files[0].file.name}</span>
+              <span className="text-gray-700 dark:text-gray-200">{files[0].file.name}</span>
             </div>
           </div>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Compression Level</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Compression Level</label>
               <select
                 value={quality}
                 onChange={(e) => setQuality(Number(e.target.value))}
-                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition duration-200"
+                className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition duration-200"
               >
                 <option value={80}>Maximum Quality (~20% Reduction)</option>
                 <option value={60}>High Quality (~40% Reduction)</option>
@@ -280,7 +276,7 @@ export function CompressPDF() {
                 <option value={10}>Minimum Quality (~90% Reduction)</option>
               </select>
               <div className="mt-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-white mb-1">Custom Reduction (%)</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Custom Reduction (%)</label>
                 <input
                   type="number"
                   min="0"
@@ -288,9 +284,9 @@ export function CompressPDF() {
                   value={customReduction || ''}
                   onChange={(e) => setCustomReduction(Number(e.target.value) || null)}
                   placeholder="e.g., 50"
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition duration-200"
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 shadow-sm focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 transition duration-200"
                 />
-                <p className="mt-1 text-sm text-gray-500 dark:text-white">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-300">
                   Leave blank for preset, or enter custom reduction percentage (0-95%).
                 </p>
               </div>
@@ -302,23 +298,23 @@ export function CompressPDF() {
                   className="bg-green-600 h-2.5 rounded-full transition-all duration-300"
                   style={{ width: `${progress}%` }}
                 ></div>
-                <p className="text-sm text-gray-600 mt-1">Compressing: {progress}%</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">Compressing: {progress}%</p>
               </div>
             )}
 
             {previewSize.original && (
               <div className="bg-gray-50 p-4 rounded-lg dark:bg-gray-800 space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-white">Original Size:</span>
-                  <span className="font-medium dark:text-white">{formatFileSize(previewSize.original)}</span>
+                  <span className="text-gray-600 dark:text-gray-200">Original Size:</span>
+                  <span className="font-medium dark:text-gray-200">{formatFileSize(previewSize.original)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600 dark:text-white">Compressed Size:</span>
-                  <span className="font-medium dark:text-white">{formatFileSize(previewSize.compressed)}</span>
+                  <span className="text-gray-600 dark:text-gray-200">Compressed Size:</span>
+                  <span className="font-medium dark:text-gray-200">{formatFileSize(previewSize.compressed)}</span>
                 </div>
                 {calculateReduction() > 0 && (
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Reduction:</span>
+                    <span className="text-gray-600 dark:text-gray-200">Reduction:</span>
                     <span className="font-medium text-green-600">{calculateReduction()}%</span>
                   </div>
                 )}
@@ -362,31 +358,31 @@ export function CompressPDF() {
         </>
       )}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More Image Tools</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-gray-200">More Image Tools</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <ImageIcon className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Size Reduce</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-gray-200">Image Size Reduce</span>
           </Link>
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Settings className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Conversion</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-gray-200">Image Conversion</span>
           </Link>
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <FileText className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image to PDF</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-gray-200">Image to PDF</span>
           </Link>
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Crop className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-gray-200">Crop Image</span>
           </Link>
         </div>
       </div>

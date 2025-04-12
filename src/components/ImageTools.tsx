@@ -6,7 +6,8 @@ import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
-import { Link } from 'react-router-dom'; 
+import { Link } from 'react-router-dom';
+
 // Interfaces
 interface PreviewImage { file: File; preview: string; }
 interface ConversionSettings { 
@@ -45,7 +46,8 @@ const ASPECT_RATIOS = [
   { label: '3:2', value: '3:2' },
 ];
 const MAX_RECOMMENDED_SIZE = 15 * 1024 * 1024; // 15MB
-const MAX_IMAGES = 3; // Limit to 3 images in batch mode
+const MAX_IMAGES = 3; // Limit to 3 images
+const ICO_SIZES = [16, 32, 48, 128, 256];
 
 // Utility Functions
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
@@ -58,22 +60,70 @@ const formatFileSize = (bytes: number): string => {
   return `${(bytes / Math.pow(k, i)).toFixed(1)} ${sizes[i]}`;
 };
 
-// Memoized Image Preview Component
+// Compress image using canvas
+const compressImageCanvas = (file: Blob, quality: number, maxWidth?: number, maxHeight?: number): Promise<Blob> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = createSecureObjectURL(file);
+    img.src = url;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+      if (maxWidth && maxHeight) {
+        const aspect = width / height;
+        if (width > maxWidth) {
+          width = maxWidth;
+          height = width / aspect;
+        }
+        if (height > maxHeight) {
+          height = maxHeight;
+          width = height * aspect;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        revokeBlobUrl(url);
+        return reject(new Error('Canvas context unavailable'));
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          revokeBlobUrl(url);
+          if (blob) resolve(blob);
+          else reject(new Error('Failed to compress image'));
+        },
+        'image/jpeg',
+        Math.max(0.1, quality / 100)
+      );
+    };
+    img.onerror = () => {
+      revokeBlobUrl(url);
+      reject(new Error('Failed to load image'));
+    };
+  });
+};
+
 const ImagePreview = memo(({ image, index, convertedSize, onRemove, onCrop, onDownload }: {
   image: PreviewImage; index: number; convertedSize?: number; onRemove: (index: number) => void;
   onCrop: (index: number) => void; onDownload: (index: number) => void;
 }) => (
   <div className="relative p-4 bg-gray-100 rounded-lg shadow-md">
-    <button onClick={() => onRemove(index)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700">
+    <button onClick={() => onRemove(index)} className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 hover:bg-red-700" aria-label="Remove image">
       <Trash2 className="w-4 h-4" />
     </button>
     <p className="text-sm text-gray-700">Filename: {image.file.name}</p>
     <p className="text-sm text-gray-500">Original Size: {formatFileSize(image.file.size)}</p>
     {convertedSize && <p className="text-sm text-green-600">Converted Size: {formatFileSize(convertedSize)}</p>}
     <div className="mt-2 flex justify-between flex-wrap gap-2">
-      <button onClick={() => onCrop(index)} className="bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center"><Crop className="w-4 h-4 mr-1" />Crop</button>
+      <button onClick={() => onCrop(index)} className="bg-indigo-600 text-white rounded-lg px-2 py-1 flex items-center" aria-label="Crop image">
+        <Crop className="w-4 h-4 mr-1" />Crop
+      </button>
       {convertedSize && (
-        <button onClick={() => onDownload(index)} className="bg-green-600 text-white rounded-lg px-2 py-1 flex items-center"><Download className="w-4 h-4 mr-1" />Download</button>
+        <button onClick={() => onDownload(index)} className="bg-green-600 text-white rounded-lg px-2 py-1 flex items-center" aria-label="Download converted image">
+          <Download className="w-4 h-4 mr-1" />Download
+        </button>
       )}
     </div>
   </div>
@@ -88,7 +138,7 @@ export function ImageTools() {
   const [showCropModal, setShowCropModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [cropImageIndex, setCropImageIndex] = useState<number | null>(null);
-  const [cropSettings, setCropSettings] = useState<CropSettings>({ width: 600, height: 600, positionX: 0, positionY: 0, aspectRatio: null });
+  const [cropSettings, setCropSettings] = useState<CropSettings>({ width: 0, height: 0, positionX: 0, positionY: 0, aspectRatio: null });
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState<string | null>(null);
   const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
@@ -114,7 +164,7 @@ export function ImageTools() {
 
   const dataURLtoBlob = useCallback((dataURL: string): Blob => {
     const [header, data] = dataURL.split(',');
-    const mime = header.match(/:(.*?);/)?.[1] ?? 'image/jpeg';
+    const mime = header.match(/:(.*?);/)?.[1] || 'image/jpeg';
     const binary = atob(data);
     const array = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
@@ -133,16 +183,16 @@ export function ImageTools() {
     const currentImageCount = images.length;
     const allowedNewImages = Math.max(0, MAX_IMAGES - currentImageCount);
     const newImages = acceptedFiles
-      .slice(0, allowedNewImages) // Limit to remaining allowed images
+      .slice(0, allowedNewImages)
       .filter(file => validateFile(file, ALLOWED_IMAGE_TYPES).isValid)
       .map(file => {
         if (file.size > MAX_RECOMMENDED_SIZE) {
-          setError(`File ${file.name} exceeds recommended limit of ${formatFileSize(MAX_RECOMMENDED_SIZE)}. Performance may be affected.`);
+          setError(`File ${file.name} exceeds recommended limit of ${formatFileSize(MAX_RECOMMENDED_SIZE)}.`);
         }
         return { file, preview: createSecureObjectURL(file) };
       });
 
-    if (newImages.length !== acceptedFiles.length) setError(`Some files were rejected due to invalid type or exceeding the ${MAX_IMAGES}-image limit`);
+    if (newImages.length !== acceptedFiles.length) setError(`Some files were rejected. Max ${MAX_IMAGES} images allowed.`);
     if (fileRejections.length > 0) {
       const rejectionErrors = fileRejections.map(rejection => `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`).join('; ');
       setError(`Upload failed: ${rejectionErrors}`);
@@ -168,12 +218,11 @@ export function ImageTools() {
     const scaleY = height / naturalHeight;
     const newScale = Math.min(scaleX, scaleY);
     setScale(newScale);
-    const defaultSize = Math.min(naturalWidth, naturalHeight, 600);
     setCropSettings({
-      width: defaultSize,
-      height: defaultSize,
-      positionX: (naturalWidth - defaultSize) / 2,
-      positionY: (naturalHeight - defaultSize) / 2,
+      width: naturalWidth,
+      height: naturalHeight,
+      positionX: 0,
+      positionY: 0,
       aspectRatio: null,
     });
   }, []);
@@ -193,19 +242,25 @@ export function ImageTools() {
     canvas.width = cropSettings.width;
     canvas.height = cropSettings.height;
     ctx.drawImage(img, cropSettings.positionX, cropSettings.positionY, cropSettings.width, cropSettings.height, 0, 0, cropSettings.width, cropSettings.height);
-    return blobToDataURL(await new Promise<Blob>(resolve => canvas.toBlob(blob => resolve(blob!), 'image/jpeg', 1)));
+    return blobToDataURL(await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      }, 'image/jpeg', 0.95);
+    }));
   }, [blobToDataURL]);
 
   const addWatermarkToImage = async (blob: Blob, watermarkText: string): Promise<Blob> => {
     const img = await createImageBitmap(blob);
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-
     if (!ctx) throw new Error('Canvas context unavailable');
 
     canvas.width = img.width;
     canvas.height = img.height;
-
     ctx.drawImage(img, 0, 0);
 
     ctx.font = '30px Arial';
@@ -213,52 +268,144 @@ export function ImageTools() {
     ctx.textAlign = 'center';
     ctx.fillText(watermarkText, canvas.width / 2, canvas.height - 30);
 
-    return new Promise((resolve) => canvas.toBlob((blob) => resolve(blob!), 'image/jpeg'));
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      }, 'image/jpeg', 0.95);
+    });
   };
 
-  const createPDF = useCallback(async (preview: string, settings: ConversionSettings): Promise<Blob> => {
+  const createPDF = useCallback(async (blob: Blob, settings: ConversionSettings): Promise<Blob> => {
     const { jsPDF } = await import('jspdf');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'px' });
+    // Compress image before PDF creation
+    const compressedBlob = await compressImageCanvas(blob, settings.quality, settings.width || undefined, settings.height || undefined);
     const img = new Image();
-    img.crossOrigin = 'Anonymous';
+    img.src = createSecureObjectURL(compressedBlob);
 
     await new Promise<void>((resolve, reject) => {
       img.onload = () => resolve();
-      img.onerror = () => reject(new Error('Failed to load image for PDF conversion'));
-      img.src = preview;
+      img.onerror = () => reject(new Error('Failed to load image for PDF'));
+      img.src = img.src;
     });
 
     let width = settings.width || img.width;
     let height = settings.height || img.height;
-    if (settings.maintainAspectRatio) {
+
+    if (settings.maintainAspectRatio && (settings.width || settings.height)) {
       const aspectRatio = img.width / img.height;
-      if (width / height > aspectRatio) width = height * aspectRatio;
-      else height = width / aspectRatio;
+      if (settings.width && !settings.height) {
+        height = settings.width / aspectRatio;
+      } else if (settings.height && !settings.width) {
+        width = settings.height * aspectRatio;
+      } else if (width / height > aspectRatio) {
+        width = height * aspectRatio;
+      } else {
+        height = width / aspectRatio;
+      }
     }
 
     const pixelRatio = settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906;
-    width = width * pixelRatio;
-    height = height * pixelRatio;
+    width *= pixelRatio;
+    height *= pixelRatio;
 
-    pdf.addImage(preview, 'JPEG', 0, 0, width, height);
+    const pdf = new jsPDF({
+      orientation: width > height ? 'landscape' : 'portrait',
+      unit: 'px',
+      format: [width, height],
+    });
+
+    pdf.addImage(img.src, 'JPEG', 0, 0, width, height, undefined, 'FAST');
+    revokeBlobUrl(img.src);
     return pdf.output('blob');
   }, []);
 
-  const compressImage = useCallback((file: File, settings: ConversionSettings): Promise<Blob> => {
-    return import('browser-image-compression').then(({ default: imageCompression }) => {
-      let maxWidthOrHeight = Math.max(settings.width || 0, settings.height || 0);
-      const pixelRatio = settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906;
-      maxWidthOrHeight = maxWidthOrHeight * pixelRatio;
+  const convertToSVG = useCallback(async (blob: Blob, quality: number): Promise<Blob> => {
+    // Compress image to JPEG to control SVG size
+    const compressedBlob = await compressImageCanvas(blob, quality);
+    const img = await createImageBitmap(compressedBlob);
+    const dataURL = await blobToDataURL(compressedBlob);
+    const svgContent = `
+      <svg xmlns="http://www.w3.org/2000/svg" width="${img.width}" height="${img.height}">
+        <image href="${dataURL}" width="${img.width}" height="${img.height}"/>
+      </svg>
+    `;
+    return new Blob([svgContent], { type: 'image/svg+xml;charset=utf-8' });
+  }, [blobToDataURL]);
 
-      return imageCompression(file, {
-        maxSizeMB: settings.mode === 'size' ? settings.targetSize || 1 : undefined,
-        maxWidthOrHeight: maxWidthOrHeight || undefined,
-        initialQuality: settings.quality / 100,
-        useWebWorker: true,
-        fileType: FORMAT_OPTIONS.find(f => f.value === settings.format)?.mimeType || 'image/jpeg'
-      });
-    });
+  const compressImage = useCallback(async (file: File, settings: ConversionSettings): Promise<Blob> => {
+    const pixelRatio = settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906;
+    const maxWidth = settings.width ? settings.width * pixelRatio : undefined;
+    const maxHeight = settings.height ? settings.height * pixelRatio : undefined;
+
+    if (settings.format === 'avif' || settings.format === 'heic') {
+      // Preprocess to JPEG for AVIF/HEIC to ensure size reduction
+      return compressImageCanvas(file, settings.quality, maxWidth, maxHeight);
+    }
+
+    const { default: imageCompression } = await import('browser-image-compression');
+    const quality = Math.min(settings.quality / 100, 1);
+    const options = {
+      maxSizeMB: settings.mode === 'size' ? settings.targetSize || 1 : file.size / 1024 / 1024 * quality,
+      maxWidthOrHeight: maxWidth || maxHeight ? Math.max(maxWidth || 0, maxHeight || 0) : undefined,
+      initialQuality: quality,
+      useWebWorker: true,
+      fileType: FORMAT_OPTIONS.find(f => f.value === settings.format)?.mimeType || 'image/jpeg',
+    };
+
+    if (settings.format === 'png') {
+      options.initialQuality = quality * 0.8;
+      options.fileType = 'image/png';
+    }
+
+    return imageCompression(file, options);
   }, []);
+
+  const createICO = async (blob: Blob): Promise<Blob> => {
+    const img = await createImageBitmap(blob);
+    const canvas = document.createElement('canvas');
+    canvas.width = 256;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas context unavailable');
+    ctx.drawImage(img, 0, 0, 256, 256);
+    return new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) {
+          resolve(blob);
+        } else {
+          reject(new Error('Failed to create blob'));
+        }
+      }, 'image/x-icon');
+    });
+  };
+
+  const createICOSet = async (blob: Blob): Promise<Blob> => {
+    const zip = new JSZip();
+    const img = await createImageBitmap(blob);
+    for (const size of ICO_SIZES) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context unavailable');
+      ctx.drawImage(img, 0, 0, size, size);
+      const resizedBlob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Failed to create blob'));
+          }
+        }, 'image/x-icon');
+      });
+      zip.file(`${size}x${size}.ico`, resizedBlob);
+    }
+    return zip.generateAsync({ type: 'blob', mimeType: 'application/zip' });
+  };
 
   const handleCropComplete = useCallback(async () => {
     if (!cropImageSrc || cropImageIndex === null || !imageDimensions) {
@@ -307,23 +454,20 @@ export function ImageTools() {
             resultBlob = dataURLtoBlob(croppedSrc);
           }
 
-          if (settings.mode === 'custom' && (settings.width || settings.height)) {
-            resultBlob = await compressImage(resultBlob, {
-              ...settings,
-              maxWidthOrHeight: Math.max(settings.width || 0, settings.height || 0) * (settings.unit === 'px' ? 1 : settings.unit === 'in' ? 96 : settings.unit === 'cm' ? 37.7952755906 : 3.77952755906),
-            });
+          if (settings.format === 'svg') {
+            resultBlob = await convertToSVG(resultBlob, settings.quality);
+          } else if (settings.format === 'ico') {
+            resultBlob = await createICOSet(resultBlob);
+          } else if (settings.format === 'pdf') {
+            resultBlob = await createPDF(resultBlob, settings);
           } else {
             resultBlob = await compressImage(resultBlob, settings);
           }
 
-          if (settings.addWatermark) {
+          if (settings.addWatermark && settings.format !== 'svg' && settings.format !== 'pdf' && settings.format !== 'ico') {
             resultBlob = await addWatermarkToImage(resultBlob, settings.watermarkText);
           }
-
-          if (settings.format === 'pdf') {
-            resultBlob = await createPDF(URL.createObjectURL(resultBlob), settings);
-          }
-
+          
           saveOperation({
             type: 'image_conversion',
             metadata: {
@@ -332,7 +476,7 @@ export function ImageTools() {
               format: settings.format,
               settings,
             },
-            preview: URL.createObjectURL(resultBlob),
+            preview: createSecureObjectURL(resultBlob),
           });
 
           return { blob: resultBlob, originalName: image.file.name };
@@ -341,16 +485,16 @@ export function ImageTools() {
 
       setConvertedBlobs(results);
     } catch (err) {
-      setError((err as Error).message || 'File creation failed');
+      setError(`Conversion failed: ${(err as Error).message}`);
     } finally {
       setLoading(false);
     }
-  }, [images, settings, cropImageSrc, cropSettings, saveOperation, applyCrop, dataURLtoBlob, createPDF, addWatermarkToImage, compressImage]);
+  }, [images, settings, cropImageSrc, cropSettings, saveOperation, applyCrop, dataURLtoBlob, createPDF, addWatermarkToImage, compressImage, convertToSVG]);
 
   const handleDownload = useCallback((index: number) => {
     if (!convertedBlobs[index]) return;
     const { blob, originalName } = convertedBlobs[index];
-    const extension = settings.format === 'jpeg' ? 'jpg' : settings.format;
+    const extension = settings.format === 'jpeg' ? 'jpg' : settings.format === 'ico' ? 'zip' : settings.format;
     const link = createSecureDownloadLink(blob, `${originalName.split('.').slice(0, -1).join('.')}.${extension}`);
     document.body.appendChild(link);
     link.click();
@@ -360,7 +504,7 @@ export function ImageTools() {
   const handleBatchDownloadZip = useCallback(async () => {
     const zip = new JSZip();
     convertedBlobs.forEach(({ blob, originalName }, index) => {
-      const extension = settings.format === 'jpeg' ? 'jpg' : settings.format;
+      const extension = settings.format === 'jpeg' ? 'jpg' : settings.format === 'ico' ? 'zip' : settings.format;
       zip.file(`${originalName.split('.').slice(0, -1).join('.')}.${extension}`, blob);
     });
 
@@ -383,7 +527,7 @@ export function ImageTools() {
 
   const handleNewConversion = useCallback(() => {
     resetImages();
-    setShowDropdown(false); // Ensure dropdown is closed
+    setShowDropdown(false);
   }, [resetImages]);
 
   const removeImage = useCallback((index: number) => {
@@ -408,10 +552,10 @@ export function ImageTools() {
 
   const getPlaceholder = (field: 'width' | 'height') => {
     switch (settings.unit) {
-      case 'px': return `${field.charAt(0).toUpperCase() + field.slice(1)} in pixels (e.g., 800)`;
-      case 'in': return `${field.charAt(0).toUpperCase() + field.slice(1)} in inches (e.g., 8.5)`;
-      case 'cm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in centimeters (e.g., 21.6)`;
-      case 'mm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in millimeters (e.g., 216)`;
+      case 'px': return `${field.charAt(0).toUpperCase() + field.slice(1)} in pixels`;
+      case 'in': return `${field.charAt(0).toUpperCase() + field.slice(1)} in inches`;
+      case 'cm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in centimeters`;
+      case 'mm': return `${field.charAt(0).toUpperCase() + field.slice(1)} in millimeters`;
       default: return `${field.charAt(0).toUpperCase() + field.slice(1)}`;
     }
   };
@@ -477,7 +621,7 @@ export function ImageTools() {
           newState.width = newWidth;
           newState.height = newHeight;
         } else if (isResizing === 'bl') {
-          const newWidth = clamp(prev.width - (x - dragStart.x), minSize, prev.positionX + prev.width);
+          const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width);
           const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY);
           newState.positionX = prev.positionX + (prev.width - newWidth);
           newState.width = newWidth;
@@ -504,12 +648,11 @@ export function ImageTools() {
 
   const resetCrop = useCallback(() => {
     if (!imageDimensions) return;
-    const defaultSize = Math.min(imageDimensions.width, imageDimensions.height, 600);
     setCropSettings({
-      width: defaultSize,
-      height: defaultSize,
-      positionX: (imageDimensions.width - defaultSize) / 2,
-      positionY: (imageDimensions.height - defaultSize) / 2,
+      width: imageDimensions.width,
+      height: imageDimensions.height,
+      positionX: 0,
+      positionY: 0,
       aspectRatio: null,
     });
   }, [imageDimensions]);
@@ -591,7 +734,8 @@ export function ImageTools() {
                   <div>
                     <h3 className="text-sm font-medium">Crop Position</h3>
                     <div className="flex gap-2">
-                      <input type="number" value={Math.round(cropSettings.positionX)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position X" min="0" />
+                      <input type="number" value={Math.round(cropSettings.positionX)} onChange=
+                      {(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position X" min="0" />
                       <input type="number" value={Math.round(cropSettings.positionY)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionY: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.height - prev.height : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position Y" min="0" />
                     </div>
                   </div>
@@ -654,8 +798,8 @@ export function ImageTools() {
                   )}
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
-                  <button onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700">Cancel</button>
-                  <button onClick={handleCropComplete} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-50">
+                  <button onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700" aria-label="Cancel crop">Cancel</button>
+                  <button onClick={handleCropComplete} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-50" aria-label="Apply crop">
                     {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />Cropping...</> : <><Crop className="w-5 h-5 mr-2" />Apply Crop</>}
                   </button>
                 </div>
@@ -672,6 +816,7 @@ export function ImageTools() {
                       <button 
                         onClick={() => setShowDropdown(!showDropdown)}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 mb-4"
+                        aria-label="Choose file source"
                       >
                         Choose File
                       </button>
@@ -704,7 +849,7 @@ export function ImageTools() {
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-semibold text-gray-800">Preview and Create Files ({images.length}/{MAX_IMAGES})</h2>
                     {images.length < MAX_IMAGES && (
-                      <button onClick={handleAddMoreImages} className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700">
+                      <button onClick={handleAddMoreImages} className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700" aria-label="Add more images">
                         <Plus className="w-5 h-5" />
                       </button>
                     )}
@@ -738,7 +883,7 @@ export function ImageTools() {
                     <select
                       value={settings.format}
                       onChange={(e) => setSettings(prev => ({ ...prev, format: e.target.value }))}
-                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none"
+                      className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     >
                       {FORMAT_OPTIONS.map((o) => (
                         <option key={o.value} value={o.value}>
@@ -765,7 +910,7 @@ export function ImageTools() {
                           min="1"
                           max="100"
                           value={settings.quality}
-                          onChange={(e) => setSettings(prev => ({ ...prev, quality: +e.target.value }))}
+                          onChange={(e) => setSettings(prev => ({ ...prev, quality: Math.max(1, +e.target.value) }))}
                           className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600"
                         />
                       </div>
@@ -787,21 +932,23 @@ export function ImageTools() {
                           <input
                             type="number"
                             value={settings.width || ''}
-                            onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? +e.target.value : null }))}
+                            onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? Math.max(1, +e.target.value) : null }))}
                             placeholder={getPlaceholder('width')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            min="1"
                           />
                           <input
                             type="number"
                             value={settings.height || ''}
-                            onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? +e.target.value : null }))}
+                            onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? Math.max(1, +e.target.value) : null }))}
                             placeholder={getPlaceholder('height')}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-400 transition-colors duration-200"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            min="1"
                           />
                           <select
                             value={settings.unit}
                             onChange={(e) => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))}
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200 appearance-none"
+                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           >
                             {UNIT_OPTIONS.map((unit) => (
                               <option key={unit} value={unit}>
@@ -834,45 +981,50 @@ export function ImageTools() {
                             value={settings.watermarkText}
                             onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))}
                             placeholder="Enter watermark text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-200"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           />
                         )}
                       </div>
                     )}
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 flex-wrap">
                       <button
                         onClick={handleConversion}
                         disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)}
-                        className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center"
+                        className="w-full sm:w-auto flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center text-sm sm:text-base"
+                        aria-label="Create files"
                       >
                         {loading ? (
                           <>
-                            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Creating...
+                            <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-1 sm:mr-2" /> Creating...
                           </>
                         ) : (
                           <>
-                            {settings.format === 'pdf' ? <FileText className="w-5 h-5 mr-2" /> : <ImageIcon className="w-5 h-5 mr-2" />}
+                            {settings.format === 'pdf' ? <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />}
                             Create Files
                           </>
                         )}
                       </button>
-                    </div>
-                    {convertedBlobs.length > 0 && (
-                      <div className="flex gap-3">
+                      {convertedBlobs.length > 0 && images.length > 1 && (
                         <button
                           onClick={handleBatchDownloadZip}
-                          className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                          className="w-full max-w-xs sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center text-sm sm:text-base"
+
+                          aria-label="Download ZIP"
                         >
-                          <Archive className="w-5 h-5 mr-2" /> Download ZIP
+                          <Archive className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Download ZIP
                         </button>
+                      )}
+                      {convertedBlobs.length > 0 && (
                         <button
                           onClick={handleNewConversion}
-                          className="flex-1 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center"
+                          className="w-full max-w-xs sm:max-w-none sm:w-auto flex bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 items-center text-sm sm:text-base justify-center"
+
+                          aria-label="New conversion"
                         >
-                          <ImageIcon className="w-5 h-5 mr-2" /> New Conversion
+                          <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> New Conversion
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 </>
               )}
@@ -883,17 +1035,17 @@ export function ImageTools() {
         <div className="mt-6">
           <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More PDF Tools</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <Link to="/pdf-tools?tab=watermark" className="group flex items-center p-4 border border-gray-300 rounded-lg   hover:border-indigo-500 transition-all duration-200">
+            <Link to="/pdf-tools?tab=watermark" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
               <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
                 <Edit className="w-6 h-6 text-indigo-600" />
               </div>
-              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Watermark PDF</span>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Watermark PDF</span>
             </Link>
             <Link to="/pdf-tools?tab=split" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
               <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
                 <SplitSquareVertical className="w-6 h-6 text-indigo-600" />
               </div>
-              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white ">Split PDF</span>
+              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Split PDF</span>
             </Link>
             <Link to="/pdf-tools?tab=merge" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
               <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">

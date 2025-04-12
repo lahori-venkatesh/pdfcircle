@@ -1,11 +1,12 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Download,Upload , Image as ImageIcon, Loader2, Crop, Settings, FileText,  Images,} from 'lucide-react';
+import { Download, Upload, X, Image as ImageIcon, Loader2, Crop, Settings, FileText, Images, RefreshCw } from 'lucide-react';
 import JSZip from 'jszip';
 import { pdfjsLib } from '../../utils/pdfjs';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
+
 interface PDFFile {
   file: File;
   preview?: string;
@@ -18,6 +19,8 @@ export function PDFToImages() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [format, setFormat] = useState<'jpeg' | 'png' | 'webp'>('png');
+  const [hasDownloaded, setHasDownloaded] = useState(false); // New state to track download
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 1) {
@@ -36,6 +39,7 @@ export function PDFToImages() {
     setResult(null);
     setResultBlob(null);
     setError(null);
+    setHasDownloaded(false); // Reset download state on new file
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -62,6 +66,8 @@ export function PDFToImages() {
       }).promise;
       const zip = new JSZip();
       const imageBlobs: Blob[] = [];
+      const mimeType = `image/${format}`;
+      const extension = format === 'jpeg' ? 'jpg' : format;
 
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
@@ -87,13 +93,13 @@ export function PDFToImages() {
               if (b) resolve(b);
               else reject(new Error(`Failed to convert page ${i} to blob`));
             },
-            'image/png',
+            mimeType,
             1.0
           );
         });
 
         imageBlobs.push(blob);
-        zip.file(`page-${i}.png`, blob);
+        zip.file(`page-${i}.${extension}`, blob);
       }
 
       const zipBlob = await zip.generateAsync({
@@ -112,7 +118,7 @@ export function PDFToImages() {
           metadata: {
             filename: files[0].file.name,
             fileSize: zipBlob.size,
-            settings: { pageCount: pdf.numPages },
+            settings: { pageCount: pdf.numPages, format },
           },
           preview: createSecureObjectURL(imageBlobs[0]),
         });
@@ -129,10 +135,12 @@ export function PDFToImages() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'pdf-images.zip');
+      const extension = format === 'jpeg' ? 'jpg' : format;
+      const link = createSecureDownloadLink(resultBlob, `pdf-images-${extension}.zip`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      setHasDownloaded(true); // Mark as downloaded
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');
@@ -146,6 +154,8 @@ export function PDFToImages() {
     setResult(null);
     setResultBlob(null);
     setError(null);
+    setFormat('png');
+    setHasDownloaded(false); // Reset download state
   }, [files, result]);
 
   return (
@@ -167,18 +177,35 @@ export function PDFToImages() {
         <>
           <div>
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-800 ">Selected File</h3>
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Selected File</h3>
               <button
                 onClick={resetFiles}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 title="Remove file"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="bg-gray-50 p-3 rounded-lg">
-              <span className="text-gray-700">{files[0].file.name}</span>
+            <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+              <span className="text-gray-700 dark:text-gray-200">{files[0].file.name}</span>
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="format-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Output Image Format
+            </label>
+            <select
+              id="format-select"
+              value={format}
+              onChange={(e) => setFormat(e.target.value as 'jpeg' | 'png' | 'webp')}
+              className="block w-full sm:w-48 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              aria-label="Select output image format"
+            >
+              <option value="png">PNG</option>
+              <option value="jpeg">JPG</option>
+              <option value="webp">WebP</option>
+            </select>
           </div>
 
           {error && (
@@ -187,40 +214,53 @@ export function PDFToImages() {
             </div>
           )}
 
-          <div className="flex gap-3">
-            <button
-              onClick={handlePDFToImages}
-              disabled={loading}
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Converting...
-                </>
-              ) : (
-                <>
-                  <Images className="w-5 h-5 mr-2" />
-                  Convert to Images
-                </>
-              )}
-            </button>
-
-            {result && (
+          <div className="flex sm:flex-row flex-col gap-3">
+            {!result && (
+              <button
+                onClick={handlePDFToImages}
+                disabled={loading}
+                className="w-full sm:flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                aria-label="Convert PDF to images"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Converting...
+                  </>
+                ) : (
+                  <>
+                    <Images className="w-5 h-5 mr-2" />
+                    Convert to Images
+                  </>
+                )}
+              </button>
+            )}
+            {result && !hasDownloaded && (
               <button
                 onClick={handleDownload}
-                className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                className="w-full sm:flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center"
+                aria-label="Download converted images as ZIP"
               >
                 <Download className="w-5 h-5 mr-2" />
                 Download ZIP
+              </button>
+            )}
+            {result && hasDownloaded && (
+              <button
+                onClick={resetFiles}
+                className="w-full sm:flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+                aria-label="Start a new PDF to images conversion"
+              >
+                <RefreshCw className="w-5 h-5 mr-2" />
+                New Conversion
               </button>
             )}
           </div>
         </>
       )}
       <div className="mt-6">
-         <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image Tools</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image Tools</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <ImageIcon className="w-6 h-6 text-indigo-600" />
@@ -235,15 +275,15 @@ export function PDFToImages() {
           </Link>
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
-               <FileText className="w-6 h-6 text-indigo-600" />
+              <FileText className="w-6 h-6 text-indigo-600" />
             </div>
             <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image to PDF</span>
           </Link>
           <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
-              <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
-                <Crop className="w-6 h-6 text-indigo-600" />
-              </div>
-              <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <Crop className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
           </Link>
         </div>
       </div>
