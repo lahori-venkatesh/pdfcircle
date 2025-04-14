@@ -53,17 +53,7 @@ export const Blog = () => {
       category: t('common.pdfTools', 'PDF Tools'),
       icon: FileText,
       items: [
-        {
-          title: t('features.compressPdf.title', 'Compress PDFs'),
-          description: t('features.compressPdf.description', 'Reduce PDF file sizes without sacrificing quality, making them ideal for email and online storage with our free tools.'),
-          enhancedDescription: 'Ever hit “send” only to get a “file too large” error? Our PDF compressor shrinks files so you can email proposals or store reports without a hitch. Students, freelancers, and small biz owners—say goodbye to file-size stress.',
-          features: [
-            'Smart compression keeps text and images clear.',
-            'No downloads—just use your browser.',
-            'Lightning-fast processing saves time.',
-            'Your files stay secure, always.'
-          ]
-        },
+        
         {
           title: t('features.mergePdfs.title', 'Merge PDFs'),
           description: t('features.mergePdfs.description', 'Combine several PDF documents into one with our secure and free online merging tool, saving you time and effort.'),

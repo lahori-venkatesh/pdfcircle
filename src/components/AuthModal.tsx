@@ -7,9 +7,10 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   mode: 'login' | 'signup' | 'forgot-password';
+  onSuccess?: () => void; // Add onSuccess prop
 }
 
-export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, mode: initialMode, onSuccess }: AuthModalProps) {
   const { signIn, signUp, resetPassword } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot-password'>(initialMode);
   const [email, setEmail] = useState('');
@@ -84,10 +85,12 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
         }
         const { error: signUpError } = await signUp(email, password);
         if (signUpError) throw signUpError;
+        if (onSuccess) onSuccess(); // Call onSuccess after signup
         onClose();
       } else {
         const { error: signInError } = await signIn(email, password);
         if (signInError) throw signInError;
+        if (onSuccess) onSuccess(); // Call onSuccess after login
         onClose();
       }
     } catch (err: unknown) {

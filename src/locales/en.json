@@ -19,8 +19,8 @@
   "features": {
   "title": "Powerful PDF and Image Tools in One Place",
   "imageReduction": {
-    "title": "image size reduce & converion",
-    "description": "Easily reduce image file sizes for faster loading and sharing while maintaining crystal-clear quality with our free online tools."
+    "title": "Images: Resize, Convert, Crop & Export to PDF",
+    "description": "Quickly reduce image sizes for faster loading and easy sharing. Free & online!"
   },
   "imageToPdf": {
     "title": "Create PDFs from Images",
@@ -28,7 +28,7 @@
   },
   "pdfToImages": {
     "title": "PDF to Images ",
-    "description": "Pull high-quality images out of any PDF file effortlessly with our reliable and free online extraction tools."
+    "description": "Pull high-quality images out of any PDF file effortlessly with our reliable and free online extraction tools. free in online!"
   },
   
  

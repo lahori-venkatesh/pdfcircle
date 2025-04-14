@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileText, Plus, Image as ImageIcon, Settings, Crop } from 'lucide-react';
@@ -9,6 +9,7 @@ import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureD
 import { useOperationsCache } from '../../utils/operationsCache';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
+import { AuthModal } from '../AuthModal';
 
 interface ImageItem {
   id: string;
@@ -41,7 +42,7 @@ const MARGINS: Record<string, number> = {
   'Custom': 0,
 };
 
-export function CreatePDF() {
+export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
   const { saveOperation } = useOperationsCache();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,6 +63,20 @@ export function CreatePDF() {
   const [customMargin, setCustomMargin] = useState<number>(20);
   const [mergePDF, setMergePDF] = useState<boolean>(true);
   const [showNewConversion, setShowNewConversion] = useState<boolean>(false);
+  const [conversionCount, setConversionCount] = useState<number>(0);
+  const [showSignupPopup, setShowSignupPopup] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgot-password'>('signup');
+
+  const MAX_CONVERSIONS = isLoggedIn ? Infinity : 3;
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      setConversionCount(0);
+      setShowSignupPopup(false);
+      setError(null);
+    }
+  }, [isLoggedIn]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -75,7 +90,6 @@ export function CreatePDF() {
     })
   );
 
-  // Function to compress image using canvas
   const compressImage = async (file: File, quality: number): Promise<Blob> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
@@ -146,7 +160,6 @@ export function CreatePDF() {
       setImages((prev) => {
         const updatedImages = [...prev, ...newImages].slice(0, 30);
         const totalOriginalSize = updatedImages.reduce((sum, img) => sum + img.file.size, 0);
-        // Adjust estimation to account for PDF overhead
         const estimatedSize = totalOriginalSize * (createQualityLevel / 100) * 1.1;
         setCreateFileSizes({
           original: totalOriginalSize,
@@ -229,6 +242,11 @@ export function CreatePDF() {
       return;
     }
 
+    if (!isLoggedIn && conversionCount >= MAX_CONVERSIONS) {
+      setShowSignupPopup(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -237,7 +255,6 @@ export function CreatePDF() {
         const pdfDoc = await PDFDocument.create();
 
         for (const image of images) {
-          // Compress image before embedding
           const compressedBlob = await compressImage(image.file, createQualityLevel);
           const imageBytes = await compressedBlob.arrayBuffer();
           const img = new Image();
@@ -393,6 +410,10 @@ export function CreatePDF() {
           preview: createSecureObjectURL(zipBlob),
         });
       }
+
+      if (!isLoggedIn) {
+        setConversionCount((prev) => prev + 1);
+      }
     } catch (err) {
       setError(`Error creating PDF: ${(err as Error).message}`);
       console.error(err);
@@ -485,6 +506,17 @@ export function CreatePDF() {
     input.click();
   };
 
+  const handleSignupClose = useCallback(() => {
+    setShowSignupPopup(false);
+    setError(null);
+  }, []);
+
+  const handleLoginOrSignup = useCallback((mode: 'signup' | 'login') => {
+    setShowSignupPopup(false);
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  }, []);
+
   return (
     <div className="space-y-6">
       <div
@@ -497,8 +529,24 @@ export function CreatePDF() {
         <p className="text-gray-600 dark:text-white">
           {isDragActive ? 'Drop the images here' : 'Drag & drop images here, or tap to select'}
         </p>
-        <p className="text-sm text-gray-500 dark:text-white mt-2">Supports images (JPEG, PNG, WebP)</p>
+        <p className="text-sm text-gray-500 dark:text-white mt-2">Supports images (JPEG, PNG, WebP, max 30)</p>
       </div>
+
+      {!isLoggedIn && (
+        <div className="text-center text-sm text-gray-500">
+          <p>
+            Non-logged-in users can perform {MAX_CONVERSIONS} conversions.{' '}
+            <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 hover:underline">
+              Log in
+            </button>{' '}
+            or{' '}
+            <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 hover:underline">
+              sign up
+            </button>{' '}
+            for unlimited conversions!
+          </p>
+        </div>
+      )}
 
       {images.length > 0 && (
         <>
@@ -708,8 +756,54 @@ export function CreatePDF() {
               </button>
             )}
           </div>
+
+          {!isLoggedIn && conversionCount > 0 && (
+            <p className="text-sm text-gray-500">
+              You've used {conversionCount} of {MAX_CONVERSIONS} free conversions.{' '}
+              <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 hover:underline">
+                Log in
+              </button>{' '}
+              or{' '}
+              <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 hover:underline">
+                sign up
+              </button>{' '}
+              for unlimited conversions!
+            </p>
+          )}
         </>
       )}
+
+      {showSignupPopup && !isLoggedIn && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Unlock Unlimited Conversions</h2>
+            <p className="mb-4">
+              You've reached the limit of {MAX_CONVERSIONS} free conversions. Log in or sign up to enjoy unlimited PDF creations!
+            </p>
+            <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
+              <li>Unlimited PDF conversions</li>
+              <li>Process up to 30 images at once</li>
+              <li>Priority support</li>
+            </ul>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={handleSignupClose}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => handleLoginOrSignup('signup')}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Log In / Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
 
       <div className="mt-6">
         <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More Image Tools</h3>

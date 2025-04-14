@@ -1,6 +1,6 @@
-import  { useState } from 'react';
+import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images,  Stamp, Minimize2 } from 'lucide-react';
+import { FileText, FilePlus, Split, Images, Stamp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -8,7 +8,6 @@ import { CreatePDF } from './pdf/CreatePDF';
 import { MergePDF } from './pdf/MergePDF';
 import { SplitPDF } from './pdf/SplitPDF';
 import { PDFToImages } from './pdf/PDFToImages';
-import { CompressPDF } from './pdf/CompressPDF';
 import { WatermarkPDF } from './pdf/WatermarkPDF';
 
 const tabs = [
@@ -17,31 +16,38 @@ const tabs = [
   { id: 'split', label: 'Split PDF', icon: Split },
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
-  { id: 'compress', label: 'Compress PDF', icon: Minimize2 },
 ];
 
-export function PDFTools() {
+export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'create');
 
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case 'create': return <CreatePDF />;
-      case 'merge': return <MergePDF />;
-      case 'split': return <SplitPDF />;
-      case 'watermark': return <WatermarkPDF />;
-      case 'to-images': return <PDFToImages />;
-      case 'compress': return <CompressPDF />;
-      default: return <CreatePDF />;
+      case 'create':
+        return <CreatePDF isLoggedIn={isLoggedIn} />;
+      case 'merge':
+        return <MergePDF />;
+      case 'split':
+        return <SplitPDF />;
+      case 'watermark':
+        return <WatermarkPDF />;
+      case 'to-images':
+        return <PDFToImages isLoggedIn={isLoggedIn} />;
+      default:
+        return <CreatePDF isLoggedIn={isLoggedIn} />;
     }
   };
 
   return (
     <>
-      <SEOHeaders 
+      <SEOHeaders
         title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
-        description={t('seo.pdfTools.description', ' Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.')}
+        description={t(
+          'seo.pdfTools.description',
+          'Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.'
+        )}
         keywords={[
           'pdfcircle',
           'free online pdf merger tool',
@@ -79,7 +85,7 @@ export function PDFTools() {
           'pdf splitter online free fast',
           'reduce pdf size free online',
           'pdf compressor online free tool',
-          'pdf to image free converter'
+          'pdf to image free converter',
         ]}
         canonicalUrl="https://pdfcircle.com/pdf-tools"
       />
@@ -91,15 +97,14 @@ export function PDFTools() {
             {t('pdfTools.title', 'Free Online PDF Tools')}
           </h1>
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-            {t('pdfTools.subtitle', 'Effortlessly Create PDFs, add watermarks on PDFs, merge, split, compress, and convert your PDFs with pdfCircle’s secure, no-sign-up tools.')}
+            {t(
+              'pdfTools.subtitle',
+              'Effortlessly Create PDFs, add watermarks on PDFs, merge, split, compress, and convert your PDFs with pdfCircle’s secure, no-sign-up tools.'
+            )}
           </p>
         </section>
 
-        <AdComponent
-          slot="pdf-tools-top"
-          className="mb-6"
-          style={{ minHeight: '90px' }}
-        />
+        <AdComponent slot="pdf-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
 
         {/* Tools Navigation with H2 */}
         <section>
@@ -107,14 +112,15 @@ export function PDFTools() {
             {t('pdfTools.toolsTitle', 'Choose Your PDF Tool')}
           </h2>
           <div className="flex flex-wrap gap-2 mb-6 justify-center">
-            {tabs.map(tab => (
+            {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center px-4 py-2 dark:bg-gray-900 dark:text-white rounded-lg text-sm font-medium transition-colors
-                  ${activeTab === tab.id
-                    ? 'bg-indigo-600 text-white dark:bg-indigo-600'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                  ${
+                    activeTab === tab.id
+                      ? 'bg-indigo-600 text-white dark:bg-indigo-600'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
                   }`}
               >
                 <tab.icon className="w-4 h-4 mr-2" />

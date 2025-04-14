@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Download, Upload, X, Image as ImageIcon, Loader2, Crop, Settings, FileText, Images, RefreshCw } from 'lucide-react';
 import JSZip from 'jszip';
@@ -6,13 +6,14 @@ import { pdfjsLib } from '../../utils/pdfjs';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
+import { AuthModal } from '../AuthModal';
 
 interface PDFFile {
   file: File;
   preview?: string;
 }
 
-export function PDFToImages() {
+export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
   const { saveOperation } = useOperationsCache();
   const [files, setFiles] = useState<PDFFile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -20,7 +21,21 @@ export function PDFToImages() {
   const [result, setResult] = useState<string | null>(null);
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [format, setFormat] = useState<'jpeg' | 'png' | 'webp'>('png');
-  const [hasDownloaded, setHasDownloaded] = useState(false); // New state to track download
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+  const [conversionCount, setConversionCount] = useState<number>(0);
+  const [showSignupPopup, setShowSignupPopup] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgot-password'>('signup');
+
+  const MAX_CONVERSIONS = isLoggedIn ? Infinity : 3;
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      setConversionCount(0);
+      setShowSignupPopup(false);
+      setError(null);
+    }
+  }, [isLoggedIn]);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 1) {
@@ -39,18 +54,23 @@ export function PDFToImages() {
     setResult(null);
     setResultBlob(null);
     setError(null);
-    setHasDownloaded(false); // Reset download state on new file
+    setHasDownloaded(false);
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
-    multiple: false
+    multiple: false,
   });
 
   const handlePDFToImages = async () => {
     if (files.length !== 1) {
       setError('Please select one PDF file');
+      return;
+    }
+
+    if (!isLoggedIn && conversionCount >= MAX_CONVERSIONS) {
+      setShowSignupPopup(true);
       return;
     }
 
@@ -62,7 +82,7 @@ export function PDFToImages() {
       const pdfData = await pdfFile.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({
         data: pdfData,
-        verbosity: 0
+        verbosity: 0,
       }).promise;
       const zip = new JSZip();
       const imageBlobs: Blob[] = [];
@@ -123,6 +143,10 @@ export function PDFToImages() {
           preview: createSecureObjectURL(imageBlobs[0]),
         });
       }
+
+      if (!isLoggedIn) {
+        setConversionCount((prev) => prev + 1);
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error occurred during conversion';
       setError(`PDF to images failed: ${message}`);
@@ -140,7 +164,7 @@ export function PDFToImages() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      setHasDownloaded(true); // Mark as downloaded
+      setHasDownloaded(true);
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');
@@ -148,15 +172,26 @@ export function PDFToImages() {
   };
 
   const resetFiles = useCallback(() => {
-    files.forEach(file => file.preview && revokeBlobUrl(file.preview));
+    files.forEach((file) => file.preview && revokeBlobUrl(file.preview));
     if (result) revokeBlobUrl(result);
     setFiles([]);
     setResult(null);
     setResultBlob(null);
     setError(null);
     setFormat('png');
-    setHasDownloaded(false); // Reset download state
+    setHasDownloaded(false);
   }, [files, result]);
+
+  const handleSignupClose = useCallback(() => {
+    setShowSignupPopup(false);
+    setError(null);
+  }, []);
+
+  const handleLoginOrSignup = useCallback((mode: 'signup' | 'login') => {
+    setShowSignupPopup(false);
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -166,12 +201,28 @@ export function PDFToImages() {
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
-        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4 dark:text-white" />
         <p className="text-gray-600 dark:text-white">
           {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here, or tap to select'}
         </p>
         <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports PDF files</p>
       </div>
+
+      {!isLoggedIn && (
+        <div className="text-center text-sm text-gray-500">
+          <p>
+            Non-logged-in users can perform {MAX_CONVERSIONS} conversions.{' '}
+            <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 hover:underline">
+              Log in
+            </button>{' '}
+            or{' '}
+            <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 hover:underline">
+              sign up
+            </button>{' '}
+            for unlimited conversions!
+          </p>
+        </div>
+      )}
 
       {files.length > 0 && (
         <>
@@ -182,6 +233,7 @@ export function PDFToImages() {
                 onClick={resetFiles}
                 className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                 title="Remove file"
+                aria-label="Remove file"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -209,9 +261,7 @@ export function PDFToImages() {
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              {error}
-            </div>
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>
           )}
 
           <div className="flex sm:flex-row flex-col gap-3">
@@ -256,34 +306,101 @@ export function PDFToImages() {
               </button>
             )}
           </div>
+
+          {!isLoggedIn && conversionCount > 0 && (
+            <p className="text-sm text-gray-500">
+              You've used {conversionCount} of {MAX_CONVERSIONS} free conversions.{' '}
+              <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 hover:underline">
+                Log in
+              </button>{' '}
+              or{' '}
+              <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 hover:underline">
+                sign up
+              </button>{' '}
+              for unlimited conversions!
+            </p>
+          )}
         </>
       )}
+
+      {showSignupPopup && !isLoggedIn && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+            <h2 className="text-xl font-bold mb-4">Unlock Unlimited Conversions</h2>
+            <p className="mb-4">
+              You've reached the limit of {MAX_CONVERSIONS} free conversions. Log in or sign up to enjoy unlimited PDF to image conversions!
+            </p>
+            <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
+              <li>Unlimited PDF to image conversions</li>
+              <li>High-quality output in PNG, JPG, or WebP</li>
+              <li>Priority support</li>
+            </ul>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={handleSignupClose}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+              >
+                Maybe Later
+              </button>
+              <button
+                onClick={() => handleLoginOrSignup('signup')}
+                className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+              >
+                Log In / Sign Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
+
       <div className="mt-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image Tools</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <ImageIcon className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Size Reduce</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image Size Reduce
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Settings className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Conversion</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image Conversion
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <FileText className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image to PDF</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image to PDF
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Crop className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Crop Image
+            </span>
           </Link>
         </div>
       </div>
