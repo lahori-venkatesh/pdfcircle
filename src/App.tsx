@@ -19,7 +19,7 @@ import { AuthModal } from './components/AuthModal';
 import { SEOHeaders } from './components/SEOHeaders';
 import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
-
+import { ResetPassword } from './components/ResetPassword';
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
@@ -394,6 +394,7 @@ function AppRoutes() {
       <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
     </Routes>
   );
 }
