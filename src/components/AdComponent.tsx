@@ -51,7 +51,7 @@ export function AdComponent({ slot, format = 'auto', style, className, responsiv
           display: 'block',
           ...(responsive && { width: '100%' })
         }}
-        data-ad-client="ca-pub-YOUR_CLIENT_ID" // Replace with your AdSense client ID
+        data-ad-client="ca-pub-2007908196419480" // Updated with your client ID
         data-ad-slot={slot}
         data-ad-format={format}
         data-full-width-responsive={responsive}
@@ -64,7 +64,7 @@ export function StickyBottomAd() {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
       <AdComponent
-        slot="sticky-bottom"
+        slot="sticky-bottom" // Replace with a valid ad unit slot ID after approval
         className="mx-auto max-w-4xl py-2 px-4"
         style={{ minHeight: '50px', maxHeight: '100px' }}
       />
