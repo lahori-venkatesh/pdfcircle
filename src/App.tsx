@@ -20,6 +20,7 @@ import { SEOHeaders } from './components/SEOHeaders';
 import { StickyBottomAd } from './components/AdComponent';
 import { LanguageSelector } from './components/LanguageSelector';
 import { ResetPassword } from './components/ResetPassword';
+
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
@@ -144,14 +145,49 @@ function StepCard({ number, title, description }: StepCardProps) {
   );
 }
 
+// Hook to check ad consent (simplified, assumes CMP integration)
+function useAdConsent() {
+  const [consent, setConsent] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    // Replace with your CMP (e.g., Cookiebot, OneTrust) logic
+    const checkConsent = () => {
+      // Example: Check localStorage or CMP API for consent
+      const userConsent = localStorage.getItem('adConsent') === 'true';
+      setConsent(userConsent);
+    };
+
+    checkConsent();
+    // Listen for consent changes (e.g., CMP events)
+    window.addEventListener('consentUpdated', checkConsent);
+    return () => window.removeEventListener('consentUpdated', checkConsent);
+  }, []);
+
+  return consent;
+}
+
+// Component to conditionally render ads on content-rich pages with consent
+function ConditionalAd() {
+  const location = useLocation();
+  const consent = useAdConsent();
+  const contentRichPages = ['/', '/image-tools', '/pdf-tools'];
+
+  if (consent === true && contentRichPages.includes(location.pathname)) {
+    return <StickyBottomAd />;
+  }
+  return null;
+}
+
 function HomePage() {
   const { t } = useTranslation();
+
+  
 
   return (
     <>
       <SEOHeaders 
         title={t('seo.home.title', 'pdfCircle | Free & Secure PDF and Image Tools')}
-        description={t('seo.home.description', 'Compress, convert, merge, and edit PDFs and images online for free with pdfCircle. Fast, secure, and easy-to-use tools.')}
+        description={t('seo.home.description', 'Convert, compress, merge, and edit PDFs and images online for free with pdfCircle. Fast, secure, and user-friendly tools for all your document needs.')}
         keywords={[
           'pdfcircle', 'pdf converter', 'image converter', 'compress pdf', 'convert pdf to jpg', 'free pdf tools',
           'pdf compression', 'image optimization', 'online document tools', 'secure file conversion', 'pdf to word',
@@ -166,25 +202,28 @@ function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-              {t('hero.title', 'Convert PDFs & Images Free Online')}
+              {t('hero.title', 'Free Online PDF & Image Conversion Tools')}
             </h1>
             <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
-              {t('hero.subtitle', 'Discover pdfCircle’s fast, secure, and free solutions for converting, compressing, and enhancing your documents and images effortlessly.')}
+              {t('hero.subtitle', 'pdfCircle provides fast, secure, and free tools to convert, compress, merge, and edit PDFs and images, making document processing effortless for everyone.')}
+            </p>
+            <p className="text-lg text-indigo-200 mb-10 max-w-2xl mx-auto">
+              {t('hero.description', 'Whether you’re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required. Supporting files up to 100MB, our platform ensures end-to-end encryption and local processing to keep your data safe. Start now and simplify your document tasks!')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                to="/image-tools"
+                to="/pdf-tools"
                 onClick={() => window.scrollTo(0, 0)}
                 className="inline-block bg-white text-indigo-600 dark:bg-white dark:text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-200 transition-colors duration-300 shadow-lg"
               >
-                {t('hero.getStarted', 'Start Converting Now')}
+                {t('hero.getStarted', 'Explore PDF Tools')}
               </Link>
               <Link
-                to="/about"
+                to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
                 className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-800 transition-colors duration-300 shadow-lg"
               >
-                {t('hero.learnMore', 'Learn More About Our Tools')}
+                {t('hero.imageTools', 'Explore Image Tools')}
               </Link>
             </div>
           </div>
@@ -194,43 +233,46 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('features.title', 'Free PDF Conversion & Image Editing Tools')}
+            {t('features.title', 'Powerful Tools for PDFs and Images')}
           </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-10 max-w-3xl mx-auto">
+            {t('features.description', 'pdfCircle offers a comprehensive suite of free tools designed to streamline your document and image processing tasks. From converting PDFs to editable formats to optimizing images for faster web loading, our secure and intuitive platform supports students, professionals, and creators alike.')}
+          </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <FeatureCard 
               icon={Image} 
-              title={t('features.imageReduction.title', 'Image Reduction')} 
-              description={t('features.imageReduction.description', 'Reduce image file size without losing quality.')} 
-              to="/image-tools"
+              title={t('features.imageReduction.title', 'Image Compression')} 
+              description={t('features.imageReduction.description', 'Reduce image file sizes without compromising quality, perfect for web, email, or storage efficiency.')} 
+              to="/image-tools?tab=compress"
             />
             <FeatureCard 
               icon={FileUp} 
               title={t('features.imageToPdf.title', 'Image to PDF')} 
-              description={t('features.imageToPdf.description', 'Convert images to PDF documents easily.')} 
+              description={t('features.imageToPdf.description', 'Transform JPG, PNG, or other images into professional PDF documents with a single click.')} 
               to="/pdf-tools?tab=create"
             />
             <FeatureCard 
               icon={Images} 
               title={t('features.pdfToImages.title', 'PDF to Images')} 
-              description={t('features.pdfToImages.description', 'Extract images from PDFs quickly.')} 
+              description={t('features.pdfToImages.description', 'Extract high-quality images from PDFs quickly for presentations or sharing.')} 
               to="/pdf-tools?tab=to-images"
             />
             <FeatureCard 
               icon={FilePlus} 
               title={t('features.mergePdfs.title', 'Merge PDFs')} 
-              description={t('features.mergePdfs.description', 'Combine multiple PDFs into one document.')} 
+              description={t('features.mergePdfs.description', 'Combine multiple PDF files into a single, organized document in seconds.')} 
               to="/pdf-tools?tab=merge"
             />
             <FeatureCard 
               icon={Split} 
               title={t('features.splitPdf.title', 'Split PDF')} 
-              description={t('features.splitPdf.description', 'Divide large PDFs into smaller files.')} 
+              description={t('features.splitPdf.description', 'Divide large PDFs into smaller, manageable files for easy distribution.')} 
               to="/pdf-tools?tab=split"
             />
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
-              description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
+              description={t('features.addWatermark.description', 'Protect your PDFs with custom text or image watermarks to ensure ownership.')} 
               to="/pdf-tools?tab=watermark"
             />
           </div>
@@ -240,23 +282,26 @@ function HomePage() {
       <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('howItWorks.title', 'How pdfCircle Makes Document Processing Simple')}
+            {t('howItWorks.title', 'How pdfCircle Simplifies Document Processing')}
           </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-10 max-w-3xl mx-auto">
+            {t('howItWorks.description', 'Our intuitive platform makes it easy to manage your PDFs and images in just a few steps, with no technical expertise required. Upload, process, and download your files securely and instantly.')}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StepCard
               number={1}
               title={t('howItWorks.step1.title', 'Upload Your File')}
-              description={t('howItWorks.step1.description', 'Simply drag and drop or select your file to begin.')}
+              description={t('howItWorks.step1.description', 'Drag and drop or select your PDF or image file to start processing instantly, supporting files up to 100MB.')}
             />
             <StepCard
               number={2}
               title={t('howItWorks.step2.title', 'Choose Your Tool')}
-              description={t('howItWorks.step2.description', 'Select the tool you need from our wide range of options.')}
+              description={t('howItWorks.step2.description', 'Select from a wide range of tools, including compression, conversion, merging, or watermarking, tailored to your needs.')}
             />
             <StepCard
               number={3}
               title={t('howItWorks.step3.title', 'Download Your Result')}
-              description={t('howItWorks.step3.description', 'Get your processed file instantly and securely.')}
+              description={t('howItWorks.step3.description', 'Download your processed file securely in seconds, ready for sharing or storage, with no data retention.')}
             />
           </div>
           <div className="text-center mt-8">
@@ -286,39 +331,39 @@ function HomePage() {
               {t('security.title', 'Your Security Matters')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              {t('security.subtitle', 'We prioritize your privacy with top-notch security features.')}
+              {t('security.subtitle', 'At pdfCircle, we prioritize your privacy with industry-leading security measures to protect your files and data.')}
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <SecurityFeature 
               icon={ShieldCheck} 
               title={t('security.localProcessing.title', 'Local Processing')} 
-              description={t('security.localProcessing.description', 'Files are processed locally for enhanced privacy.')} 
+              description={t('security.localProcessing.description', 'Your files are processed directly in your browser, ensuring no data is uploaded to external servers.')} 
             />
             <SecurityFeature 
               icon={Key} 
               title={t('security.endToEnd.title', 'End-to-End Encryption')} 
-              description={t('security.endToEnd.description', 'Your data is encrypted from start to finish.')} 
+              description={t('security.endToEnd.description', 'All file transfers are protected with end-to-end encryption, safeguarding your data from unauthorized access.')} 
             />
             <SecurityFeature 
               icon={Server} 
               title={t('security.noStorage.title', 'No Cloud Storage')} 
-              description={t('security.noStorage.description', 'We don’t store your files after processing.')} 
+              description={t('security.noStorage.description', 'We delete your files immediately after processing, ensuring no copies are stored on our servers.')} 
             />
             <SecurityFeature 
               icon={RefreshCw} 
-              title={t('security.updates.title', 'Regular Updates')} 
-              description={t('security.updates.description', 'Our tools are continuously updated for security.')} 
+              title={t('security.updates.title', 'Regular Security Updates')} 
+              description={t('security.updates.description', 'Our platform is continuously updated to address vulnerabilities and maintain top-tier security standards.')} 
             />
             <SecurityFeature 
               icon={LockIcon} 
-              title={t('security.connection.title', 'Secure Connection')} 
-              description={t('security.connection.description', 'All data transfers use HTTPS for safety.')} 
+              title={t('security.connection.title', 'Secure HTTPS Connection')} 
+              description={t('security.connection.description', 'All interactions with pdfCircle use HTTPS, ensuring safe and encrypted data transfers.')} 
             />
             <SecurityFeature 
               icon={CheckCircle} 
-              title={t('security.verified.title', 'Verified Security')} 
-              description={t('security.verified.description', 'Certified secure by industry standards.')} 
+              title={t('security.verified.title', 'Verified Security Standards')} 
+              description={t('security.verified.description', 'Our security practices are certified to meet industry standards, giving you peace of mind.')} 
             />
           </div>
           <div className="text-center mt-8">
@@ -341,33 +386,33 @@ function HomePage() {
               {t('faq.title', 'Frequently Asked Questions')}
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              {t('faq.subtitle', 'Find answers to common questions about our tools.')}
+              {t('faq.subtitle', 'Explore common questions about pdfCircle’s tools and services to get started quickly.')}
             </p>
           </div>
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
             <FAQItem 
               question={t('faq.free.question', 'Is pdfCircle really free?')} 
-              answer={t('faq.free.answer', 'Yes, all our tools are completely free to use with no hidden fees.')} 
+              answer={t('faq.free.answer', 'Yes, all our tools are completely free to use with no hidden fees, making professional-grade document processing accessible to everyone.')} 
             />
             <FAQItem 
               question={t('faq.fileSize.question', 'What is the maximum file size?')} 
-              answer={t('faq.fileSize.answer', 'You can process files up to 100MB for free.')} 
+              answer={t('faq.fileSize.answer', 'You can process files up to 100MB for free, with no limits on the number of conversions or edits.')} 
             />
             <FAQItem 
               question={t('faq.fileHandling.question', 'How are my files handled?')} 
-              answer={t('faq.fileHandling.answer', 'Files are processed locally and deleted immediately after use.')} 
+              answer={t('faq.fileHandling.answer', 'Files are processed locally in your browser and deleted immediately after use, ensuring maximum privacy and security.')} 
             />
             <FAQItem 
               question={t('faq.formats.question', 'Which file formats are supported?')} 
-              answer={t('faq.formats.answer', 'We support PDF, JPG, PNG, Word, Excel, and more.')} 
+              answer={t('faq.formats.answer', 'We support a wide range of formats, including PDF, JPG, PNG, DOCX, Excel, and more, for seamless conversions.')} 
             />
             <FAQItem 
               question={t('faq.account.question', 'Do I need an account?')} 
-              answer={t('faq.account.answer', 'No account is required, but signing up unlocks additional features like processing up to 10 images at once.')} 
+              answer={t('faq.account.answer', 'No account is required to use our tools, but signing up unlocks advanced features like batch processing for up to 10 files at once.')} 
             />
             <FAQItem 
               question={t('faq.security.question', 'Is my data secure?')} 
-              answer={t('faq.security.answer', 'Absolutely, we use end-to-end encryption and local processing.')} 
+              answer={t('faq.security.answer', 'Absolutely, we use end-to-end encryption, local processing, and HTTPS connections to ensure your data remains private and secure.')} 
             />
           </div>
         </div>
@@ -376,7 +421,6 @@ function HomePage() {
   );
 }
 
-// Component to handle routes with auth context
 function AppRoutes() {
   const { user } = useAuth();
 
@@ -413,7 +457,6 @@ function Layout({ children }: PropsWithChildren<{}>) {
     console.log('Layout - User:', user ? 'Logged in' : 'Not logged in');
   }, [user]);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -495,7 +538,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                    className="p-2 rounded-full rounded-full border border-indigo-600 stroke-indigo-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 rounded-full border border-indigo-600 stroke-indigo-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                     aria-label="Profile"
                     title="Profile"
                   >
@@ -503,16 +546,16 @@ function Layout({ children }: PropsWithChildren<{}>) {
                   </button>
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
-                    >
-                      <div className="w-6 h-6 mr-2 flex items-center justify-center rounded-full ">
-                        <LogOut className="w-4 h-4 " />
-                      </div>
-                      Logout
-                    </button>
-                  </div>
+                      <button
+                        onClick={handleSignOut}
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                      >
+                        <div className="w-6 h-6 mr-2 flex items-center justify-center rounded-full">
+                          <LogOut className="w-4 h-4" />
+                        </div>
+                        Logout
+                      </button>
+                    </div>
                   )}
                 </div>
               ) : (
@@ -594,6 +637,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
       </header>
 
       {children}
+      <ConditionalAd />
 
       <button
         onClick={scrollToTop}
@@ -656,7 +700,6 @@ function App() {
             <ScrollToTop>
               <Layout>
                 <AppRoutes />
-                <StickyBottomAd />
               </Layout>
             </ScrollToTop>
           </ErrorBoundary>

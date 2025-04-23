@@ -68,6 +68,8 @@
     "typescript": "^5.3.3",
     "typescript-eslint": "^7.0.1",
     "vite": "^6.2.2",
+    "vite-plugin-html": "^3.2.2",
+    "vite-plugin-image-optimizer": "^1.1.8",
     "vite-plugin-pwa": "^0.21.2"
   }
 }

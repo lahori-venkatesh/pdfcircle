@@ -1,6 +1,6 @@
-import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
+import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -213,6 +213,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgot-password'>('signup');
   const [urlInput, setUrlInput] = useState<string>('');
   const [showUrlModal, setShowUrlModal] = useState(false);
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
   const imgRef = useRef<HTMLImageElement | null>(null);
   const cropContainerRef = useRef<HTMLDivElement | null>(null);
@@ -225,13 +226,52 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   const MAX_IMAGES = isLoggedIn ? 10 : 3;
   const MAX_CONVERSIONS = isLoggedIn ? Infinity : 3;
 
+  const faqData = [
+    {
+      question: "What can I do with pdfCircle’s Image Editor?",
+      answer: "Edit and convert images easily! Resize, crop, compress, add watermarks, and convert to formats like JPEG, PNG, WebP, PDF, or ICO. Upload via drag-and-drop, device, or URL, and download results individually or as a ZIP."
+    },
+    
+    {
+      question: "What image formats are supported?",
+      answer: "Upload PNG, JPEG, WebP, SVG, AVIF, or HEIC (up to 15MB). Convert to JPEG, PNG, WebP, SVG, PDF, AVIF, HEIC, or ICO for versatile use, like PDFs for documents or ICOs for favicons."
+    },
+    {
+      question: "How do I compress images?",
+      answer: "Use 'Quality' mode to adjust compression (1-100%) or 'Size' mode to target sizes like 50KB or 1MB. The tool balances quality and file size, perfect for web or email."
+    },
+    {
+      question: "Can I crop or resize images?",
+      answer: "Yes! Crop with custom sizes or aspect ratios (e.g., 1:1, 16:9) using an interactive tool. Resize in pixels, inches, or cm, with an option to keep the aspect ratio."
+    },
+    {
+      question: "How do I add watermarks?",
+      answer: "Check 'Add Watermark' in settings and enter your text. Watermarks are added to all formats except SVG, PDF, and ICO, great for branding or protection."
+    },
+    {
+      question: "What are the limits for free users?",
+      answer: "Free users can upload 3 images and do 3 conversions/downloads per session. Sign up to process 10 images at once with unlimited conversions."
+    },
+    {
+      question: "Is it safe to upload images?",
+      answer: "Yes, processing happens in your browser for privacy. Secure file handling ensures safety, and no data is stored unless you save operations (logged-in users only)."
+    },
+    {
+      question: "Can I use it on mobile?",
+      answer: "Absolutely! Upload, edit, and convert images on mobile browsers like Chrome or Safari. Touch controls make cropping and resizing easy."
+    },
+    {
+      question: "What if I get an error?",
+      answer: "Errors may occur for files over 15MB or unsupported formats. Check the error message for details. Contact support via the <Link to='/contact' className='text-indigo-600 hover:underline'>contact page</Link> for help."
+    }
+  ];
+
   useEffect(() => {
-    console.log('isLoggedIn:', isLoggedIn, 'MAX_IMAGES:', MAX_IMAGES); // Debug log
     if (isLoggedIn) {
       setConversionCount(0);
       setDownloadCount(0);
       setShowSignupPopup(false);
-      setError(null); // Clear any errors
+      setError(null);
     }
   }, [isLoggedIn]);
 
@@ -253,7 +293,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     }), []);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
-    console.log('onDrop - isLoggedIn:', isLoggedIn, 'Current images:', images.length, 'New files:', acceptedFiles.length); // Debug log
     if (!isLoggedIn && images.length + acceptedFiles.length > MAX_IMAGES) {
       setShowSignupPopup(true);
       setError(`Maximum ${MAX_IMAGES} images allowed for non-logged-in users. Please log in or sign up to upload up to 10 images.`);
@@ -274,15 +313,11 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
     if (newImages.length !== acceptedFiles.length) {
       setError(`Only ${allowedNewImages} more image${allowedNewImages !== 1 ? 's' : ''} allowed. ${isLoggedIn ? 'You can upload up to 10 images.' : 'Log in or sign up to upload up to 10 images.'}`);
+ telloquent: true
+      setImages(prev => [...prev, ...newImages]);
+      setConvertedBlobs([]);
+      if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
     }
-    if (fileRejections.length > 0) {
-      const rejectionErrors = fileRejections.map(rejection => `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`).join('; ');
-      setError(`Upload failed: ${rejectionErrors}`);
-    }
-
-    setImages(prev => [...prev, ...newImages]);
-    setConvertedBlobs([]);
-    if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
   }, [images, MAX_IMAGES, isLoggedIn]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -383,7 +418,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, []);
 
   const handleAddMoreImages = useCallback(() => {
-    console.log('handleAddMoreImages - isLoggedIn:', isLoggedIn, 'Images:', images.length, 'MAX_IMAGES:', MAX_IMAGES); // Debug log
     if (images.length >= MAX_IMAGES) {
       if (!isLoggedIn) {
         setShowSignupPopup(true);
@@ -531,17 +565,21 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     else if (source === 'url') setShowUrlModal(true); 
   };
 
+  const toggleFaq = (index: number) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
+
   return (
     <>
       <SEOHeaders 
         title="Free Online Image Editor - Create, Resize, Crop, Convert Images" 
-        description="Create and edit high-resolution images online with our free tool. Resize, crop, convert to JPEG, PNG, WebP, PDF, ICO, and more with advanced features." 
-        keywords={['image editor online free', 'create images online', 'resize high resolution images', 'crop image online tool', 'convert image to pdf', 'image compressor free', 'optimize images', 'batch image resizer', 'SEO image optimization', 'add watermark to image', 'free photo editing tool', 'online image creator']} 
+        description="Edit, resize, crop, and convert images online for free with pdfCircle’s advanced image tools. Supports JPEG, PNG, WebP, PDF, ICO, and more. Perfect for professionals, students, and creators." 
+        keywords={['image editor online free', 'resize images online', 'crop image tool', 'convert image to pdf', 'image compressor free', 'batch image converter', 'add watermark to image', 'free photo editing tool', 'online image optimizer']} 
         canonicalUrl="https://pdfcircle.com/image-tools" 
       />
 
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
+        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-4 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
         <div className="bg-white rounded-xl shadow-lg p-6">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
@@ -593,7 +631,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             <div className="space-y-6">
               {images.length === 0 ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Create Files (Max {MAX_IMAGES})</h2>
+                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Edit or Convert (Max {MAX_IMAGES})</h2>
                   <div {...getRootProps()} className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}>
                     <input {...getInputProps()} ref={fileInputRef} className="hidden" />
                     <div className="relative inline-block">
@@ -610,36 +648,33 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
                   <div className="mt-4 text-sm text-gray-600">
-                    <p>How to Create Files:</p>
+                    <p>How to Use Image Tools:</p>
                     <ul className="list-disc pl-5">
-                      <li>Select up to {MAX_IMAGES} images to upload.</li>
-                      <li>Add more images with the + button if under limit.</li>
-                      <li>Choose your desired output format and settings.</li>
-                      <li>Optionally crop or add a watermark.</li>
-                      <li>Click "Create Files" to generate new files.</li>
-                      <li>Download individually or as ZIP, then start a new conversion.</li>
+                      <li>Upload up to {MAX_IMAGES} images via drag-and-drop, device, or URL.</li>
+                      <li>Edit with cropping, resizing, or watermarking tools.</li>
+                      <li>Choose output formats (JPEG, PNG, PDF, etc.) and compression settings.</li>
+                      <li>Download converted images individually or as a ZIP file.</li>
+                      <li>Start a new conversion to process more images.</li>
                     </ul>
                   </div>
                   {!isLoggedIn && (
                     <div className="mt-6 mx-auto max-w-md rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-center text-sm text-gray-700 shadow-sm">
-                    <p>
-                      <span className="font-semibold text-gray-800">Guests can upload up to {MAX_IMAGES} images</span> and make{" "}
-                      <span className="font-semibold text-gray-800">{MAX_CONVERSIONS} conversions.</span><br />
-                      <span className="text-gray-600">Want more?</span>{" "}
-                      <button onClick={() => handleLoginOrSignup('login')} className="font-medium text-indigo-600 hover:underline">Log in</button> or{" "}
-                      <button onClick={() => handleLoginOrSignup('signup')} className="font-medium text-indigo-600 hover:underline">sign up</button>{" "}
-                      to <span className="font-semibold text-gray-800">upload 10 images at once</span> and enjoy{" "}
-                      <span className="font-semibold text-gray-800">unlimited conversions!</span>
-                    </p>
-                  </div>
-                  
-                  
+                      <p>
+                        <span className="font-semibold text-gray-800">Guests can upload up to {MAX_IMAGES} images</span> and make{" "}
+                        <span className="font-semibold text-gray-800">{MAX_CONVERSIONS} conversions.</span><br />
+                        <span className="text-gray-600">Want more?</span>{" "}
+                        <button onClick={() => handleLoginOrSignup('login')} className="font-medium text-indigo-600 hover:underline">Log in</button> or{" "}
+                        <button onClick={() => handleLoginOrSignup('signup')} className="font-medium text-indigo-600 hover:underline">sign up</button>{" "}
+                        to <span className="font-semibold text-gray-800">upload 10 images at once</span> and enjoy{" "}
+                        <span className="font-semibold text-gray-800">unlimited conversions!</span>
+                      </p>
+                    </div>
                   )}
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-800">Preview and Create Files ({images.length}/{MAX_IMAGES})</h2>
+                    <h2 className="text-lg font-semibold text-gray-800">Preview and Edit Images ({images.length}/{MAX_IMAGES})</h2>
                     {images.length < MAX_IMAGES && <button onClick={handleAddMoreImages} className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700" aria-label="Add more images"><Plus className="w-5 h-5" /></button>}
                   </div>
                   <input {...getInputProps()} ref={fileInputRef} className="hidden" />
@@ -659,7 +694,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                   </div>
                   {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
                   <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between"><h2 className="text-sm font-medium text-gray-700">File Creation Settings</h2><Settings2 className="w-5 h-5 text-gray-400" /></div>
+                    <div className="flex items-center justify-between"><h2 className="text-sm font-medium text-gray-700">Image Editing Settings</h2><Settings2 className="w-5 h-5 text-gray-400" /></div>
                     <select value={settings.format} onChange={(e) => setSettings(prev => ({ ...prev, format: e.target.value }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                       {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
@@ -759,12 +794,12 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                         onClick={handleConversion} 
                         disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)} 
                         className="w-full sm:w-auto flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center text-sm sm:text-base" 
-                        aria-label="Create files"
+                        aria-label="Edit images"
                       >
                         {loading ? (
-                          <><Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-1 sm:mr-2" /> Creating...</>
+                          <><Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-1 sm:mr-2" /> Processing...</>
                         ) : (
-                          <>{settings.format === 'pdf' ? <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />} Create Files</>
+                          <>{settings.format === 'pdf' ? <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />} Edit Images</>
                         )}
                       </button>
                       {convertedBlobs.length > 0 && images.length > 1 && (
@@ -845,7 +880,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         )}
 
         <div className="mt-6">
-          <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More PDF Tools</h3>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">Explore More PDF Tools</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {['watermark', 'split', 'merge', 'to-images', 'create'].map(tab => (
               <Link 
@@ -867,6 +902,55 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </div>
+
+        <section className="mt-6 text-gray-700 dark:text-gray-200">
+          <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
+          <p className="mb-4">
+            pdfCircle’s free online image editor empowers professionals, students, and creators to <strong>edit, resize, crop, and convert images</strong> with ease. Supporting formats like <strong>JPEG, PNG, WebP, PDF, ICO, AVIF, and HEIC</strong>, our tools are perfect for optimizing images for websites, crafting social media visuals, or preparing professional documents. Whether you’re a web developer reducing file sizes for faster load times, a marketer designing eye-catching graphics, or a student formatting images for assignments, pdfCircle delivers a secure, user-friendly experience.
+          </p>
+          <ul className="list-disc pl-5 mb-4">
+            <li><strong>Advanced Editing</strong>: Resize images in pixels, inches, or centimeters, crop with custom aspect ratios (e.g., 1:1, 16:9), and add watermarks for branding or protection.</li>
+            <li><strong>Versatile Conversion</strong>: Convert images to multiple formats, including PDF for documents, ICO for favicons, or WebP for web optimization.</li>
+            <li><strong>Batch Processing</strong>: Edit up to 10 images at once (3 for guests) and download them individually or as a ZIP file for convenience.</li>
+            <li><strong>Smart Compression</strong>: Reduce file sizes while preserving quality, ideal for email attachments or SEO-friendly websites. Choose quality levels or target sizes (e.g., 100KB, 1MB).</li>
+            <li><strong>Secure & Accessible</strong>: Process images directly in your browser for maximum privacy. No sign-up needed for basic features, with premium accounts for unlimited conversions.</li>
+          </ul>
+          <p className="mb-4">
+            Our intuitive interface supports drag-and-drop uploads, real-time previews, and URL-based image imports, making editing accessible to all skill levels. Optimize your workflow with pdfCircle’s free tools and unlock unlimited possibilities by signing up for a free account. Start transforming your images today—no software downloads required!
+          </p>
+          <p className="text-sm text-gray-500">
+            <em>Pro Tip: Sign up to process up to 10 images at once and enjoy unlimited conversions, all from the comfort of your browser.</em>
+          </p>
+        </section>
+
+        <section className="mt-8 text-gray-700 dark:text-gray-200">
+          <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">Frequently Asked Questions</h2>
+          <div className="space-y-4">
+            {faqData.map((faq, index) => (
+              <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg">
+                <button
+                  onClick={() => toggleFaq(index)}
+                  className="w-full flex justify-between items-center p-4 text-left text-lg font-medium text-gray-800 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  aria-expanded={openFaqIndex === index}
+                  aria-controls={`faq-answer-${index}`}
+                >
+                  <span>{faq.question}</span>
+                  {openFaqIndex === index ? (
+                    <ChevronUp className="w-5 h-5 text-gray-500" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-500" />
+                  )}
+                </button>
+                <div
+                  id={`faq-answer-${index}`}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${openFaqIndex === index ? 'max-h-96 p-4' : 'max-h-0'}`}
+                >
+                  <p className="text-sm text-gray-600 dark:text-gray-300" dangerouslySetInnerHTML={{ __html: faq.answer }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </>
   );
