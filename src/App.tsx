@@ -3,14 +3,14 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { 
   FileUp, Image, FileText, FilePlus, Split, Menu, X, LogOut, Images,
   ShieldCheck, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle,
-  Stamp, Sun, Moon, ArrowUp, User
+  Stamp, Sun, Moon, ArrowUp, User, Upload, File, Download, Zap
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ImageTools } from './components/ImageTools';
 import { PDFTools } from './components/PDFTools';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
-import { Blog } from './components/blog';
+import { Blog } from './components/Blog';
 import { Contact } from './components/Contact';
 import { AboutUs } from './components/AboutUs';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -67,13 +67,13 @@ interface SecurityFeatureProps {
 }
 function SecurityFeature({ icon: Icon, title, description }: SecurityFeatureProps) {
   return (
-    <div className="flex items-start space-x-4 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-200 dark:border-gray-700">
-      <div className="flex-shrink-0 w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg flex items-center justify-center">
+    <div className="flex items-start space-x-4 p-6 bg-white dark:bg-gray-800 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1">
+      <div className="flex-shrink-0 w-12 h-12 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg flex items-center justify-center">
         <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
       </div>
       <div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-300">{description}</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{description}</p>
       </div>
     </div>
   );
@@ -90,17 +90,17 @@ function FAQItem({ question, answer }: FAQItemProps) {
     <div className="border-b border-gray-200 dark:border-gray-700 last:border-0">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex justify-between items-center w-full py-4 text-left"
+        className="flex justify-between items-center w-full py-4 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-700/50"
       >
         <span className="text-lg font-medium text-gray-900 dark:text-white">{question}</span>
-        <span className={`ml-6 flex-shrink-0 transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+        <span className={`ml-6 flex-shrink-0 transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
           <svg className="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         </span>
       </button>
       <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isOpen ? 'max-h-96 mb-4' : 'max-h-0'}`}>
-        <p className="text-gray-600 dark:text-gray-300">{answer}</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{answer}</p>
       </div>
     </div>
   );
@@ -115,12 +115,12 @@ interface FeatureCardProps {
 function FeatureCard({ icon: Icon, title, description, to }: FeatureCardProps) {
   return (
     <Link to={to} onClick={() => window.scrollTo(0, 0)} className="block">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 dark:bg-indigo-900 rounded-lg mb-4">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100 dark:border-gray-700 transform hover:-translate-y-1">
+        <div className="flex items-center justify-center w-12 h-12 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg mb-4 transition-transform duration-300 group-hover:scale-110">
           <Icon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
         </div>
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-300">{description}</p>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{description}</p>
       </div>
     </Link>
   );
@@ -130,35 +130,50 @@ interface StepCardProps {
   number: number;
   title: string;
   description: string;
+  icon: React.ComponentType<any>;
 }
-function StepCard({ number, title, description }: StepCardProps) {
+function StepCard({ number, title, description, icon: Icon }: StepCardProps) {
   return (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 flex items-center space-x-4 hover:shadow-xl transition-shadow duration-300">
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex items-center space-x-4 hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
       <div className="flex-shrink-0 w-12 h-12 bg-indigo-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
-        {number}
+        <Icon className="w-6 h-6" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-300">{description}</p>
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-1">Step {number}: {title}</h3>
+        <p className="text-gray-600 dark:text-gray-300 text-sm">{description}</p>
       </div>
     </div>
   );
 }
 
-// Hook to check ad consent (simplified, assumes CMP integration)
+interface WhyChooseCardProps {
+  icon: React.ComponentType<any>;
+  title: string;
+  description: string;
+}
+function WhyChooseCard({ icon: Icon, title, description }: WhyChooseCardProps) {
+  return (
+    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col items-center text-center hover:shadow-md transition-all duration-300 transform hover:-translate-y-1">
+      <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mb-4">
+        <Icon className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+      </div>
+      <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">{title}</h3>
+      <p className="text-gray-600 dark:text-gray-300 text-sm">{description}</p>
+    </div>
+  );
+}
+
+// Hook to check ad consent
 function useAdConsent() {
   const [consent, setConsent] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Replace with your CMP (e.g., Cookiebot, OneTrust) logic
     const checkConsent = () => {
-      // Example: Check localStorage or CMP API for consent
       const userConsent = localStorage.getItem('adConsent') === 'true';
       setConsent(userConsent);
     };
 
     checkConsent();
-    // Listen for consent changes (e.g., CMP events)
     window.addEventListener('consentUpdated', checkConsent);
     return () => window.removeEventListener('consentUpdated', checkConsent);
   }, []);
@@ -166,7 +181,7 @@ function useAdConsent() {
   return consent;
 }
 
-// Component to conditionally render ads on content-rich pages with consent
+// Component to conditionally render ads
 function ConditionalAd() {
   const location = useLocation();
   const consent = useAdConsent();
@@ -180,8 +195,6 @@ function ConditionalAd() {
 
 function HomePage() {
   const { t } = useTranslation();
-
-  
 
   return (
     <>
@@ -197,31 +210,31 @@ function HomePage() {
         canonicalUrl="https://pdfcircle.com/"
       />
 
-      <section className="relative bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-800 dark:from-indigo-900 dark:via-indigo-800 dark:to-purple-900 py-16 sm:py-24">
-        <div className="absolute inset-0 bg-[url('/hero.webp')] bg-cover bg-center opacity-10"></div>
+      <section className="relative bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 py-16 sm:py-24 overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] bg-cover bg-center opacity-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="text-center">
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 sm:mb-8">
-              {t('hero.title', 'Free Online PDF & Image Conversion Tools')}
+          <div className="text-center animate-fade-in">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
+              {t('hero.title', 'Transform Your Documents with Ease')}
             </h1>
-            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 sm:mb-10 max-w-3xl mx-auto">
-              {t('hero.subtitle', 'pdfCircle provides fast, secure, and free tools to convert, compress, merge, and edit PDFs and images, making document processing effortless for everyone.')}
+            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+              {t('hero.subtitle', 'Free, secure, and powerful tools to convert, compress, merge, and edit PDFs and images effortlessly.')}
             </p>
             <p className="text-lg text-indigo-200 mb-10 max-w-2xl mx-auto">
               {t('hero.description', 'Whether you’re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required. Supporting files up to 100MB, our platform ensures end-to-end encryption and local processing to keep your data safe. Start now and simplify your document tasks!')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
                 to="/pdf-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block bg-white text-indigo-600 dark:bg-white dark:text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-indigo-200 dark:hover:bg-indigo-200 transition-colors duration-300 shadow-lg"
+                className="inline-block bg-white text-indigo-600 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition-all duration-300 shadow-lg transform hover:-translate-y-1"
               >
                 {t('hero.getStarted', 'Explore PDF Tools')}
               </Link>
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-gray-800 transition-colors duration-300 shadow-lg"
+                className="inline-block border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-indigo-600 transition-all duration-300 shadow-lg transform hover:-translate-y-1"
               >
                 {t('hero.imageTools', 'Explore Image Tools')}
               </Link>
@@ -230,169 +243,169 @@ function HomePage() {
         </div>
       </section>
 
-      <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
+      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('features.title', 'Powerful Tools for PDFs and Images')}
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 dark:text-white mb-6">
+            {t('features.title', 'Powerful Tools for Every Need')}
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-10 max-w-3xl mx-auto">
-            {t('features.description', 'pdfCircle offers a comprehensive suite of free tools designed to streamline your document and image processing tasks. From converting PDFs to editable formats to optimizing images for faster web loading, our secure and intuitive platform supports students, professionals, and creators alike.')}
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
+            {t('features.description', 'Discover our suite of free tools designed to simplify your document and image processing tasks.')}
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <FeatureCard 
               icon={Image} 
               title={t('features.imageReduction.title', 'Image Compression')} 
-              description={t('features.imageReduction.description', 'Reduce image file sizes without compromising quality, perfect for web, email, or storage efficiency.')} 
+              description={t('features.imageReduction.description', 'Reduce image sizes without losing quality for web and storage.')} 
               to="/image-tools?tab=compress"
             />
             <FeatureCard 
               icon={FileUp} 
               title={t('features.imageToPdf.title', 'Image to PDF')} 
-              description={t('features.imageToPdf.description', 'Transform JPG, PNG, or other images into professional PDF documents with a single click.')} 
+              description={t('features.imageToPdf.description', 'Convert images to professional PDFs in one click.')} 
               to="/pdf-tools?tab=create"
             />
             <FeatureCard 
               icon={Images} 
               title={t('features.pdfToImages.title', 'PDF to Images')} 
-              description={t('features.pdfToImages.description', 'Extract high-quality images from PDFs quickly for presentations or sharing.')} 
+              description={t('features.pdfToImages.description', 'Extract high-quality images from PDFs instantly.')} 
               to="/pdf-tools?tab=to-images"
             />
             <FeatureCard 
               icon={FilePlus} 
               title={t('features.mergePdfs.title', 'Merge PDFs')} 
-              description={t('features.mergePdfs.description', 'Combine multiple PDF files into a single, organized document in seconds.')} 
+              description={t('features.mergePdfs.description', 'Combine multiple PDFs into one organized document.')} 
               to="/pdf-tools?tab=merge"
             />
             <FeatureCard 
               icon={Split} 
               title={t('features.splitPdf.title', 'Split PDF')} 
-              description={t('features.splitPdf.description', 'Divide large PDFs into smaller, manageable files for easy distribution.')} 
+              description={t('features.splitPdf.description', 'Split large PDFs into smaller, manageable files.')} 
               to="/pdf-tools?tab=split"
             />
             <FeatureCard 
               icon={Stamp} 
               title={t('features.addWatermark.title', 'Add Watermark')} 
-              description={t('features.addWatermark.description', 'Protect your PDFs with custom text or image watermarks to ensure ownership.')} 
+              description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
               to="/pdf-tools?tab=watermark"
             />
           </div>
         </div>
       </section>
 
-      <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-8 sm:mb-12">
-            {t('howItWorks.title', 'How pdfCircle Simplifies Document Processing')}
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 dark:text-white mb-6">
+            {t('whyChoose.title', 'Why Choose pdfCircle')}
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-10 max-w-3xl mx-auto">
-            {t('howItWorks.description', 'Our intuitive platform makes it easy to manage your PDFs and images in just a few steps, with no technical expertise required. Upload, process, and download your files securely and instantly.')}
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
+            {t('whyChoose.description', 'Experience unmatched efficiency and security with our cutting-edge document processing tools.')}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <WhyChooseCard
+              icon={Zap}
+              title={t('whyChoose.speed.title', 'Lightning Fast')}
+              description={t('whyChoose.speed.description', 'Process files in seconds with our optimized technology.')}
+            />
+            <WhyChooseCard
+              icon={ShieldCheck}
+              title={t('whyChoose.security.title', 'Top-Tier Security')}
+              description={t('whyChoose.security.description', 'Your data is protected with end-to-end encryption.')}
+            />
+            <WhyChooseCard
+              icon={File}
+              title={t('whyChoose.free.title', 'Completely Free')}
+              description={t('whyChoose.free.description', 'Access professional tools at no cost, no hidden fees.')}
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 dark:text-white mb-6">
+            {t('howItWorks.title', 'How pdfCircle Simplifies Your Work')}
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
+            {t('howItWorks.description', 'Effortlessly process your PDFs and images in three straightforward steps with our user-friendly platform.')}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <StepCard
               number={1}
+              icon={Upload}
               title={t('howItWorks.step1.title', 'Upload Your File')}
-              description={t('howItWorks.step1.description', 'Drag and drop or select your PDF or image file to start processing instantly, supporting files up to 100MB.')}
+              description={t('howItWorks.step1.description', 'Simply drag and drop your PDF or image file (up to 100MB) to begin. No account needed!')}
             />
             <StepCard
               number={2}
-              title={t('howItWorks.step2.title', 'Choose Your Tool')}
-              description={t('howItWorks.step2.description', 'Select from a wide range of tools, including compression, conversion, merging, or watermarking, tailored to your needs.')}
+              icon={File}
+              title={t('howItWorks.step2.title', 'Select a Tool')}
+              description={t('howItWorks.step2.description', 'Choose from our tools like compression, conversion, merging, or watermarking to suit your needs.')}
             />
             <StepCard
               number={3}
-              title={t('howItWorks.step3.title', 'Download Your Result')}
-              description={t('howItWorks.step3.description', 'Download your processed file securely in seconds, ready for sharing or storage, with no data retention.')}
+              icon={Download}
+              title={t('howItWorks.step3.title', 'Download Instantly')}
+              description={t('howItWorks.step3.description', 'Get your processed file in seconds, ready to use, with top-notch security.')}
             />
-          </div>
-          <div className="text-center mt-8">
-            <Link
-              to="/pdf-tools"
-              onClick={() => window.scrollTo(0, 0)}
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline mr-4"
-            >
-              {t('howItWorks.seeAllTools', 'See All PDF Tools')}
-            </Link>
-            <a
-              href="https://www.adobe.com/acrobat/online/pdf-tools.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
-            >
-              {t('howItWorks.exploreExternal', 'Explore Adobe PDF Tools')}
-            </a>
           </div>
         </div>
       </section>
 
-      <section className="py-12 sm:py-20 bg-white dark:bg-gray-800">
+      <section className="py-16 sm:py-24 bg-white dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('security.title', 'Your Security Matters')}
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-              {t('security.subtitle', 'At pdfCircle, we prioritize your privacy with industry-leading security measures to protect your files and data.')}
-            </p>
-          </div>
+          <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 dark:text-white mb-6">
+            {t('security.title', 'Uncompromising Security')}
+          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
+            {t('security.subtitle', 'Your privacy is our priority with industry-leading security measures.')}
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <SecurityFeature 
               icon={ShieldCheck} 
               title={t('security.localProcessing.title', 'Local Processing')} 
-              description={t('security.localProcessing.description', 'Your files are processed directly in your browser, ensuring no data is uploaded to external servers.')} 
+              description={t('security.localProcessing.description', 'Files are processed in your browser, not on servers.')} 
             />
             <SecurityFeature 
               icon={Key} 
               title={t('security.endToEnd.title', 'End-to-End Encryption')} 
-              description={t('security.endToEnd.description', 'All file transfers are protected with end-to-end encryption, safeguarding your data from unauthorized access.')} 
+              description={t('security.endToEnd.description', 'Your data is protected during all transfers.')} 
             />
             <SecurityFeature 
               icon={Server} 
               title={t('security.noStorage.title', 'No Cloud Storage')} 
-              description={t('security.noStorage.description', 'We delete your files immediately after processing, ensuring no copies are stored on our servers.')} 
+              description={t('security.noStorage.description', 'Files are deleted immediately after processing.')} 
             />
             <SecurityFeature 
               icon={RefreshCw} 
-              title={t('security.updates.title', 'Regular Security Updates')} 
-              description={t('security.updates.description', 'Our platform is continuously updated to address vulnerabilities and maintain top-tier security standards.')} 
+              title={t('security.updates.title', 'Regular Updates')} 
+              description={t('security.updates.description', 'Continuous updates ensure top security standards.')} 
             />
             <SecurityFeature 
               icon={LockIcon} 
-              title={t('security.connection.title', 'Secure HTTPS Connection')} 
-              description={t('security.connection.description', 'All interactions with pdfCircle use HTTPS, ensuring safe and encrypted data transfers.')} 
+              title={t('security.connection.title', 'Secure Connection')} 
+              description={t('security.connection.description', 'All interactions use encrypted HTTPS connections.')} 
             />
             <SecurityFeature 
               icon={CheckCircle} 
-              title={t('security.verified.title', 'Verified Security Standards')} 
-              description={t('security.verified.description', 'Our security practices are certified to meet industry standards, giving you peace of mind.')} 
+              title={t('security.verified.title', 'Verified Standards')} 
+              description={t('security.verified.description', 'Certified to meet industry security standards.')} 
             />
-          </div>
-          <div className="text-center mt-8">
-            <a
-              href="https://www.ssl.com/article/what-is-end-to-end-encryption/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200 underline"
-            >
-              {t('security.learnMore', 'Learn More About Encryption')}
-            </a>
           </div>
         </div>
       </section>
 
-      <section className="py-12 sm:py-20 bg-gray-50 dark:bg-gray-900">
+      <section className="py-12 sm:py-16 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              {t('faq.title', 'Frequently Asked Questions')}
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              {t('faq.subtitle', 'Explore common questions about pdfCircle’s tools and services to get started quickly.')}
-            </p>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 sm:p-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-center text-gray-900 dark:text-white mb-6">
+            {t('faq.title', 'Frequently Asked Questions')}
+          </h2>
+          <p className="text-base text-gray-600 dark:text-gray-300 text-center mb-8 max-w-2xl mx-auto">
+            {t('faq.subtitle', 'Find answers to your questions about pdfCircle’s tools and services.')}
+          </p>
+          <div className="space-y-4">
             <FAQItem 
               question={t('faq.free.question', 'Is pdfCircle really free?')} 
-              answer={t('faq.free.answer', 'Yes, all our tools are completely free to use with no hidden fees, making professional-grade document processing accessible to everyone.')} 
+              answer={t('faq.free.answer', 'Yes, all our tools are completely free to use with no hidden fees, providing professional-grade document processing for everyone.')} 
             />
             <FAQItem 
               question={t('faq.fileSize.question', 'What is the maximum file size?')} 
@@ -400,7 +413,7 @@ function HomePage() {
             />
             <FAQItem 
               question={t('faq.fileHandling.question', 'How are my files handled?')} 
-              answer={t('faq.fileHandling.answer', 'Files are processed locally in your browser and deleted immediately after use, ensuring maximum privacy and security.')} 
+              answer={t('faq.fileHandling.answer', 'Your files are processed locally in your browser and deleted immediately after use, ensuring maximum privacy and security.')} 
             />
             <FAQItem 
               question={t('faq.formats.question', 'Which file formats are supported?')} 
@@ -408,11 +421,23 @@ function HomePage() {
             />
             <FAQItem 
               question={t('faq.account.question', 'Do I need an account?')} 
-              answer={t('faq.account.answer', 'No account is required to use our tools, but signing up unlocks advanced features like batch processing for up to 10 files at once.')} 
+              answer={t('faq.account.answer', 'No account is required, but signing up unlocks advanced features like batch processing for up to 10 files at once.')} 
             />
             <FAQItem 
               question={t('faq.security.question', 'Is my data secure?')} 
-              answer={t('faq.security.answer', 'Absolutely, we use end-to-end encryption, local processing, and HTTPS connections to ensure your data remains private and secure.')} 
+              answer={t('faq.security.answer', 'Absolutely, we use end-to-end encryption, local processing, and HTTPS connections to keep your data private and secure.')} 
+            />
+            <FAQItem 
+              question={t('faq.speed.question', 'How fast is the processing?')} 
+              answer={t('faq.speed.answer', 'Our optimized technology processes files in seconds, even for large documents or images, ensuring a seamless experience.')} 
+            />
+            <FAQItem 
+              question={t('faq.devices.question', 'Can I use pdfCircle on any device?')} 
+              answer={t('faq.devices.answer', 'Yes, pdfCircle is web-based and works on any device with a modern browser, including desktops, tablets, and smartphones.')} 
+            />
+            <FAQItem 
+              question={t('faq.batch.question', 'Does pdfCircle support batch processing?')} 
+              answer={t('faq.batch.answer', 'Yes, registered users can process up to 10 files simultaneously with our batch processing feature, saving you time.')} 
             />
           </div>
         </div>
@@ -452,6 +477,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
   const [isVisible, setIsVisible] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const location = useLocation();
 
   useEffect(() => {
     console.log('Layout - User:', user ? 'Logged in' : 'Not logged in');
@@ -520,16 +546,40 @@ function Layout({ children }: PropsWithChildren<{}>) {
             </div>
             <div className="hidden sm:flex items-center justify-center flex-1 px-8">
               <div className="flex space-x-6">
-                <Link to="/" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
-                <Link to="/image-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
-                <Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
-                <Link to="/blog" onClick={scrollToTop} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Blog</Link>
+                <Link 
+                  to="/" 
+                  onClick={scrollToTop} 
+                  className={`transition-colors font-medium ${location.pathname === '/' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/image-tools" 
+                  onClick={scrollToTop} 
+                  className={`transition-colors font-medium ${location.pathname === '/image-tools' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                >
+                  Image Tools
+                </Link>
+                <Link 
+                  to="/pdf-tools" 
+                  onClick={scrollToTop} 
+                  className={`transition-colors font-medium ${location.pathname === '/pdf-tools' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                >
+                  PDF Tools
+                </Link>
+                <Link 
+                  to="/blog" 
+                  onClick={scrollToTop} 
+                  className={`transition-colors font-medium ${location.pathname === '/blog' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+                >
+                  Blog
+                </Link>
               </div>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2 rounded-full text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                 title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
               >
                 {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -538,7 +588,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-                    className="p-2 rounded-full border border-indigo-600 stroke-indigo-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    className="p-2 rounded-full border border-indigo-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Profile"
                     title="Profile"
                   >
@@ -560,10 +610,10 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 </div>
               ) : (
                 <>
-                  <button onClick={() => openAuthModal('login')} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                  <button onClick={() => openAuthModal('login')} className="text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                     Login
                   </button>
-                  <button onClick={() => openAuthModal('signup')} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                  <button onClick={() => openAuthModal('signup')} className="bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition-colors">
                     Sign Up
                   </button>
                 </>
@@ -583,13 +633,37 @@ function Layout({ children }: PropsWithChildren<{}>) {
         {mobileMenuOpen && (
           <div className="sm:hidden bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
             <div className="px-4 py-3 space-y-3">
-              <Link to="/" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Home</Link>
-              <Link to="/image-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Image Tools</Link>
-              <Link to="/pdf-tools" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">PDF Tools</Link>
-              <Link to="/blog" onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} className="block text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white">Blog</Link>
+              <Link 
+                to="/" 
+                onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} 
+                className={`block font-medium ${location.pathname === '/' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+              >
+                Home
+              </Link>
+              <Link 
+                to="/image-tools" 
+                onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} 
+                className={`block font-medium ${location.pathname === '/image-tools' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+              >
+                Image Tools
+              </Link>
+              <Link 
+                to="/pdf-tools" 
+                onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} 
+                className={`block font-medium ${location.pathname === '/pdf-tools' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+              >
+                PDF Tools
+              </Link>
+              <Link 
+                to="/blog" 
+                onClick={() => { setMobileMenuOpen(false); scrollToTop(); }} 
+                className={`block font-medium ${location.pathname === '/blog' ? 'text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400'}`}
+              >
+                Blog
+              </Link>
               <button
                 onClick={toggleTheme}
-                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+                className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 {theme === 'dark' ? (
                   <>
@@ -627,8 +701,8 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 </div>
               ) : (
                 <>
-                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white py-2">Login</button>
-                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">Sign Up</button>
+                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-2">Login</button>
+                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition-colors">Sign Up</button>
                 </>
               )}
             </div>
@@ -641,13 +715,13 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-colors duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'} transition-transform duration-300`}
+        className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'}`}
         aria-label="Scroll to Top"
       >
         <ArrowUp className="w-6 h-6" />
       </button>
 
-      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-8 sm:py-12">
+      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
@@ -655,24 +729,24 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 <FileText className="w-6 h-6" />
                 <span className="text-xl font-bold">pdfCircle</span>
               </div>
-              <p className="text-gray-400">pdfCircle Transform your documents and images with our free, secure tools.</p>
+              <p className="text-gray-400 text-sm">Transform your documents and images with our free, secure tools.</p>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2">
-                <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-white">Home</Link></li>
-                <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">Image Tools</Link></li>
-                <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-white">PDF Tools</Link></li>
+                <li><Link to="/" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Home</Link></li>
+                <li><Link to="/image-tools" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Image Tools</Link></li>
+                <li><Link to="/pdf-tools" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">PDF Tools</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-semibold mb-4">Legal</h3>
               <ul className="space-y-2">
-                <li><Link to="/about" onClick={scrollToTop} className="text-gray-400 hover:text-white">About Us</Link></li>
-                <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-white">Privacy Policy</Link></li>
-                <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-white">Terms of Service</Link></li>
-                <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-white">Contact Us</Link></li>
-                <li><Link to="/blog" onClick={scrollToTop} className="text-gray-400 hover:text-white">Blog</Link></li>
+                <li><Link to="/about" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">About Us</Link></li>
+                <li><Link to="/privacy" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Terms of Service</Link></li>
+                <li><Link to="/contact" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Contact Us</Link></li>
+                <li><Link to="/blog" onClick={scrollToTop} className="text-gray-400 hover:text-indigo-400 transition-colors">Blog</Link></li>
               </ul>
             </div>
             <div>
@@ -680,7 +754,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
               <LanguageSelector />
             </div>
           </div>
-          <div className="border-t border-gray-800 mt-8 sm:mt-12 pt-8 text-center text-gray-400">
+          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400 text-sm">
             <p>© {new Date().getFullYear()} pdfCircle. All rights reserved.</p>
           </div>
         </div>
