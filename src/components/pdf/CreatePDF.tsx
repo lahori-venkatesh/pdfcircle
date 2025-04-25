@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileText, Plus, Image as ImageIcon, Settings, Crop } from 'lucide-react';
@@ -521,15 +521,34 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
     <div className="space-y-6">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors
+        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
-        <Upload className="w-12 h-12 dark:text-white text-gray-400 mx-auto mb-4" />
+        <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4 dark:text-white" />
         <p className="text-gray-600 dark:text-white">
-          {isDragActive ? 'Drop the images here' : 'Drag & drop images here, or tap to select'}
+          {isDragActive ? 'Drop the images here' : 'Drag & drop images here'}
         </p>
-        <p className="text-sm text-gray-500 dark:text-white mt-2">Supports images (JPEG, PNG, WebP, max 30)</p>
+        <button
+          type="button"
+          onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+          className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          Choose Images
+        </button>
+        <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports images (JPEG, PNG, WebP, max 30)</p>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">How to Use Create PDF:</h3>
+        <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
+          <li>Upload up to 30 images via drag-and-drop or by clicking "Choose Images".</li>
+          <li>Arrange images in the desired order using drag-and-drop.</li>
+          <li>Adjust quality, orientation, page size, and margins as needed.</li>
+          <li>Choose to merge images into one PDF or create separate PDFs (downloaded as a ZIP).</li>
+          <li>Click "Create PDF" and download the result.</li>
+        </ul>
       </div>
 
       {!isLoggedIn && (
@@ -659,7 +678,7 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
                   min="0"
                   value={customMargin}
                   onChange={(e) => setCustomMargin(Math.max(0, Number(e.target.value)))}
-                  className="w-full p-3 mt-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full p-3 mt-2 border border-gray-300 rounded-lg text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                   placeholder="Enter margin in points"
                 />
               )}

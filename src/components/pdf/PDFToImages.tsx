@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import  { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Download, Upload, X, Image as ImageIcon, Loader2, Crop, Settings, FileText, Images, RefreshCw } from 'lucide-react';
 import JSZip from 'jszip';
@@ -197,15 +197,34 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
     <div className="space-y-6">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors
+        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4 dark:text-white" />
         <p className="text-gray-600 dark:text-white">
-          {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here, or tap to select'}
+          {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here'}
         </p>
+        <button
+          type="button"
+          onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+          className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          Choose File
+        </button>
         <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports PDF files</p>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">How to Use PDF to Images:</h3>
+        <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
+          <li>Upload a single PDF file via drag-and-drop or by clicking "Choose File".</li>
+          <li>Select the desired output image format (PNG, JPG, or WebP).</li>
+          <li>Click "Convert to Images" to process the PDF.</li>
+          <li>Download the resulting images as a ZIP file.</li>
+          <li>Start a new conversion by clicking "New Conversion".</li>
+        </ul>
       </div>
 
       {!isLoggedIn && (
@@ -231,7 +250,7 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Selected File</h3>
               <button
                 onClick={resetFiles}
-                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 dark:text-white"
                 title="Remove file"
                 aria-label="Remove file"
               >
@@ -239,19 +258,19 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
               </button>
             </div>
             <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-              <span className="text-gray-700 dark:text-gray-200">{files[0].file.name}</span>
+              <span className="text-gray-700 dark:text-white">{files[0].file.name}</span>
             </div>
           </div>
 
           <div>
-            <label htmlFor="format-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <label htmlFor="format-select" className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
               Output Image Format
             </label>
             <select
               id="format-select"
               value={format}
               onChange={(e) => setFormat(e.target.value as 'jpeg' | 'png' | 'webp')}
-              className="block w-full sm:w-48 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="block w-full sm:w-48 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               aria-label="Select output image format"
             >
               <option value="png">PNG</option>
@@ -356,7 +375,7 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
 
       <div className="mt-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image Tools</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image & PDF Tools</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Link
             to="/image-tools"
@@ -400,6 +419,50 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
             <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
               Crop Image
+            </span>
+          </Link>
+          <Link
+            to="/pdf-tools?tab=create"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Create PDF
+            </span>
+          </Link>
+          <Link
+            to="/pdf-tools?tab=watermark"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Watermark PDF
+            </span>
+          </Link>
+          <Link
+            to="/pdf-tools?tab=split"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Split PDF
+            </span>
+          </Link>
+          <Link
+            to="/pdf-tools?tab=merge"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
+            <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
+              <FileText className="w-6 h-6 text-indigo-600" />
+            </div>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Merge PDF
             </span>
           </Link>
         </div>

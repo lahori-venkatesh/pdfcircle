@@ -3,7 +3,7 @@ import mime from 'mime-types';
 import path from 'path-browserify';
 
 // Maximum file size in bytes (15MB as per your previous setup, adjusted from 5MB to match)
-export const MAX_FILE_SIZE = 20 * 1024 * 1024;
+export const MAX_FILE_SIZE = 80 * 1024 * 1024;
 
 // Allowed file types
 export const ALLOWED_IMAGE_TYPES = [

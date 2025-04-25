@@ -212,6 +212,43 @@ function HomePage() {
 
       <section className="relative bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 py-16 sm:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] bg-cover bg-center opacity-10"></div>
+        <div className="absolute inset-0 pointer-events-none">
+    <svg className="w-full h-full opacity-10" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* PDF Document Illustration */}
+      <g transform="translate(120, 60) scale(0.9)">
+        <rect width="120" height="160" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#4F46E5" stroke-width="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <text x="35" y="120" font-size="24" fill="#ffffff" font-family="sans-serif" font-weight="bold">PDF</text>
+      </g>
+      {/* Image File Illustration */}
+      <g transform="translate(1050, 320) scale(0.8)">
+        <rect width="120" height="120" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#A855F7" stroke-width="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fill-opacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fill-opacity="0.8" />
+      </g>
+      {/* Conversion Arrows */}
+      <g transform="translate(580, 220) scale(0.9)">
+        <path d="M0 50H140L120 30M140 50L120 70" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+        <text x="20" y="90" font-size="22" fill="#ffffff" font-family="sans-serif" font-weight="500">Convert</text>
+      </g>
+      {/* Secondary PDF Illustration */}
+      <g transform="translate(320, 360) scale(0.7)">
+        <rect width="120" height="160" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#4F46E5" stroke-width="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
+        <text x="35" y="120" font-size="24" fill="#ffffff" font-family="sans-serif" font-weight="bold">PDF</text>
+      </g>
+      {/* Secondary Image Illustration */}
+      <g transform="translate(880, 100) scale(0.7)">
+        <rect width="120" height="120" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#A855F7" stroke-width="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fill-opacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fill-opacity="0.8" />
+      </g>
+    </svg>
+  </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center animate-fade-in">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
@@ -221,20 +258,20 @@ function HomePage() {
               {t('hero.subtitle', 'Free, secure, and powerful tools to convert, compress, merge, and edit PDFs and images effortlessly.')}
             </p>
             <p className="text-lg text-indigo-200 mb-10 max-w-2xl mx-auto">
-              {t('hero.description', 'Whether you’re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required. Supporting files up to 100MB, our platform ensures end-to-end encryption and local processing to keep your data safe. Start now and simplify your document tasks!')}
+              {t('hero.description', 'Whether you’re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
                 to="/pdf-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block bg-white text-indigo-600 px-6 py-3 rounded-full font-semibold hover:bg-indigo-100 transition-all duration-300 shadow-lg transform hover:-translate-y-1"
+                className="inline-flex items-center bg-white text-indigo-600 px-6 py-3 rounded-lg font-medium hover:bg-indigo-100 transition-colors duration-200 shadow-sm"
               >
                 {t('hero.getStarted', 'Explore PDF Tools')}
               </Link>
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-block border-2 border-white text-white px-8 py-3 rounded-full font-semibold hover:bg-white hover:text-indigo-600 transition-all duration-300 shadow-lg transform hover:-translate-y-1"
+                className="inline-flex items-center  text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 shadow-sm border border-white"
               >
                 {t('hero.imageTools', 'Explore Image Tools')}
               </Link>

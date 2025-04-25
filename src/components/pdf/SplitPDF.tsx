@@ -5,10 +5,17 @@ import { Upload, Download, ImageIcon, FileText, Settings, Crop, Loader2, X, Spli
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
+
 interface PDFFile {
   file: File;
   preview?: string;
 }
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 export function SplitPDF() {
   const { saveOperation } = useOperationsCache();
@@ -19,6 +26,7 @@ export function SplitPDF() {
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
   const [splitPages, setSplitPages] = useState<string>('');
   const [totalPages, setTotalPages] = useState<number | null>(null);
+  const [splitMode, setSplitMode] = useState<'remove' | 'extract'>('remove');
 
   useEffect(() => {
     const loadPageCount = async () => {
@@ -81,18 +89,18 @@ export function SplitPDF() {
         }
         
         for (let i = start; i <= end; i++) {
-          pages.push(i - 1); // Convert to 0-based indexing
+          pages.push(i - 1);
         }
       } else {
         const pageNum = parseInt(part, 10);
         if (isNaN(pageNum) || pageNum < 1 || pageNum > maxPages) {
           throw new Error(`Invalid page number: ${part}. Pages must be between 1 and ${maxPages}`);
         }
-        pages.push(pageNum - 1); // Convert to 0-based indexing
+        pages.push(pageNum - 1);
       }
     }
 
-    return [...new Set(pages)].sort((a, b) => a - b); // Remove duplicates and sort
+    return [...new Set(pages)].sort((a, b) => a - b);
   };
 
   const handleSplitPDF = async () => {
@@ -102,7 +110,7 @@ export function SplitPDF() {
     }
 
     if (!splitPages.trim()) {
-      setError('Please specify pages to remove');
+      setError(`Please specify pages to ${splitMode}`);
       return;
     }
 
@@ -112,22 +120,31 @@ export function SplitPDF() {
     try {
       const pdfBytes = await files[0].file.arrayBuffer();
       const pdfDoc = await PDFDocument.load(pdfBytes);
-      const pagesToRemove = parsePageInput(splitPages, totalPages);
+      const pagesToProcess = parsePageInput(splitPages, totalPages);
 
-      if (pagesToRemove.length === 0) {
-        throw new Error('No valid pages specified to remove');
+      if (pagesToProcess.length === 0) {
+        throw new Error(`No valid pages specified to ${splitMode}`);
       }
 
-      if (pagesToRemove.length === totalPages) {
+      if (splitMode === 'remove' && pagesToProcess.length === totalPages) {
         throw new Error('Cannot remove all pages');
       }
 
       const newPdf = await PDFDocument.create();
-      const copiedPages = await newPdf.copyPages(pdfDoc, 
-        Array.from({ length: totalPages }, (_, i) => i)
-          .filter(i => !pagesToRemove.includes(i))
-      );
+      let pageIndices: number[] = [];
 
+      if (splitMode === 'remove') {
+        pageIndices = Array.from({ length: totalPages }, (_, i) => i)
+          .filter(i => !pagesToProcess.includes(i));
+      } else {
+        pageIndices = pagesToProcess;
+      }
+
+      if (pageIndices.length === 0) {
+        throw new Error('No pages selected for output');
+      }
+
+      const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
       copiedPages.forEach(page => newPdf.addPage(page));
 
       const pdfBytesResult = await newPdf.save();
@@ -143,12 +160,16 @@ export function SplitPDF() {
         metadata: {
           filename: files[0].file.name,
           fileSize: blob.size,
-          settings: { removedPages: splitPages }
+          settings: { mode: splitMode, pages: splitPages }
         },
         preview: newResult
       });
     } catch (err) {
-      setError(err.message || 'Error splitting PDF. Please try again.');
+      if (err instanceof Error) {
+        setError(err.message || `Error ${splitMode === 'remove' ? 'splitting' : 'extracting'} PDF. Please try again.`);
+      } else {
+        setError(`An unknown error occurred.`);
+      }
       console.error(err);
     } finally {
       setLoading(false);
@@ -159,7 +180,7 @@ export function SplitPDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'split.pdf');
+      const link = createSecureDownloadLink(resultBlob, `${splitMode === 'remove' ? 'split' : 'extracted'}.pdf`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -184,21 +205,40 @@ export function SplitPDF() {
     <div className="space-y-6">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors
+        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600 dark:text-white">
-          {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here, or tap to select'}
+          {isDragActive ? 'Drop the PDF file here' : 'Drag & drop a PDF file here'}
         </p>
+        <button
+          type="button"
+          onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+          className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          Choose File
+        </button>
         <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports PDF files</p>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">How to Use Split PDF:</h3>
+        <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
+          <li>Upload a single PDF file via drag-and-drop or by clicking "Choose File".</li>
+          <li>Choose "Remove Pages" to delete specific pages or "Extract Pages" to keep only selected pages.</li>
+          <li>Enter page numbers or ranges (e.g., 5,6,9 or 4-7) to process.</li>
+          <li>Click "Split PDF" or "Extract Pages" to process your PDF.</li>
+          <li>Download the resulting PDF file.</li>
+        </ul>
       </div>
 
       {files.length > 0 && (
         <>
           <div>
-            <div className="flex justify-between  items-center mb-4">
+            <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Selected File</h3>
               <button
                 onClick={resetFiles}
@@ -210,22 +250,62 @@ export function SplitPDF() {
             </div>
             <div className="bg-gray-50 p-3 rounded-lg dark:bg-gray-700 flex justify-between items-center">
               <span className="text-gray-700 dark:text-white">{files[0].file.name}</span>
-              {totalPages !== null && (
+              <div className="flex items-center gap-4">
                 <span className="text-sm text-gray-500">
-                  {totalPages} {totalPages === 1 ? 'page' : 'pages'}
+                  {formatFileSize(files[0].file.size)}
                 </span>
-              )}
+                {totalPages !== null && (
+                  <span className="text-sm text-gray-500">
+                    {totalPages} {totalPages === 1 ? 'page' : 'pages'}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium dark:text-white text-gray-700">
-                Pages to Remove
+                Split Mode
+              </label>
+            </div>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="remove"
+                  checked={splitMode === 'remove'}
+                  onChange={() => setSplitMode('remove')}
+                  className="mr-2"
+                />
+                <span className="text-gray-700 dark:text-white">Remove Pages</span>
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="extract"
+                  checked={splitMode === 'extract'}
+                  onChange={() => setSplitMode('extract')}
+                  className="mr-2"
+                />
+                <span className="text-gray-700 dark:text-white">Extract Pages</span>
+              </label>
+            </div>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+              {splitMode === 'remove' 
+                ? 'Select "Remove Pages" to delete specific pages from your PDF and keep the rest.' 
+                : 'Select "Extract Pages" to create a new PDF containing only the pages you specify.'}
+            </p>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium dark:text-white text-gray-700">
+                Pages to {splitMode === 'remove' ? 'Remove' : 'Extract'}
               </label>
               <div className="flex items-center text-sm text-gray-500">
                 <Info className="w-4 h-4 mr-1" />
-                <span className='dark:text-white'>e.g., 5,6,9 or 4-7,9</span>
+                <span className='dark:text-white'>e.g., 5,6,9 or 4-7</span>
               </div>
             </div>
             <div className="relative">
@@ -233,7 +313,7 @@ export function SplitPDF() {
                 type="text"
                 value={splitPages}
                 onChange={(e) => setSplitPages(e.target.value)}
-                placeholder={totalPages ? `Enter pages to remove (1-${totalPages})` : 'Enter pages to remove'}
+                placeholder={totalPages ? `Enter pages to ${splitMode} (1-${totalPages})` : `Enter pages to ${splitMode}`}
                 className="block w-full rounded-lg border dark:bg-gray-700 border-gray-500 stroke-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 pl-3 pr-10 py-2"
               />
               {totalPages !== null && (
@@ -243,7 +323,10 @@ export function SplitPDF() {
               )}
             </div>
             <p className="mt-1 text-xs text-gray-500">
-              Use commas to separate numbers or ranges (e.g., 5,6,9 or 4-7).
+              Enter page numbers or ranges separated by commas (e.g., 5,6,9 or 4-7).{' '}
+              {splitMode === 'remove' 
+                ? 'These pages will be removed from the output PDF.' 
+                : 'Only these pages will be included in the output PDF.'}
             </p>
           </div>
 
@@ -256,18 +339,18 @@ export function SplitPDF() {
           <div className="flex gap-3">
             <button
               onClick={handleSplitPDF}
-              disabled={loading || !splitPages.trim()}
-              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={loading || !-splitPages.trim()}
+              className="flex-1 bg-indigo-1 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  Splitting...
+                  Processing...
                 </>
               ) : (
                 <>
-                  <Split className="w-5 h-5 mr-2 " />
-                  Split PDF
+                  <Split className="w-5 h-5 mr-2" />
+                  {splitMode === 'remove' ? 'Split PDF' : 'Extract Pages'}
                 </>
               )}
             </button>

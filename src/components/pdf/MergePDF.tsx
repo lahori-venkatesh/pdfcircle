@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
-import { Upload, Download, ImageIcon, Loader2,Crop , Settings, FileText , X, FilePlus } from 'lucide-react';
+import { Upload, Download, ImageIcon, Loader2, Crop, Settings, FileText, X, FilePlus } from 'lucide-react';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
+
 interface PDFFile {
   file: File;
   preview?: string;
@@ -132,28 +133,47 @@ export function MergePDF() {
     <div className="space-y-6">
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed  rounded-lg p-6 sm:p-8 text-center cursor-pointer transition-colors
+        className={`border-2 border-dashed rounded-lg p-6 sm:p-8 text-center transition-colors
           ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}
       >
         <input {...getInputProps()} />
         <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <p className="text-gray-600 dark:text-white">
-          {isDragActive ? 'Drop the PDF files here' : 'Drag & drop PDF files here, or tap to select'}
+          {isDragActive ? 'Drop the PDF files here' : 'Drag & drop PDF files here'}
         </p>
+        <button
+          type="button"
+          onClick={() => (document.querySelector('input[type="file"]') as HTMLInputElement)?.click()}
+          className="mt-4 inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+        >
+          <Upload className="w-5 h-5 mr-2" />
+          Choose Files
+        </button>
         <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports PDF files</p>
+      </div>
+
+      <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">How to Use Merge PDF:</h3>
+        <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
+          <li>Upload multiple PDF files via drag-and-drop or by clicking "Choose Files".</li>
+          <li>Arrange files in the desired order (remove any unwanted files).</li>
+          <li>Click "Merge PDFs" to combine all selected files into a single PDF.</li>
+          <li>Download the merged PDF file.</li>
+          <li>Clear the list to start a new merge process.</li>
+        </ul>
       </div>
 
       {files.length > 0 && (
         <>
           <div>
-            <div className="flex justify-between  items-center mb-4">
-              <h3 className="text-lg font-semibold dark:text-white  text-gray-800">Selected Files</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold dark:text-white text-gray-800">Selected Files</h3>
               <button
                 onClick={resetFiles}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-white"
                 title="Remove all files"
               >
-                <X className="w-5 h-5 dark:text-white" />
+                <X className="w-5 h-5" />
               </button>
             </div>
             <div className="space-y-2">
@@ -164,7 +184,7 @@ export function MergePDF() {
                     onClick={() => removeFile(index)}
                     className="text-gray-500 dark:text-white hover:text-gray-700"
                   >
-                    <X className="w-4 h-4 dark:text-white" />
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               ))}
