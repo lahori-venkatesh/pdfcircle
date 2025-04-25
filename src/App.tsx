@@ -10,7 +10,7 @@ import { ImageTools } from './components/ImageTools';
 import { PDFTools } from './components/PDFTools';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
-import { Blog } from './components/Blog';
+import { Blog } from './components/blog';
 import { Contact } from './components/Contact';
 import { AboutUs } from './components/AboutUs';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
