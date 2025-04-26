@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, ImageIcon, FileText, Settings, Crop, Loader2, X, Split, Info } from 'lucide-react';
@@ -69,12 +69,12 @@ export function SplitPDF() {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: { 'application/pdf': ['.pdf'] },
-    multiple: false
+    multiple: false,
   });
 
   const parsePageInput = (input: string, maxPages: number): number[] => {
     const pages: number[] = [];
-    const parts = input.split(',').map(part => part.trim());
+    const parts = input.split(',').map((part) => part.trim());
 
     for (const part of parts) {
       if (!part) continue;
@@ -83,11 +83,11 @@ export function SplitPDF() {
       if (rangeMatch) {
         const start = parseInt(rangeMatch[1], 10);
         const end = parseInt(rangeMatch[2], 10);
-        
+
         if (isNaN(start) || isNaN(end) || start > end || start < 1 || end > maxPages) {
           throw new Error(`Invalid range: ${part}. Pages must be between 1 and ${maxPages}`);
         }
-        
+
         for (let i = start; i <= end; i++) {
           pages.push(i - 1);
         }
@@ -101,6 +101,16 @@ export function SplitPDF() {
     }
 
     return [...new Set(pages)].sort((a, b) => a - b);
+  };
+
+  const isValidPageInput = (input: string, maxPages: number | null): boolean => {
+    if (!input.trim() || !maxPages) return false;
+    try {
+      const pages = parsePageInput(input, maxPages);
+      return pages.length > 0;
+    } catch {
+      return false;
+    }
   };
 
   const handleSplitPDF = async () => {
@@ -134,8 +144,9 @@ export function SplitPDF() {
       let pageIndices: number[] = [];
 
       if (splitMode === 'remove') {
-        pageIndices = Array.from({ length: totalPages }, (_, i) => i)
-          .filter(i => !pagesToProcess.includes(i));
+        pageIndices = Array.from({ length: totalPages }, (_, i) => i).filter(
+          (i) => !pagesToProcess.includes(i)
+        );
       } else {
         pageIndices = pagesToProcess;
       }
@@ -145,7 +156,7 @@ export function SplitPDF() {
       }
 
       const copiedPages = await newPdf.copyPages(pdfDoc, pageIndices);
-      copiedPages.forEach(page => newPdf.addPage(page));
+      copiedPages.forEach((page) => newPdf.addPage(page));
 
       const pdfBytesResult = await newPdf.save();
       const blob = new Blob([pdfBytesResult], { type: 'application/pdf' });
@@ -160,13 +171,15 @@ export function SplitPDF() {
         metadata: {
           filename: files[0].file.name,
           fileSize: blob.size,
-          settings: { mode: splitMode, pages: splitPages }
+          settings: { mode: splitMode, pages: splitPages },
         },
-        preview: newResult
+        preview: newResult,
       });
     } catch (err) {
       if (err instanceof Error) {
-        setError(err.message || `Error ${splitMode === 'remove' ? 'splitting' : 'extracting'} PDF. Please try again.`);
+        setError(
+          err.message || `Error ${splitMode === 'remove' ? 'splitting' : 'extracting'} PDF. Please try again.`
+        );
       } else {
         setError(`An unknown error occurred.`);
       }
@@ -191,7 +204,7 @@ export function SplitPDF() {
   };
 
   const resetFiles = useCallback(() => {
-    files.forEach(file => file.preview && revokeBlobUrl(file.preview));
+    files.forEach((file) => file.preview && revokeBlobUrl(file.preview));
     if (result) revokeBlobUrl(result);
     setFiles([]);
     setResult(null);
@@ -292,8 +305,8 @@ export function SplitPDF() {
               </label>
             </div>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-              {splitMode === 'remove' 
-                ? 'Select "Remove Pages" to delete specific pages from your PDF and keep the rest.' 
+              {splitMode === 'remove'
+                ? 'Select "Remove Pages" to delete specific pages from your PDF and keep the rest.'
                 : 'Select "Extract Pages" to create a new PDF containing only the pages you specify.'}
             </p>
           </div>
@@ -305,7 +318,7 @@ export function SplitPDF() {
               </label>
               <div className="flex items-center text-sm text-gray-500">
                 <Info className="w-4 h-4 mr-1" />
-                <span className='dark:text-white'>e.g., 5,6,9 or 4-7</span>
+                <span className="dark:text-white">e.g., 5,6,9 or 4-7</span>
               </div>
             </div>
             <div className="relative">
@@ -313,7 +326,9 @@ export function SplitPDF() {
                 type="text"
                 value={splitPages}
                 onChange={(e) => setSplitPages(e.target.value)}
-                placeholder={totalPages ? `Enter pages to ${splitMode} (1-${totalPages})` : `Enter pages to ${splitMode}`}
+                placeholder={
+                  totalPages ? `Enter pages to ${splitMode} (1-${totalPages})` : `Enter pages to ${splitMode}`
+                }
                 className="block w-full rounded-lg border dark:bg-gray-700 border-gray-500 stroke-gray-500 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 pl-3 pr-10 py-2"
               />
               {totalPages !== null && (
@@ -322,10 +337,15 @@ export function SplitPDF() {
                 </span>
               )}
             </div>
+            {splitPages && !isValidPageInput(splitPages, totalPages) && (
+              <p className="mt-1 text-xs text-red-500">
+                Invalid page numbers or ranges. Use format like "5,6,9" or "4-7".
+              </p>
+            )}
             <p className="mt-1 text-xs text-gray-500">
               Enter page numbers or ranges separated by commas (e.g., 5,6,9 or 4-7).{' '}
-              {splitMode === 'remove' 
-                ? 'These pages will be removed from the output PDF.' 
+              {splitMode === 'remove'
+                ? 'These pages will be removed from the output PDF.'
                 : 'Only these pages will be included in the output PDF.'}
             </p>
           </div>
@@ -339,8 +359,8 @@ export function SplitPDF() {
           <div className="flex gap-3">
             <button
               onClick={handleSplitPDF}
-              disabled={loading || !-splitPages.trim()}
-              className="flex-1 bg-indigo-1 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+              disabled={loading || !isValidPageInput(splitPages, totalPages)}
+              className="flex-1 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (
                 <>
@@ -367,32 +387,53 @@ export function SplitPDF() {
           </div>
         </>
       )}
+
       <div className="mt-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4 dark:text-white">More Image Tools</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <ImageIcon className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Size Reduce</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image Size Reduce
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Settings className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image Conversion</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image Conversion
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <FileText className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Image to PDF</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Image to PDF
+            </span>
           </Link>
-          <Link to="/image-tools" className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200">
+          <Link
+            to="/image-tools"
+            className="group flex items-center p-4 border border-gray-300 rounded-lg hover:border-indigo-500 transition-all duration-200"
+          >
             <div className="bg-indigo-100 rounded-full p-2 mr-3 group-hover:bg-indigo-200 transition-colors">
               <Crop className="w-6 h-6 text-indigo-600" />
             </div>
-            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">Crop Image</span>
+            <span className="text-sm sm:text-base text-gray-700 group-hover:text-indigo-800 dark:text-white">
+              Crop Image
+            </span>
           </Link>
         </div>
       </div>
