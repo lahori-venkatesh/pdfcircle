@@ -241,87 +241,95 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
       setError('Please select at least one image');
       return;
     }
-
+  
     if (!isLoggedIn && conversionCount >= MAX_CONVERSIONS) {
       setShowSignupPopup(true);
       return;
     }
-
+  
     setLoading(true);
     setError(null);
-
+  
     try {
       if (mergePDF) {
         const pdfDoc = await PDFDocument.create();
-
+  
         for (const image of images) {
+          console.log(`Processing image: ${image.file.name}, type: ${image.file.type}`); // Log original file type
           const compressedBlob = await compressImage(image.file, createQualityLevel);
           const imageBytes = await compressedBlob.arrayBuffer();
+          console.log(`Compressed blob type: ${compressedBlob.type}, size: ${compressedBlob.size}`); // Log compressed blob details
+  
           const img = new Image();
           img.src = createSecureObjectURL(compressedBlob);
-
-          await new Promise((resolve) => {
+  
+          await new Promise((resolve, reject) => {
             img.onload = resolve;
+            img.onerror = () => reject(new Error(`Failed to load image for sizing: ${image.file.name}`));
           });
-
+  
           let pdfImage;
-          if (image.file.type === 'image/png' || image.file.type === 'image/webp') {
-            pdfImage = await pdfDoc.embedPng(imageBytes);
-          } else {
+          try {
+            // Always use embedJpg since compressImage outputs JPEG
             pdfImage = await pdfDoc.embedJpg(imageBytes);
+          } catch (embedError) {
+            throw new Error(`Failed to embed image ${image.file.name}: ${embedError instanceof Error ? embedError.message : String(embedError)}`);
           }
-
+  
           const page = pdfDoc.addPage();
           const size = PAGE_SIZES[pageSize];
           let pageWidth, pageHeight;
-
+  
           if (pageSize === 'Fit') {
+            if (img.width <= 0 || img.height <= 0) {
+              throw new Error(`Invalid image dimensions for ${image.file.name}: width=${img.width}, height=${img.height}`);
+            }
             pageWidth = img.width;
             pageHeight = img.height;
           } else {
             pageWidth = orientation === 'Portrait' ? size.width : size.height;
             pageHeight = orientation === 'Portrait' ? size.height : size.width;
           }
-
+  
           page.setSize(pageWidth, pageHeight);
-
+  
           const marginSize = margin === 'Custom' ? Math.max(0, customMargin) : MARGINS[margin];
           const drawWidth = pageWidth - 2 * marginSize;
           const drawHeight = pageHeight - 2 * marginSize;
           const aspectRatio = pdfImage.width / pdfImage.height;
-
+  
           let finalWidth = drawWidth;
           let finalHeight = drawHeight;
-
+  
           if (drawWidth / drawHeight > aspectRatio) {
             finalWidth = drawHeight * aspectRatio;
           } else {
             finalHeight = drawWidth / aspectRatio;
           }
-
+  
           page.drawImage(pdfImage, {
             x: (pageWidth - finalWidth) / 2,
             y: (pageHeight - finalHeight) / 2,
             width: finalWidth,
             height: finalHeight,
           });
-
+  
           revokeBlobUrl(img.src);
         }
-
+  
         const pdfBytes = await pdfDoc.save();
         const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-
+  
         if (result) revokeBlobUrl(result);
         const newResult = createSecureObjectURL(blob);
         setResult(newResult);
         setResultBlob(blob);
-
+  
         setCreateFileSizes((prev) => ({
           ...prev,
           final: pdfBytes.length,
         }));
-
+  
         saveOperation({
           type: 'create_pdf',
           metadata: {
@@ -334,26 +342,34 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
       } else {
         const zip = new JSZip();
         for (const image of images) {
+          console.log(`Processing image for ZIP: ${image.file.name}, type: ${image.file.type}`); // Log original file type
           const pdfDoc = await PDFDocument.create();
           const compressedBlob = await compressImage(image.file, createQualityLevel);
           const imageBytes = await compressedBlob.arrayBuffer();
+          console.log(`Compressed blob type: ${compressedBlob.type}, size: ${compressedBlob.size}`); // Log compressed blob details
+  
           let pdfImage;
-          if (image.file.type === 'image/png' || image.file.type === 'image/webp') {
-            pdfImage = await pdfDoc.embedPng(imageBytes);
-          } else {
+          try {
+            // Always use embedJpg since compressImage outputs JPEG
             pdfImage = await pdfDoc.embedJpg(imageBytes);
+          } catch (embedError) {
+            throw new Error(`Failed to embed image ${image.file.name}: ${embedError instanceof Error ? embedError.message : String(embedError)}`);
           }
-
+  
           const page = pdfDoc.addPage();
           const size = PAGE_SIZES[pageSize];
           let pageWidth, pageHeight;
-
+  
           if (pageSize === 'Fit') {
             const img = new Image();
             img.src = createSecureObjectURL(compressedBlob);
-            await new Promise((resolve) => {
+            await new Promise((resolve, reject) => {
               img.onload = resolve;
+              img.onerror = () => reject(new Error(`Failed to load image for sizing: ${image.file.name}`));
             });
+            if (img.width <= 0 || img.height <= 0) {
+              throw new Error(`Invalid image dimensions for ${image.file.name}: width=${img.width}, height=${img.height}`);
+            }
             pageWidth = img.width;
             pageHeight = img.height;
             revokeBlobUrl(img.src);
@@ -361,45 +377,47 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
             pageWidth = orientation === 'Portrait' ? size.width : size.height;
             pageHeight = orientation === 'Portrait' ? size.height : size.width;
           }
-
+  
           page.setSize(pageWidth, pageHeight);
-
+  
           const marginSize = margin === 'Custom' ? Math.max(0, customMargin) : MARGINS[margin];
           const drawWidth = pageWidth - 2 * marginSize;
           const drawHeight = pageHeight - 2 * marginSize;
           const aspectRatio = pdfImage.width / pdfImage.height;
-
+  
           let finalWidth = drawWidth;
           let finalHeight = drawHeight;
-
+  
           if (drawWidth / drawHeight > aspectRatio) {
             finalWidth = drawHeight * aspectRatio;
           } else {
             finalHeight = drawWidth / aspectRatio;
           }
-
+  
           page.drawImage(pdfImage, {
             x: (pageWidth - finalWidth) / 2,
             y: (pageHeight - finalHeight) / 2,
             width: finalWidth,
             height: finalHeight,
           });
-
+  
           const pdfBytes = await pdfDoc.save();
           zip.file(`${image.file.name.replace(/\.[^/.]+$/, '')}.pdf`, pdfBytes);
         }
-
-        const zipBlob = await zip.generateAsync({ type: 'blob' });
+  
+        const zipBlob = await zip.generateAsync({ type: 'blob' }).catch((zipError) => {
+          throw new Error(`Failed to generate ZIP: ${zipError instanceof Error ? zipError.message : String(zipError)}`);
+        });
         if (result) revokeBlobUrl(result);
         const newResult = createSecureObjectURL(zipBlob);
         setResult(newResult);
         setResultBlob(zipBlob);
-
+  
         setCreateFileSizes((prev) => ({
           ...prev,
           final: zipBlob.size,
         }));
-
+  
         saveOperation({
           type: 'create_pdf_zip',
           metadata: {
@@ -410,13 +428,14 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
           preview: createSecureObjectURL(zipBlob),
         });
       }
-
+  
       if (!isLoggedIn) {
         setConversionCount((prev) => prev + 1);
       }
     } catch (err) {
-      setError(`Error creating PDF: ${(err as Error).message}`);
-      console.error(err);
+      const errorMessage = err instanceof Error ? err.message : String(err) || 'Unknown error occurred';
+      setError(`Error creating PDF: ${errorMessage}`);
+      console.error('PDF creation error:', err);
     } finally {
       setLoading(false);
     }
