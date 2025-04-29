@@ -21,7 +21,6 @@
     <meta property="og:image" content="https://www.pdfcircle.com/apple-touch-icon.webp" />
     <meta property="og:type" content="website" />
     
-    
     <!-- google adsense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480" crossorigin="anonymous"></script>
     
@@ -56,12 +55,12 @@
     <!-- Content Security Policy -->
     <meta http-equiv="Content-Security-Policy" content="
       default-src 'self';
-      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com;
+      script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://www.googletagmanager.com https://www.google-analytics.com https://pagead2.googlesyndication.com https://consentcdn.cookiebot.com https://ep2.adtrafficquality.google;
       style-src 'self' 'unsafe-inline';
-      img-src 'self' blob: data: https://*.unsplash.com https://www.pdfcircle.com;
-      connect-src 'self' https://tragwrsmmqtiusvitofm.supabase.co https://www.google-analytics.com https://tragwrsmmqtiusvitofm.supabase.co/storage/v1 https://tragwrsmmqtiusvitofm.supabase.co/functions/v1/* https://staticimgly.com data: blob:;
+      img-src 'self' blob: data: https://*.unsplash.com https://www.pdfcircle.com https://ep1.adtrafficquality.google;
+      connect-src 'self' https://tragwrsmmqtiusvitofm.supabase.co https://www.google-analytics.com https://tragwrsmmqtiusvitofm.supabase.co/storage/v1 https://tragwrsmmqtiusvitofm.supabase.co/functions/v1/* https://staticimgly.com https://ep1.adtrafficquality.google data: blob:;
       worker-src 'self' blob:;
-      frame-src 'self';
+      frame-src 'self' https://consentcdn.cookiebot.com https://googleads.g.doubleclick.net https://ep2.adtrafficquality.google https://www.google.com;
       font-src 'self' data:;
       object-src 'none';
       base-uri 'self';
