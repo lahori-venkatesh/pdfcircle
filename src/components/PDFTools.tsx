@@ -152,7 +152,14 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </p>
         </section>
 
-        <AdComponent slot="pdf-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
+        <AdComponent
+          slot="4325618154" // Your actual slot ID
+          format="auto"
+          responsive={true}
+          className="mx-auto max-w-4xl"
+          style={{ height: '90px', width: '100%' }}
+        />
+
 
         {/* Tools Navigation with H2 */}
         <section>

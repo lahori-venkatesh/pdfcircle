@@ -580,7 +580,14 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       <div className="max-w-6xl mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-4 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
-        <AdComponent slot="image-tools-top" className="mb-6" style={{ minHeight: '90px' }} />
+        <AdComponent
+          slot="4325618154" // Your actual slot ID
+          format="auto"
+          responsive={true}
+          className="mx-auto max-w-4xl"
+          style={{ height: '90px', width: '100%' }}
+        />
+
         <div className="bg-white rounded-xl shadow-lg p-6">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
             <div className="flex flex-col md:flex-row gap-6">
