@@ -216,47 +216,47 @@ function HomePage() {
     <svg className="w-full h-full opacity-10" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* PDF Document Illustration */}
       <g transform="translate(120, 60) scale(0.9)">
-        <rect width="120" height="160" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#4F46E5" stroke-width="2" />
-        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <text x="35" y="120" font-size="24" fill="#ffffff" font-family="sans-serif" font-weight="bold">PDF</text>
+        <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
       </g>
       {/* Image File Illustration */}
       <g transform="translate(1050, 320) scale(0.8)">
-        <rect width="120" height="120" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#A855F7" stroke-width="2" />
-        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fill-opacity="0.6" />
-        <circle cx="60" cy="60" r="20" fill="#ffffff" fill-opacity="0.8" />
+        <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
       </g>
       {/* Conversion Arrows */}
       <g transform="translate(580, 220) scale(0.9)">
-        <path d="M0 50H140L120 30M140 50L120 70" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" />
-        <text x="20" y="90" font-size="22" fill="#ffffff" font-family="sans-serif" font-weight="500">Convert</text>
+        <path d="M0 50H140L120 30M140 50L120 70" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <text x="20" y="90" fontSize="22" fill="#ffffff" fontFamily="sans-serif" fontWeight="500">Convert</text>
       </g>
       {/* Secondary PDF Illustration */}
       <g transform="translate(320, 360) scale(0.7)">
-        <rect width="120" height="160" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#4F46E5" stroke-width="2" />
-        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fill-opacity="0.6" />
-        <text x="35" y="120" font-size="24" fill="#ffffff" font-family="sans-serif" font-weight="bold">PDF</text>
+        <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
       </g>
       {/* Secondary Image Illustration */}
       <g transform="translate(880, 100) scale(0.7)">
-        <rect width="120" height="120" rx="12" fill="#ffffff" fill-opacity="0.25" stroke="#A855F7" stroke-width="2" />
-        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fill-opacity="0.6" />
-        <circle cx="60" cy="60" r="20" fill="#ffffff" fill-opacity="0.8" />
+        <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
       </g>
     </svg>
   </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center animate-fade-in">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
-              {t('hero.title', 'Transform Your Documents with Ease')}
+              {t('hero.title', 'PDF & Image Tools: Convert, Edit & Process Documents Online')}
             </h1>
-            <p className="text-xl sm:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+            <h2 className="text-xl sm:text-2xl text-indigo-100 mb-8 max-w-3xl mx-auto leading-relaxed font-semibold">
               {t('hero.subtitle', 'Free, secure, and powerful tools to convert, compress, merge, and edit PDFs and images effortlessly.')}
-            </p>
+            </h2>
             <p className="text-lg text-indigo-200 mb-10 max-w-2xl mx-auto">
               {t('hero.description', 'Whether you’re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required.')}
             </p>
@@ -283,7 +283,7 @@ function HomePage() {
       <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-center text-gray-900 dark:text-white mb-6">
-            {t('features.title', 'Powerful Tools for Every Need')}
+            {t('features.title', 'PDF & Image Processing Tools: Everything You Need')}
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 text-center mb-12 max-w-3xl mx-auto">
             {t('features.description', 'Discover our suite of free tools designed to simplify your document and image processing tasks.')}
@@ -738,8 +738,8 @@ function Layout({ children }: PropsWithChildren<{}>) {
                 </div>
               ) : (
                 <>
-                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-2">Login</button>
-                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-2 rounded-full hover:bg-indigo-700 transition-colors">Sign Up</button>
+                  <button onClick={() => openAuthModal('login')} className="w-full text-left text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 py-3 text-lg">Login</button>
+                  <button onClick={() => openAuthModal('signup')} className="w-full bg-indigo-600 text-white px-4 py-3 rounded-full hover:bg-indigo-700 transition-colors text-lg">Sign Up</button>
                 </>
               )}
             </div>

@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit, ChevronDown, ChevronUp } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent } from './AdComponent';
+import { AdComponent, StickyBottomAd } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -231,7 +231,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       question: "What can I do with pdfCircle’s Image Editor?",
       answer: "Edit and convert images easily! Resize, crop, compress, add watermarks, and convert to formats like JPEG, PNG, WebP, PDF, or ICO. Upload via drag-and-drop, device, or URL, and download results individually or as a ZIP."
     },
-    
+
     {
       question: "What image formats are supported?",
       answer: "Upload PNG, JPEG, WebP, SVG, AVIF, or HEIC (up to 15MB). Convert to JPEG, PNG, WebP, SVG, PDF, AVIF, HEIC, or ICO for versatile use, like PDFs for documents or ICOs for favicons."
@@ -313,7 +313,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
     if (newImages.length !== acceptedFiles.length) {
       setError(`Only ${allowedNewImages} more image${allowedNewImages !== 1 ? 's' : ''} allowed. ${isLoggedIn ? 'You can upload up to 10 images.' : 'Log in or sign up to upload up to 10 images.'}`);
- telloquent: true
       setImages(prev => [...prev, ...newImages]);
       setConvertedBlobs([]);
       if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
@@ -493,7 +492,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           newState.height = newHeight; 
         } else if (isResizing === 'bl') { 
           const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width); 
-          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
+          const newHeight = prev.aspectRatio ? newWidth/ parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
           newState.positionX = prev.positionX + (prev.width - newWidth); 
           newState.width = newWidth; 
           newState.height = newHeight; 
@@ -578,7 +577,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         canonicalUrl="https://pdfcircle.com/image-tools" 
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-4 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent
           slot="4325618154" // Your actual slot ID
@@ -588,7 +587,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           style={{ height: '90px', width: '100%' }}
         />
 
-        <div className="bg-white rounded-xl shadow-lg p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 ">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
             <div className="flex flex-col md:flex-row gap-6">
               <div className="w-full md:w-1/3 bg-gray-800 p-4 rounded-lg text-white space-y-4">
@@ -639,10 +638,10 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
               {images.length === 0 ? (
                 <div>
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Edit or Convert (Max {MAX_IMAGES})</h2>
-                  <div {...getRootProps()} className={`border-2 border-dashed dark:bg-gray-800 rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}`}>
+                  <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50 dark:bg-gray-800' : 'border-gray-300 hover:border-indigo-400 dark:bg-gray-800'}`}>
                     <input {...getInputProps()} ref={fileInputRef} className="hidden" />
-                    <div className="relative inline-block">
-                      <button onClick={() => setShowDropdown(!showDropdown)} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 mb-4" aria-label="Choose file source">Choose File</button>
+                    <div className="relative inline-block py-8">
+                      <button onClick={() => setShowDropdown(!showDropdown)} className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-700 mb-4" aria-label="Choose file source">Choose File</button>
                       {showDropdown && (
                         <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                           <button onClick={() => handleUploadSource('device')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Device</button>
@@ -654,7 +653,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
                     <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
-                  <div className="mt-4 text-sm text-gray-600">
+                  <div className="mt-4 text-sm dark:text-white text-gray-600">
                     <p>How to Use Image Tools:</p>
                     <ul className="list-disc pl-5">
                       <li>Upload up to {MAX_IMAGES} images via drag-and-drop, device, or URL.</li>
@@ -748,7 +747,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                             value={settings.width || ''} 
                             onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? Math.max(1, +e.target.value) : null }))} 
                             placeholder={getPlaceholder('width')} 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                             min="1" 
                           />
                           <input 
@@ -756,13 +755,13 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                             value={settings.height || ''} 
                             onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? Math.max(1, +e.target.value) : null }))} 
                             placeholder={getPlaceholder('height')} 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                             min="1" 
                           />
                           <select 
                             value={settings.unit} 
                             onChange={(e) => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))} 
-                            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           >
                             {UNIT_OPTIONS.map(unit => <option key={unit} value={unit}>{unit.toUpperCase()}</option>)}
                           </select>
@@ -791,7 +790,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                             value={settings.watermarkText} 
                             onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))} 
                             placeholder="Enter watermark text" 
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
                           />
                         )}
                       </div>
@@ -874,7 +873,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                 value={urlInput} 
                 onChange={(e) => setUrlInput(e.target.value)} 
                 placeholder="Enter image URL" 
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4" 
+                className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4" 
               />
               <div className="flex justify-end gap-4">
                 <button onClick={() => { setShowUrlModal(false); setUrlInput(''); }} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</button>
@@ -913,7 +912,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
           <p className="mb-4">
-            pdfCircle’s free online image editor empowers professionals, students, and creators to <strong>edit, resize, crop, and convert images</strong> with ease. Supporting formats like <strong>JPEG, PNG, WebP, PDF, ICO, AVIF, and HEIC</strong>, our tools are perfect for optimizing images for websites, crafting social media visuals, or preparing professional documents. Whether you’re a web developer reducing file sizes for faster load times, a marketer designing eye-catching graphics, or a student formatting images for assignments, pdfCircle delivers a secure, user-friendly experience.
+            pdfCircle’s free online image editor empowers professionals, students, and creators to <strong>edit, resize, crop, and convert images</strong> with ease. Supporting formats like <strong>JPEG, PNG, WebP, PDF, ICO, AVIF, and HEIC</strong>, our tools are perfect for optimizing images for websites, crafting social media visuals, or preparing professional documents. Whether you’re a web developer reducing file sizesfor faster load times, a marketer designing eye-catching graphics, or a student formatting images for assignments, pdfCircle delivers a secure, user-friendly experience.
           </p>
           <ul className="list-disc pl-5 mb-4">
             <li><strong>Advanced Editing</strong>: Resize images in pixels, inches, or centimeters, crop with custom aspect ratios (e.g., 1:1, 16:9), and add watermarks for branding or protection.</li>
@@ -959,6 +958,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
+      <StickyBottomAd />
     </>
   );
 }

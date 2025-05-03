@@ -3,7 +3,7 @@ import { useSearchParams, Link } from 'react-router-dom';
 import { FileText, FilePlus, Split, Images, Stamp, ChevronDown, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent } from './AdComponent';
+import { AdComponent, StickyBottomAd } from './AdComponent';
 import { CreatePDF } from './pdf/CreatePDF';
 import { MergePDF } from './pdf/MergePDF';
 import { SplitPDF } from './pdf/SplitPDF';
@@ -266,6 +266,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
+      <StickyBottomAd />
     </>
   );
 }

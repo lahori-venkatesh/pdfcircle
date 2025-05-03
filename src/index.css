@@ -1,3 +1,83 @@
+
+.ad-container {
+  contain: layout paint;
+  will-change: opacity;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+}
+
+.adsbygoogle {
+  margin: 0 auto;
+  display: block;
+  text-align: center;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Optimize images */
+@layer base {
+  img {
+    @apply w-auto h-auto max-w-full;
+    content-visibility: auto;
+    loading: lazy;
+  }
+}
+
+/* Mobile touch target optimizations */
+@layer utilities {
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+}
+
+/* Optimize font loading */
+@layer base {
+  html {
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Prevent layout shifts */
+@layer utilities {
+  .content-stable {
+    content-visibility: auto;
+    contain: layout style paint;
+  }
+}
+
+/* Mobile optimizations */
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+}
+
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* Improve touch targets */
+@media (max-width: 640px) {
+  button, 
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  input,
+  select {
+    font-size: 16px; /* Prevent iOS zoom */
+  }
+}
+
