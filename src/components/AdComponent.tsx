@@ -56,11 +56,11 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
         script.crossOrigin = 'anonymous';
         script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
         script.onload = () => {
-          console.log('AdSense script loaded');
+          console.log('AdSense script loaded successfully');
           pushAd();
         };
-        script.onerror = () => {
-          console.error('Failed to load ad script');
+        script.onerror = (error) => {
+          console.error('Failed to load AdSense script:', error);
           retryLoad();
         };
         document.head.appendChild(script);
@@ -75,9 +75,9 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
         (window.adsbygoogle = window.adsbygoogle || []).push({});
         setIsLoaded(true);
         setAdError(null);
-        console.log('Ad pushed for slot:', effectiveSlot);
+        console.log('Ad pushed successfully for slot:', effectiveSlot);
       } catch (e) {
-        console.error('Ad push failed', e);
+        console.error('Ad push failed:', e);
         retryLoad();
       }
     };
@@ -96,6 +96,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
       } else {
         setAdError('Failed to load ad');
         setIsLoaded(false);
+        console.error('Max retries reached for ad slot:', effectiveSlot);
       }
     };
 
@@ -111,6 +112,11 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
 
     return () => clearInterval(pollInterval);
   }, [isLoaded, effectiveSlot]);
+
+  // Optional: Hide the ad container if ad fails to load
+  // if (adError && isProduction) {
+  //   return null;
+  // }
 
   if (!isProduction) {
     return (
@@ -141,7 +147,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
       {!isLoaded && (
         <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
           {adError ? (
-            <span className="text-red-600 dark:text-red-400 text-sm">Ads blocked? Please disable ad blocker!</span>
+            <span className="text-red-600 dark:text-red-400 text-sm">Ad not available at this time.</span>
           ) : (
             <span className="text-sm">Loading ad...</span>
           )}
@@ -171,6 +177,10 @@ export const StickyBottomAd: React.FC = React.memo(() => {
         style={{
           minHeight: '50px',
           maxHeight: '50px',
+          ...(window.innerWidth > 768 && {
+            minHeight: '100px',
+            maxHeight: '100px'
+          }),
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
