@@ -31,23 +31,53 @@ export const AdComponent: React.FC<AdProps> = React.memo(
     const retryCount = useRef(0);
     const maxRetries = 3;
     const isProduction = import.meta.env.PROD;
+    const retryTimeout = useRef<NodeJS.Timeout>();
 
     // Detect mobile device (≤ 768px) with a more performant approach
     const [isMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
 
-    // Initialize ads as soon as possible
-    useEffect(() => {
-      if (typeof window === 'undefined' || adInitialized.current) return;
-      
+    const initializeAd = () => {
       try {
-        // Push initial configuration
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        adInitialized.current = true;
-        setIsLoaded(true);
+        if (window.adsbygoogle && !adInitialized.current) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          adInitialized.current = true;
+          setIsLoaded(true);
+          setAdError(null);
+        }
       } catch (error) {
         console.error('Ad initialization error:', error);
-        setAdError('Failed to initialize ad');
+        if (retryCount.current < maxRetries) {
+          retryCount.current += 1;
+          retryTimeout.current = setTimeout(initializeAd, 1000 * retryCount.current);
+        } else {
+          setAdError('Failed to initialize ad');
+        }
       }
+    };
+
+    useEffect(() => {
+      if (typeof window === 'undefined') return;
+      
+      // Check if AdBlocker is enabled
+      const checkAdBlocker = async () => {
+        try {
+          await fetch('https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js', {
+            method: 'HEAD',
+            mode: 'no-cors'
+          });
+          initializeAd();
+        } catch (error) {
+          setAdError('Please disable ad blocker');
+        }
+      };
+
+      checkAdBlocker();
+
+      return () => {
+        if (retryTimeout.current) {
+          clearTimeout(retryTimeout.current);
+        }
+      };
     }, []);
 
     // Select slot ID and format based on device and context
