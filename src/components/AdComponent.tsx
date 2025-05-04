@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 interface AdProps {
   slot?: string; // Optional, defaults set based on device
@@ -23,7 +22,6 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
   const retryCount = useRef(0);
   const maxRetries = 5;
   const isProduction = import.meta.env.PROD;
-  const location = useLocation();
 
   // Detect mobile device (≤ 768px)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -39,7 +37,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
   // Select slot ID and format based on device and context
   const desktopSlots = ['4325618154', '1049089258'];
   const effectiveSlot = slot && !desktopSlots.includes(slot)
-    ? slot
+    ? slot // Use provided slot if it's not a desktop slot
     : isMobile
       ? isStickyBottomAd
         ? '8611335761' // Mobile sticky ad
@@ -48,14 +46,6 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
         ? '4325618154' // Desktop sticky ad
         : '1049089258'; // Desktop in-content ad
   const effectiveFormat = isMobile ? 'horizontal' : format;
-
-  // Reset ad state on route change
-  useEffect(() => {
-    setIsLoaded(false);
-    setAdError(null);
-    retryCount.current = 0;
-    console.log('Ad state reset due to route change:', location.pathname);
-  }, [location.pathname]);
 
   useEffect(() => {
     // Load Google AdSense script only once
@@ -66,11 +56,11 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
         script.crossOrigin = 'anonymous';
         script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
         script.onload = () => {
-          console.log('AdSense script loaded successfully');
+          console.log('AdSense script loaded');
           pushAd();
         };
-        script.onerror = (error) => {
-          console.error('Failed to load AdSense script:', error);
+        script.onerror = () => {
+          console.error('Failed to load ad script');
           retryLoad();
         };
         document.head.appendChild(script);
@@ -82,17 +72,12 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
     const pushAd = () => {
       if (!adRef.current || isLoaded) return;
       try {
-        if (window.adsbygoogle && window.adsbygoogle.loaded) {
-          (window.adsbygoogle = window.adsbygoogle || []).push({});
-          setIsLoaded(true);
-          setAdError(null);
-          console.log('Ad pushed successfully for slot:', effectiveSlot);
-        } else {
-          console.warn('AdSense not fully loaded, retrying...');
-          retryLoad();
-        }
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        setIsLoaded(true);
+        setAdError(null);
+        console.log('Ad pushed for slot:', effectiveSlot);
       } catch (e) {
-        console.error('Ad push failed:', e);
+        console.error('Ad push failed', e);
         retryLoad();
       }
     };
@@ -102,7 +87,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
         retryCount.current += 1;
         console.log(`Retrying ad load, attempt ${retryCount.current}`);
         setTimeout(() => {
-          if (window.adsbygoogle && window.adsbygoogle.loaded) {
+          if (window.adsbygoogle) {
             pushAd();
           } else {
             loadAdScript();
@@ -111,7 +96,6 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
       } else {
         setAdError('Failed to load ad');
         setIsLoaded(false);
-        console.error('Max retries reached for ad slot:', effectiveSlot);
       }
     };
 
@@ -120,21 +104,13 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
 
     // Poll for adsbygoogle availability
     const pollInterval = setInterval(() => {
-      if (window.adsbygoogle && window.adsbygoogle.loaded && adRef.current && !isLoaded && !adError) {
+      if (window.adsbygoogle && adRef.current && !isLoaded) {
         pushAd();
-      } else if (adError || isLoaded) {
-        clearInterval(pollInterval);
       }
     }, 100);
 
     return () => clearInterval(pollInterval);
-  }, [isLoaded, effectiveSlot, adError, location.pathname]);
-
-  // Hide ad container if ad fails to load in production
-  if (adError && isProduction) {
-    console.log('Hiding ad container due to load failure:', effectiveSlot);
-    return null;
-  }
+  }, [isLoaded, effectiveSlot]);
 
   if (!isProduction) {
     return (
@@ -165,7 +141,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
       {!isLoaded && (
         <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
           {adError ? (
-            <span className="text-red-600 dark:text-red-400 text-sm">Ad not available at this time.</span>
+            <span className="text-red-600 dark:text-red-400 text-sm">Ads blocked? Please disable ad blocker!</span>
           ) : (
             <span className="text-sm">Loading ad...</span>
           )}
@@ -195,10 +171,6 @@ export const StickyBottomAd: React.FC = React.memo(() => {
         style={{
           minHeight: '50px',
           maxHeight: '50px',
-          ...(window.innerWidth > 768 && {
-            minHeight: '100px',
-            maxHeight: '100px'
-          }),
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
