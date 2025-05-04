@@ -163,20 +163,77 @@ function WhyChooseCard({ icon: Icon, title, description }: WhyChooseCardProps) {
   );
 }
 
+// Consent Banner Component
+function ConsentBanner() {
+  const [isVisible, setIsVisible] = useState(false);
+  const consent = useAdConsent();
+  const location = useLocation();
+  const contentRichPages = ['/', '/image-tools', '/pdf-tools'];
+  const isMobile = window.innerWidth <= 768;
+  const isAdVisible = consent === true && contentRichPages.includes(location.pathname);
+  const bottomOffset = isAdVisible ? (isMobile ? 'bottom-[50px]' : 'bottom-[100px]') : 'bottom-0';
+
+  useEffect(() => {
+    const consentValue = localStorage.getItem('adConsent');
+    setIsVisible(consentValue === null);
+    console.log('ConsentBanner: isVisible=', consentValue === null, 'adConsent=', consentValue, 'bottomOffset=', bottomOffset);
+  }, [consent]);
+
+  const handleAccept = () => {
+    localStorage.setItem('adConsent', 'true');
+    setIsVisible(false);
+    window.dispatchEvent(new Event('consentUpdated'));
+    console.log('Ad consent accepted, hiding banner');
+  };
+
+  const handleDecline = () => {
+    localStorage.setItem('adConsent', 'false');
+    setIsVisible(false);
+    window.dispatchEvent(new Event('consentUpdated'));
+    console.log('Ad consent declined, hiding banner');
+  };
+
+  if (!isVisible) return null;
+
+  return (
+    <div className={`fixed ${bottomOffset} left-0 right-0 bg-gray-800 text-white p-4 flex flex-col sm:flex-row items-center justify-between z-50`}>
+      <p className="text-sm mb-2 sm:mb-0">
+        We use ads to keep our services free. Do you consent to personalized ads?
+      </p>
+      <div className="flex space-x-4">
+        <button
+          onClick={handleAccept}
+          className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
+        >
+          Accept
+        </button>
+        <button
+          onClick={handleDecline}
+          className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+        >
+          Decline
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // Hook to check ad consent
 function useAdConsent() {
-  const [consent, setConsent] = useState<boolean | null>(null);
+  const [consent, setConsent] = useState<boolean>(false);
+  const location = useLocation();
 
   useEffect(() => {
     const checkConsent = () => {
       const userConsent = localStorage.getItem('adConsent') === 'true';
       setConsent(userConsent);
+      console.log('Ad consent checked:', userConsent, 'Path:', location.pathname);
     };
 
     checkConsent();
     window.addEventListener('consentUpdated', checkConsent);
     return () => window.removeEventListener('consentUpdated', checkConsent);
-  }, []);
+  }, [location.pathname]);
 
   return consent;
 }
@@ -186,6 +243,8 @@ function ConditionalAd() {
   const location = useLocation();
   const consent = useAdConsent();
   const contentRichPages = ['/', '/image-tools', '/pdf-tools'];
+
+  console.log('ConditionalAd render:', { consent, pathname: location.pathname });
 
   if (consent === true && contentRichPages.includes(location.pathname)) {
     return <StickyBottomAd />;
@@ -420,7 +479,7 @@ function HomePage() {
             <SecurityFeature 
               icon={LockIcon} 
               title={t('security.connection.title', 'Secure Connection')} 
-              description={t('security.connection.description', 'All interactions use encrypted HTTPS connections.')} 
+              description={t('security.connection.title', 'All interactions use encrypted HTTPS connections.')} 
             />
             <SecurityFeature 
               icon={CheckCircle} 
@@ -749,13 +808,14 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
       {children}
       <ConditionalAd />
+      <ConsentBanner />
 
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-[100px] sm:bottom-[150px] right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'}`}
+        className={`fixed bottom-[100px] sm:bottom-[150px] right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 z-60 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'}`}
         aria-label="Scroll to Top"
       >
-        <ArrowUp className="w-6 h-6 " />
+        <ArrowUp className="w-6 h-6" />
       </button>
 
       <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">

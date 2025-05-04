@@ -156,7 +156,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           format="horizontal"
           responsive={true}
           className="my-4 mx-auto max-w-full sm:max-w-4xl h-[50px] sm:h-[90px]"
-          style={{ minHeight: '50px', maxHeight: '50px', width: '100%' }}
+          style={{ minHeight: '50px', maxHeight: '90px', width: '100%' }}
         />
 
 
