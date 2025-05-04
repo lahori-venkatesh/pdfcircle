@@ -27,17 +27,27 @@ export const AdComponent: React.FC<AdProps> = React.memo(
     const adRef = useRef<HTMLDivElement>(null);
     const [isLoaded, setIsLoaded] = useState(false);
     const [adError, setAdError] = useState<string | null>(null);
+    const adInitialized = useRef(false);
     const retryCount = useRef(0);
     const maxRetries = 3;
     const isProduction = import.meta.env.PROD;
 
-    // Detect mobile device (≤ 768px)
-    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+    // Detect mobile device (≤ 768px) with a more performant approach
+    const [isMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
 
+    // Initialize ads as soon as possible
     useEffect(() => {
-      const handleResize = () => setIsMobile(window.innerWidth <= 768);
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      if (typeof window === 'undefined' || adInitialized.current) return;
+      
+      try {
+        // Push initial configuration
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        adInitialized.current = true;
+        setIsLoaded(true);
+      } catch (error) {
+        console.error('Ad initialization error:', error);
+        setAdError('Failed to initialize ad');
+      }
     }, []);
 
     // Select slot ID and format based on device and context
