@@ -153,11 +153,10 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         </section>
 
         <AdComponent
-          slot="4325618154" // Your actual slot ID
-          format="auto"
+          format="horizontal"
           responsive={true}
-          className="mx-auto max-w-4xl"
-          style={{ height: '90px', width: '100%' }}
+          className="my-4 mx-auto max-w-full sm:max-w-4xl h-[50px] sm:h-[90px]"
+          style={{ minHeight: '50px', maxHeight: '50px', width: '100%' }}
         />
 
 

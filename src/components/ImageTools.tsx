@@ -1,9 +1,9 @@
-import { useState, useCallback, useEffect, useRef, memo } from 'react';
+import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit, ChevronDown, ChevronUp } from 'lucide-react';
+import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit , ChevronDown, ChevronUp  } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent, StickyBottomAd } from './AdComponent';
+import { AdComponent , StickyBottomAd } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -225,7 +225,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
   const MAX_IMAGES = isLoggedIn ? 10 : 3;
   const MAX_CONVERSIONS = isLoggedIn ? Infinity : 3;
-
   const faqData = [
     {
       question: "What can I do with pdfCircle’s Image Editor?",
@@ -267,11 +266,12 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   ];
 
   useEffect(() => {
+    console.log('isLoggedIn:', isLoggedIn, 'MAX_IMAGES:', MAX_IMAGES); // Debug log
     if (isLoggedIn) {
       setConversionCount(0);
       setDownloadCount(0);
       setShowSignupPopup(false);
-      setError(null);
+      setError(null); // Clear any errors
     }
   }, [isLoggedIn]);
 
@@ -293,6 +293,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     }), []);
 
   const onDrop = useCallback((acceptedFiles: File[], fileRejections: any[]) => {
+    console.log('onDrop - isLoggedIn:', isLoggedIn, 'Current images:', images.length, 'New files:', acceptedFiles.length); // Debug log
     if (!isLoggedIn && images.length + acceptedFiles.length > MAX_IMAGES) {
       setShowSignupPopup(true);
       setError(`Maximum ${MAX_IMAGES} images allowed for non-logged-in users. Please log in or sign up to upload up to 10 images.`);
@@ -313,10 +314,15 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
     if (newImages.length !== acceptedFiles.length) {
       setError(`Only ${allowedNewImages} more image${allowedNewImages !== 1 ? 's' : ''} allowed. ${isLoggedIn ? 'You can upload up to 10 images.' : 'Log in or sign up to upload up to 10 images.'}`);
-      setImages(prev => [...prev, ...newImages]);
-      setConvertedBlobs([]);
-      if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
     }
+    if (fileRejections.length > 0) {
+      const rejectionErrors = fileRejections.map(rejection => `${rejection.file.name}: ${rejection.errors.map((e: any) => e.message).join(', ')}`).join('; ');
+      setError(`Upload failed: ${rejectionErrors}`);
+    }
+
+    setImages(prev => [...prev, ...newImages]);
+    setConvertedBlobs([]);
+    if (!fileRejections.length && newImages.length === acceptedFiles.length) setError(null);
   }, [images, MAX_IMAGES, isLoggedIn]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -417,6 +423,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   }, []);
 
   const handleAddMoreImages = useCallback(() => {
+    console.log('handleAddMoreImages - isLoggedIn:', isLoggedIn, 'Images:', images.length, 'MAX_IMAGES:', MAX_IMAGES); // Debug log
     if (images.length >= MAX_IMAGES) {
       if (!isLoggedIn) {
         setShowSignupPopup(true);
@@ -492,7 +499,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           newState.height = newHeight; 
         } else if (isResizing === 'bl') { 
           const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width); 
-          const newHeight = prev.aspectRatio ? newWidth/ parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
+          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
           newState.positionX = prev.positionX + (prev.width - newWidth); 
           newState.width = newWidth; 
           newState.height = newHeight; 
@@ -563,72 +570,161 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     else if (source === 'dropbox') handleDropboxUpload(); 
     else if (source === 'url') setShowUrlModal(true); 
   };
-
   const toggleFaq = (index: number) => {
     setOpenFaqIndex(openFaqIndex === index ? null : index);
   };
 
   return (
     <>
-      <SEOHeaders 
-        title="Free Online Image Editor - Create, Resize, Crop, Convert Images" 
-        description="Edit, resize, crop, and convert images online for free with pdfCircle’s advanced image tools. Supports JPEG, PNG, WebP, PDF, ICO, and more. Perfect for professionals, students, and creators." 
-        keywords={['image editor online free', 'resize images online', 'crop image tool', 'convert image to pdf', 'image compressor free', 'batch image converter', 'add watermark to image', 'free photo editing tool', 'online image optimizer']} 
-        canonicalUrl="https://pdfcircle.com/image-tools" 
+      <SEOHeaders
+        title="Free Online Image Editor - Create, Resize, Crop, Convert Images"
+        description="Create and edit high-resolution images online with our free tool. Resize, crop, convert to JPEG, PNG, WebP, PDF, ICO, and more with advanced features."
+        keywords={['image editor online free', 'create images online', 'resize high resolution images', 'crop image online tool', 'convert image to pdf', 'image compressor free', 'optimize images', 'batch image resizer', 'SEO image optimization', 'add watermark to image', 'free photo editing tool', 'online image creator']}
+        canonicalUrl="https://pdfcircle.com/image-tools"
       />
 
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold dark:text-white text-gray-900 mb-4 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
+      <div className="max-w-6xl mx-auto px-4 py-6 bg-white dark:bg-gray-900">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent
-          slot="4325618154" // Your actual slot ID
-          format="auto"
+          format="horizontal"
           responsive={true}
-          className="mx-auto max-w-4xl"
-          style={{ height: '90px', width: '100%' }}
+          className="my-4 mx-auto max-w-full sm:max-w-4xl h-[50px] sm:h-[90px]"
+          style={{ minHeight: '50px', maxHeight: '90px', width: '100%' }}
         />
-
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 ">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
             <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-1/3 bg-gray-800 p-4 rounded-lg text-white space-y-4">
-                <h2 className="text-lg font-semibold">Crop Rectangle</h2>
+              <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-gray-900 dark:text-gray-100 space-y-4 border border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Crop Rectangle</h2>
                 <div className="space-y-2">
                   <div className="flex gap-2">
-                    <input type="number" value={Math.round(cropSettings.width)} onChange={(e) => { const newWidth = Math.max(50, +e.target.value); setCropSettings(prev => ({ ...prev, width: newWidth, height: prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : prev.height })); }} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Width" min="50" />
-                    <input type="number" value={Math.round(cropSettings.height)} onChange={(e) => { const newHeight = Math.max(50, +e.target.value); setCropSettings(prev => ({ ...prev, height: newHeight, width: prev.aspectRatio ? newHeight * parseAspectRatio(prev.aspectRatio) : prev.width })); }} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Height" min="50" />
+                    <input
+                      type="number"
+                      value={Math.round(cropSettings.width)}
+                      onChange={(e) => {
+                        const newWidth = Math.max(50, +e.target.value);
+                        setCropSettings(prev => ({ ...prev, width: newWidth, height: prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : prev.height }));
+                      }}
+                      className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                      placeholder="Width"
+                      min="50"
+                    />
+                    <input
+                      type="number"
+                      value={Math.round(cropSettings.height)}
+                      onChange={(e) => {
+                        const newHeight = Math.max(50, +e.target.value);
+                        setCropSettings(prev => ({ ...prev, height: newHeight, width: prev.aspectRatio ? newHeight * parseAspectRatio(prev.aspectRatio) : prev.width }));
+                      }}
+                      className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                      placeholder="Height"
+                      min="50"
+                    />
                   </div>
-                  <select value={cropSettings.aspectRatio || 'Freeform'} onChange={(e) => { const value = e.target.value === 'Freeform' ? null : e.target.value; setCropSettings(prev => ({ ...prev, aspectRatio: value, height: value ? prev.width / parseAspectRatio(value) : prev.height })); }} className="w-full p-2 bg-gray-700 text-white rounded">
+                  <select
+                    value={cropSettings.aspectRatio || 'Freeform'}
+                    onChange={(e) => {
+                      const value = e.target.value === 'Freeform' ? null : e.target.value;
+                      setCropSettings(prev => ({ ...prev, aspectRatio: value, height: value ? prev.width / parseAspectRatio(value) : prev.height }));
+                    }}
+                    className="w-full p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                  >
                     {ASPECT_RATIOS.map(ratio => <option key={ratio.value || 'Freeform'} value={ratio.value || 'Freeform'}>{ratio.label}</option>)}
                   </select>
                   <div>
-                    <h3 className="text-sm font-medium">Crop Position</h3>
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Crop Position</h3>
                     <div className="flex gap-2">
-                      <input type="number" value={Math.round(cropSettings.positionX)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position X" min="0" />
-                      <input type="number" value={Math.round(cropSettings.positionY)} onChange={(e) => setCropSettings(prev => ({ ...prev, positionY: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.height - prev.height : Infinity) }))} className="w-1/2 p-2 bg-gray-700 text-white rounded" placeholder="Position Y" min="0" />
+                      <input
+                        type="number"
+                        value={Math.round(cropSettings.positionX)}
+                        onChange={(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))}
+                        className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                        placeholder="Position X"
+                        min="0"
+                      />
+                      <input
+                        type="number"
+                        value={Math.round(cropSettings.positionY)}
+                        onChange={(e) => setCropSettings(prev => ({ ...prev, positionY: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.height - prev.height : Infinity) }))}
+                        className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                        placeholder="Position Y"
+                        min="0"
+                      />
                     </div>
                   </div>
-                  <button onClick={resetCrop} className="w-full bg-gray-600 text-white p-2 rounded hover:bg-gray-700">Reset</button>
+                  <button onClick={resetCrop} className="w-full bg-gray-500 dark:bg-gray-600 text-white p-2 rounded hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors">Reset</button>
                 </div>
               </div>
               <div className="w-full md:w-2/3 relative overflow-hidden">
-                <div ref={cropContainerRef} className="relative overflow-auto touch-none select-none" style={{ maxHeight: '80vh', userSelect: 'none' }}>
-                  <img ref={imgRef} src={cropImageSrc} alt="Image to crop" onLoad={handleImageLoad} className="max-w-full max-h-full object-contain" style={{ width: '100%', height: 'auto' }} />
+                <div ref={cropContainerRef} className="relative overflow-auto touch-none select-none bg-gray-100 dark:bg-gray-900" style={{ maxHeight: '80vh', userSelect: 'none' }}>
+                  <img
+                    ref={imgRef}
+                    src={cropImageSrc}
+                    alt="Image to crop"
+                    onLoad={handleImageLoad}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ width: '100%', height: 'auto' }}
+                  />
                   {imageDimensions && scale > 0 && (
-                    <div className={`absolute border-2 border-indigo-500 bg-indigo-500/30 cursor-move ${isDragging || isResizing ? 'opacity-75' : ''}`} style={{ width: `${cropSettings.width * scale}px`, height: `${cropSettings.height * scale}px`, left: `${cropSettings.positionX * scale}px`, top: `${cropSettings.positionY * scale}px`, touchAction: 'none' }} onMouseDown={handleDragStart} onTouchStart={handleDragStart}>
+                    <div
+                      className={`absolute border-2 border-indigo-500 dark:border-indigo-400 bg-indigo-500/30 dark:bg-indigo-400/30 cursor-move ${isDragging || isResizing ? 'opacity-75' : ''}`}
+                      style={{
+                        width: `${cropSettings.width * scale}px`,
+                        height: `${cropSettings.height * scale}px`,
+                        left: `${cropSettings.positionX * scale}px`,
+                        top: `${cropSettings.positionY * scale}px`,
+                        touchAction: 'none'
+                      }}
+                      onMouseDown={handleDragStart}
+                      onTouchStart={handleDragStart}
+                    >
                       <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
-                        {[...Array(8)].map((_, i) => <div key={i} className={`border border-indigo-500 border-opacity-50 ${i % 3 === 2 ? 'border-r-0' : ''} ${i >= 6 ? 'border-b-0' : ''}`} />)}
+                        {[...Array(8)].map((_, i) => (
+                          <div key={i} className={`border border-indigo-500 dark:border-indigo-400 border-opacity-50 ${i % 3 === 2 ? 'border-r-0' : ''} ${i >= 6 ? 'border-b-0' : ''}`} />
+                        ))}
                       </div>
-                      <div className="absolute -top-2 -left-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nwse-resize" onMouseDown={(e) => handleResizeStart(e, 'tl')} onTouchStart={(e) => handleResizeStart(e, 'tl')} />
-                      <div className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nesw-resize" onMouseDown={(e) => handleResizeStart(e, 'tr')} onTouchStart={(e) => handleResizeStart(e, 'tr')} />
-                      <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nesw-resize" onMouseDown={(e) => handleResizeStart(e, 'bl')} onTouchStart={(e) => handleResizeStart(e, 'bl')} />
-                      <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-indigo-600 rounded-full cursor-nwse-resize" onMouseDown={(e) => handleResizeStart(e, 'br')} onTouchStart={(e) => handleResizeStart(e, 'br')} />
+                      <div
+                        className="absolute -top-2 -left-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nwse-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'tl')}
+                        onTouchStart={(e) => handleResizeStart(e, 'tl')}
+                      />
+                      <div
+                        className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nesw-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'tr')}
+                        onTouchStart={(e) => handleResizeStart(e, 'tr')}
+                      />
+                      <div
+                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nesw-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'bl')}
+                        onTouchStart={(e) => handleResizeStart(e, 'bl')}
+                      />
+                      <div
+                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nwse-resize"
+                        onMouseDown={(e) => handleResizeStart(e, 'br')}
+                        onTouchStart={(e) => handleResizeStart(e, 'br')}
+                      />
                     </div>
                   )}
                 </div>
                 <div className="flex justify-end gap-2 mt-4">
-                  <button onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }} className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700" aria-label="Cancel crop">Cancel</button>
-                  <button onClick={handleCropComplete} disabled={loading} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center disabled:opacity-50" aria-label="Apply crop">
-                    {loading ? <><Loader2 className="w-5 h-5 animate-spin mr-2" />Cropping...</> : <><Crop className="w-5 h-5 mr-2" />Apply Crop</>}
+                  <button
+                    onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }}
+                    className="bg-gray-500 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Cancel crop"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleCropComplete}
+                    disabled={loading}
+                    className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 flex items-center disabled:opacity-50 transition-colors"
+                    aria-label="Apply crop"
+                  >
+                    {loading ? (
+                      <><Loader2 className="w-5 h-5 animate-spin mr-2 text-white" />Cropping...</>
+                    ) : (
+                      <><Crop className="w-5 h-5 mr-2 text-white" />Apply Crop</>
+                    )}
                   </button>
                 </div>
               </div>
@@ -637,42 +733,67 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             <div className="space-y-6">
               {images.length === 0 ? (
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">Upload Images to Edit or Convert (Max {MAX_IMAGES})</h2>
-                  <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 bg-indigo-50 dark:bg-gray-800' : 'border-gray-300 hover:border-indigo-400 dark:bg-gray-800'}`}>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Upload Images to Create Files (Max {MAX_IMAGES})</h2>
+                  <div
+                    {...getRootProps()}
+                    className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer ${isDragActive ? 'border-indigo-500 dark:border-indigo-400 bg-indigo-50 dark:bg-indigo-900/30' : 'border-gray-300 dark:border-gray-600 hover:border-indigo-400 dark:hover:border-indigo-500'}`}
+                  >
                     <input {...getInputProps()} ref={fileInputRef} className="hidden" />
-                    <div className="relative inline-block py-8">
-                      <button onClick={() => setShowDropdown(!showDropdown)} className="bg-indigo-600 text-white px-8 py-2 rounded-lg hover:bg-indigo-700 mb-4" aria-label="Choose file source">Choose File</button>
+                    <div className="relative inline-block">
+                      <button
+                        onClick={() => setShowDropdown(!showDropdown)}
+                        className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors mb-4"
+                        aria-label="Choose file source"
+                      >
+                        Choose File
+                      </button>
                       {showDropdown && (
-                        <div className="absolute left-0 mt-2 w-40 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                          <button onClick={() => handleUploadSource('device')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Device</button>
-                          <button onClick={() => handleUploadSource('dropbox')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dropbox</button>
-                          <button onClick={() => handleUploadSource('url')} className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">URL</button>
+                        <div className="absolute left-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                          <button
+                            onClick={() => handleUploadSource('device')}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Device
+                          </button>
+                          <button
+                            onClick={() => handleUploadSource('dropbox')}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Dropbox
+                          </button>
+                          <button
+                            onClick={() => handleUploadSource('url')}
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            URL
+                          </button>
                         </div>
                       )}
                     </div>
-                    <p className="text-gray-600 dark:text-white">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
-                    <p className="text-sm text-gray-500 mt-2 dark:text-white">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
+                    <p className="text-gray-600 dark:text-gray-300">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
-                  <div className="mt-4 text-sm dark:text-white text-gray-600">
-                    <p>How to Use Image Tools:</p>
+                  <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                    <p>How to Create Files:</p>
                     <ul className="list-disc pl-5">
-                      <li>Upload up to {MAX_IMAGES} images via drag-and-drop, device, or URL.</li>
-                      <li>Edit with cropping, resizing, or watermarking tools.</li>
-                      <li>Choose output formats (JPEG, PNG, PDF, etc.) and compression settings.</li>
-                      <li>Download converted images individually or as a ZIP file.</li>
-                      <li>Start a new conversion to process more images.</li>
+                      <li>Select up to {MAX_IMAGES} images to upload.</li>
+                      <li>Add more images with the + button if under limit.</li>
+                      <li>Choose your desired output format and settings.</li>
+                      <li>Optionally crop or add a watermark.</li>
+                      <li>Click "Create Files" to generate new files.</li>
+                      <li>Download individually or as ZIP, then start a new conversion.</li>
                     </ul>
                   </div>
                   {!isLoggedIn && (
-                    <div className="mt-6 mx-auto max-w-md rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-3 text-center text-sm text-gray-700 shadow-sm">
+                    <div className="mt-6 mx-auto max-w-md rounded-lg border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-3 text-center text-sm text-gray-700 dark:text-gray-300 shadow-sm">
                       <p>
-                        <span className="font-semibold text-gray-800">Guests can upload up to {MAX_IMAGES} images</span> and make{" "}
-                        <span className="font-semibold text-gray-800">{MAX_CONVERSIONS} conversions.</span><br />
-                        <span className="text-gray-600">Want more?</span>{" "}
-                        <button onClick={() => handleLoginOrSignup('login')} className="font-medium text-indigo-600 hover:underline">Log in</button> or{" "}
-                        <button onClick={() => handleLoginOrSignup('signup')} className="font-medium text-indigo-600 hover:underline">sign up</button>{" "}
-                        to <span className="font-semibold text-gray-800">upload 10 images at once</span> and enjoy{" "}
-                        <span className="font-semibold text-gray-800">unlimited conversions!</span>
+                        <span className="font-semibold text-gray-800 dark:text-gray-100">Guests can upload up to {MAX_IMAGES} images</span> and make{" "}
+                        <span className="font-semibold text-gray-800 dark:text-gray-100">{MAX_CONVERSIONS} conversions.</span><br />
+                        <span className="text-gray-600 dark:text-gray-400">Want more?</span>{" "}
+                        <button onClick={() => handleLoginOrSignup('login')} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Log in</button> or{" "}
+                        <button onClick={() => handleLoginOrSignup('signup')} className="font-medium text-indigo-600 dark:text-indigo-400 hover:underline">sign up</button>{" "}
+                        to <span className="font-semibold text-gray-800 dark:text-gray-100">upload 10 images at once</span> and enjoy{" "}
+                        <span className="font-semibold text-gray-800 dark:text-gray-100">unlimited conversions!</span>
                       </p>
                     </div>
                   )}
@@ -680,36 +801,60 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
               ) : (
                 <>
                   <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-800">Preview and Edit Images ({images.length}/{MAX_IMAGES})</h2>
-                    {images.length < MAX_IMAGES && <button onClick={handleAddMoreImages} className="bg-blue-600 text-white rounded-full p-2 hover:bg-blue-700" aria-label="Add more images"><Plus className="w-5 h-5" /></button>}
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Preview and Create Files ({images.length}/{MAX_IMAGES})</h2>
+                    {images.length < MAX_IMAGES && (
+                      <button
+                        onClick={handleAddMoreImages}
+                        className="bg-blue-500 dark:bg-blue-600 text-white rounded-full p-2 hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
+                        aria-label="Add more images"
+                      >
+                        <Plus className="w-5 h-5 text-white" />
+                      </button>
+                    )}
                   </div>
                   <input {...getInputProps()} ref={fileInputRef} className="hidden" />
-                  {loading && <div className="text-center"><Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600" /><p className="mt-2 text-gray-600">Processing...</p></div>}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {loading && (
+                    <div className="text-center">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-600 dark:text-indigo-400" />
+                      <p className="mt-2 text-gray-600 dark:text-gray-300">Processing...</p>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {images.map((image, index) => (
-                      <ImagePreview 
-                        key={index} 
-                        image={image} 
-                        index={index} 
-                        convertedSize={convertedBlobs[index]?.blob.size} 
-                        onRemove={removeImage} 
-                        onCrop={() => { setCropImageSrc(image.preview); setCropImageIndex(index); setShowCropModal(true); }} 
-                        onDownload={() => handleDownload(index)} 
+                      <ImagePreview
+                        key={index}
+                        image={image}
+                        index={index}
+                        convertedSize={convertedBlobs[index]?.blob.size}
+                        onRemove={removeImage}
+                        onCrop={() => { setCropImageSrc(image.preview); setCropImageIndex(index); setShowCropModal(true); }}
+                        onDownload={() => handleDownload(index)}
                       />
                     ))}
                   </div>
-                  {error && <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">{error}</div>}
-                  <div className="space-y-4 bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between"><h2 className="text-sm font-medium text-gray-700">Image Editing Settings</h2><Settings2 className="w-5 h-5 text-gray-400" /></div>
-                    <select value={settings.format} onChange={(e) => setSettings(prev => ({ ...prev, format: e.target.value }))} className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                  {error && (
+                    <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-lg">
+                      {error}
+                    </div>
+                  )}
+                  <div className="space-y-4 bg-gray-50 dark:bg-gray-900/30 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center justify-between">
+                      <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">File Creation Settings</h2>
+                      <Settings2 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                    </div>
+                    <select
+                      value={settings.format}
+                      onChange={(e) => setSettings(prev => ({ ...prev, format: e.target.value }))}
+                      className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                    >
                       {FORMAT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                     </select>
                     <div className="flex gap-2">
                       {['quality', 'size', 'custom'].map(mode => (
-                        <button 
-                          key={mode} 
-                          onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' | 'custom' }))} 
-                          className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                        <button
+                          key={mode}
+                          onClick={() => setSettings(prev => ({ ...prev, mode: mode as 'size' | 'quality' | 'custom' }))}
+                          className={`flex-1 px-3 py-2 rounded-lg ${settings.mode === mode ? 'bg-indigo-500 dark:bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'}`}
                         >
                           {mode.charAt(0).toUpperCase() + mode.slice(1)}
                         </button>
@@ -717,23 +862,23 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     </div>
                     {settings.mode === 'quality' ? (
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Quality: {settings.quality}%</label>
-                        <input 
-                          type="range" 
-                          min="1" 
-                          max="100" 
-                          value={settings.quality} 
-                          onChange={(e) => setSettings(prev => ({ ...prev, quality: Math.max(1, +e.target.value) }))} 
-                          className="w-full h-2 bg-gray-200 rounded-lg cursor-pointer accent-indigo-600" 
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Quality: {settings.quality}%</label>
+                        <input
+                          type="range"
+                          min="1"
+                          max="100"
+                          value={settings.quality}
+                          onChange={(e) => setSettings(prev => ({ ...prev, quality: Math.max(1, +e.target.value) }))}
+                          className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg cursor-pointer accent-indigo-600 dark:accent-indigo-400"
                         />
                       </div>
                     ) : settings.mode === 'size' ? (
                       <div className="flex flex-wrap gap-2">
                         {SIZE_OPTIONS.map(size => (
-                          <button 
-                            key={size} 
-                            onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))} 
-                            className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                          <button
+                            key={size}
+                            onClick={() => setSettings(prev => ({ ...prev, targetSize: size }))}
+                            className={`px-3 py-1 rounded-full ${settings.targetSize === size ? 'bg-indigo-500 dark:bg-indigo-600 text-white' : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors'}`}
                           >
                             {size < 1 ? `${size * 1000}KB` : `${size}MB`}
                           </button>
@@ -742,100 +887,100 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     ) : (
                       <div>
                         <div className="grid grid-cols-3 gap-4">
-                          <input 
-                            type="number" 
-                            value={settings.width || ''} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? Math.max(1, +e.target.value) : null }))} 
-                            placeholder={getPlaceholder('width')} 
-                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                            min="1" 
+                          <input
+                            type="number"
+                            value={settings.width || ''}
+                            onChange={(e) => setSettings(prev => ({ ...prev, width: e.target.value ? Math.max(1, +e.target.value) : null }))}
+                            placeholder={getPlaceholder('width')}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                            min="1"
                           />
-                          <input 
-                            type="number" 
-                            value={settings.height || ''} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? Math.max(1, +e.target.value) : null }))} 
-                            placeholder={getPlaceholder('height')} 
-                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
-                            min="1" 
+                          <input
+                            type="number"
+                            value={settings.height || ''}
+                            onChange={(e) => setSettings(prev => ({ ...prev, height: e.target.value ? Math.max(1, +e.target.value) : null }))}
+                            placeholder={getPlaceholder('height')}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
+                            min="1"
                           />
-                          <select 
-                            value={settings.unit} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))} 
-                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                          <select
+                            value={settings.unit}
+                            onChange={(e) => setSettings(prev => ({ ...prev, unit: e.target.value as 'px' | 'in' | 'cm' | 'mm' }))}
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
                           >
                             {UNIT_OPTIONS.map(unit => <option key={unit} value={unit}>{unit.toUpperCase()}</option>)}
                           </select>
                         </div>
                         <label className="flex items-center mt-2">
-                          <input 
-                            type="checkbox" 
-                            checked={settings.maintainAspectRatio} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))} 
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" 
+                          <input
+                            type="checkbox"
+                            checked={settings.maintainAspectRatio}
+                            onChange={(e) => setSettings(prev => ({ ...prev, maintainAspectRatio: e.target.checked }))}
+                            className="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 border-gray-300 dark:border-gray-700 rounded"
                           />
-                          <span className="ml-2 text-sm text-gray-700">Maintain aspect ratio</span>
+                          <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Maintain aspect ratio</span>
                         </label>
                         <label className="flex items-center mt-2">
-                          <input 
-                            type="checkbox" 
-                            checked={settings.addWatermark} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, addWatermark: e.target.checked }))} 
-                            className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" 
+                          <input
+                            type="checkbox"
+                            checked={settings.addWatermark}
+                            onChange={(e) => setSettings(prev => ({ ...prev, addWatermark: e.target.checked }))}
+                            className="h-4 w-4 text-indigo-600 dark:text-indigo-400 focus:ring-indigo-500 dark:focus:ring-indigo-400 border-gray-300 dark:border-gray-700 rounded"
                           />
-                          <span className="ml-2 text-sm text-gray-700">Add Watermark</span>
+                          <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Add Watermark</span>
                         </label>
                         {settings.addWatermark && (
-                          <input 
-                            type="text" 
-                            value={settings.watermarkText} 
-                            onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))} 
-                            placeholder="Enter watermark text" 
-                            className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" 
+                          <input
+                            type="text"
+                            value={settings.watermarkText}
+                            onChange={(e) => setSettings(prev => ({ ...prev, watermarkText: e.target.value }))}
+                            placeholder="Enter watermark text"
+                            className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
                           />
                         )}
                       </div>
                     )}
                     <div className="flex gap-2 flex-wrap">
-                      <button 
-                        onClick={handleConversion} 
-                        disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)} 
-                        className="w-full sm:w-auto flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center text-sm sm:text-base" 
-                        aria-label="Edit images"
+                      <button
+                        onClick={handleConversion}
+                        disabled={loading || !settings.format || (settings.mode === 'size' && !settings.targetSize)}
+                        className="w-full sm:w-auto flex-1 bg-indigo-500 dark:bg-indigo-600 text-white px-3 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 disabled:opacity-50 flex items-center justify-center text-sm sm:text-base transition-colors"
+                        aria-label="Create files"
                       >
                         {loading ? (
-                          <><Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-1 sm:mr-2" /> Processing...</>
+                          <><Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin mr-1 sm:mr-2 text-white" /> Creating...</>
                         ) : (
-                          <>{settings.format === 'pdf' ? <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" />} Edit Images</>
+                          <>{settings.format === 'pdf' ? <FileText className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-white" /> : <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-white" />} Create Files</>
                         )}
                       </button>
                       {convertedBlobs.length > 0 && images.length > 1 && (
-                        <button 
-                          onClick={handleBatchDownloadZip} 
-                          className="w-full max-w-xs sm:w-auto bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center justify-center text-sm sm:text-base" 
+                        <button
+                          onClick={handleBatchDownloadZip}
+                          className="w-full max-w-xs sm:w-auto bg-green-500 dark:bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-600 dark:hover:bg-green-700 flex items-center justify-center text-sm sm:text-base transition-colors"
                           aria-label="Download ZIP"
                         >
-                          <Archive className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> Download ZIP
+                          <Archive className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-white" /> Download ZIP
                         </button>
                       )}
                       {convertedBlobs.length > 0 && (
-                        <button 
-                          onClick={handleNewConversion} 
-                          className="w-full max-w-xs sm:max-w-none sm:w-auto flex bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 items-center text-sm sm:text-base justify-center" 
+                        <button
+                          onClick={handleNewConversion}
+                          className="w-full max-w-xs sm:max-w-none sm:w-auto flex bg-purple-500 dark:bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-600 dark:hover:bg-purple-700 items-center text-sm sm:text-base justify-center transition-colors"
                           aria-label="New conversion"
                         >
-                          <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" /> New Conversion
+                          <ImageIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 text-white" /> New Conversion
                         </button>
                       )}
                     </div>
                     {!isLoggedIn && (conversionCount > 0 || downloadCount > 0) && (
-                      <p className="text-sm text-gray-500">
-                        You've used {conversionCount} conversions and {downloadCount} downloads of {MAX_CONVERSIONS} free actions. 
-                        <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 hover:underline">Log in</button> or 
-                        <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 hover:underline">sign up</button> for unlimited access and up to 10 images per batch!
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        You've used {conversionCount} conversions and {downloadCount} downloads of {MAX_CONVERSIONS} free actions.
+                        <button onClick={() => handleLoginOrSignup('login')} className="text-indigo-600 dark:text-indigo-400 hover:underline">Log in</button> or
+                        <button onClick={() => handleLoginOrSignup('signup')} className="text-indigo-600 dark:text-indigo-400 hover:underline">sign up</button> for unlimited access and up to 10 images per batch!
                       </p>
                     )}
                     {isLoggedIn && images.length > 0 && (
-                      <p className="text-sm text-green-600">You can upload up to 10 images and perform unlimited conversions!</p>
+                      <p className="text-sm text-green-600 dark:text-green-400">You can upload up to 10 images and perform unlimited conversions!</p>
                     )}
                   </div>
                 </>
@@ -845,18 +990,18 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         </div>
 
         {showSignupPopup && !isLoggedIn && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h2 className="text-xl font-bold mb-4">Unlock Unlimited Features</h2>
-              <p className="mb-4">You've reached the limit of {MAX_CONVERSIONS} free conversions/downloads or attempted to upload more than {MAX_IMAGES} images. Log in or sign up to process up to 10 images at once and enjoy unlimited conversions!</p>
-              <ul className="list-disc pl-5 mb-4 text-sm text-gray-600">
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Unlock Unlimited Features</h2>
+              <p className="mb-4 text-gray-700 dark:text-gray-300">You've reached the limit of {MAX_CONVERSIONS} free conversions/downloads or attempted to upload more than {MAX_IMAGES} images. Log in or sign up to process up to 10 images at once and enjoy unlimited conversions!</p>
+              <ul className="list-disc pl-5 mb-4 text-sm text-gray-600 dark:text-gray-400">
                 <li>Batch process up to 10 images</li>
                 <li>Unlimited conversions and downloads</li>
                 <li>Priority support</li>
               </ul>
               <div className="flex justify-end gap-4">
-                <button onClick={handleSignupClose} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Maybe Later</button>
-                <button onClick={() => handleLoginOrSignup('signup')} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">Log In / Sign Up</button>
+                <button onClick={handleSignupClose} className="bg-gray-500 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors">Maybe Later</button>
+                <button onClick={() => handleLoginOrSignup('signup')} className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors">Log In / Sign Up</button>
               </div>
             </div>
           </div>
@@ -865,19 +1010,28 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
 
         {showUrlModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-              <h2 className="text-xl font-bold mb-4">Upload Image from URL</h2>
-              <input 
-                type="text" 
-                value={urlInput} 
-                onChange={(e) => setUrlInput(e.target.value)} 
-                placeholder="Enter image URL" 
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 mb-4" 
+          <div className="fixed inset-0 bg-black bg-opacity-50 dark:bg-opacity-70 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full border border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Upload Image from URL</h2>
+              <input
+                type="text"
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Enter image URL"
+                className="w-full px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400 mb-4"
               />
               <div className="flex justify-end gap-4">
-                <button onClick={() => { setShowUrlModal(false); setUrlInput(''); }} className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">Cancel</button>
-                <button onClick={handleUrlUpload} className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700" disabled={loading}>
+                <button
+                  onClick={() => { setShowUrlModal(false); setUrlInput(''); }}
+                  className="bg-gray-500 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUrlUpload}
+                  className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 transition-colors"
+                  disabled={loading}
+                >
                   {loading ? 'Uploading...' : 'Upload'}
                 </button>
               </div>
@@ -886,7 +1040,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         )}
 
         <div className="mt-6">
-          <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">Explore More PDF Tools</h3>
+          <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More PDF Tools</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {['watermark', 'split', 'merge', 'to-images', 'create'].map(tab => (
               <Link 
@@ -908,7 +1062,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </div>
-
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
           <p className="mb-4">
@@ -928,7 +1081,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             <em>Pro Tip: Sign up to process up to 10 images at once and enjoy unlimited conversions, all from the comfort of your browser.</em>
           </p>
         </section>
-
         <section className="mt-8 text-gray-700 dark:text-gray-200">
           <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">Frequently Asked Questions</h2>
           <div className="space-y-4">

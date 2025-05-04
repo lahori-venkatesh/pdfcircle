@@ -42,14 +42,21 @@ export default defineConfig({
               expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 }
             }
           },
-          // Added caching for images
           {
             urlPattern: /\.(png|jpg|jpeg|gif|svg|webp)$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'images',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 }, // 30 days
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          // Prevent caching ad scripts to ensure fresh fetches
+          {
+            urlPattern: /^https:\/\/pagead2\.googlesyndication\.com\/.*/i,
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'ad-scripts',
             }
           }
         ],
@@ -77,7 +84,8 @@ export default defineConfig({
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=self',
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Resource-Policy': 'cross-origin'
+      // Relax CORP to allow ad scripts
+      'Cross-Origin-Resource-Policy': 'same-site'
     }
   },
   build: {
@@ -91,7 +99,6 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-pdf': ['pdf-lib', 'jspdf', 'pdfjs-dist'],
           'vendor-ui': ['lucide-react', '@dnd-kit/core'],
-          
         }
       }
     },

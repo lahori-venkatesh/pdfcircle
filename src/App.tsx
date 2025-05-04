@@ -752,10 +752,10 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-14 right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'}`}
+        className={`fixed bottom-[100px] sm:bottom-[150px] right-8 p-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'} ${isVisible ? 'translate-y-0' : 'translate-y-10'}`}
         aria-label="Scroll to Top"
       >
-        <ArrowUp className="w-6 h-6" />
+        <ArrowUp className="w-6 h-6 " />
       </button>
 
       <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">
