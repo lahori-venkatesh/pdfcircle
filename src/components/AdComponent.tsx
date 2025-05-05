@@ -12,63 +12,8 @@ interface AdProps {
 declare global {
   interface Window {
     adsbygoogle: any[];
-    adPushQueue?: Array<() => void>;
   }
 }
-
-// Centralized script loader and push queue manager
-const adScriptManager = {
-  isScriptLoaded: false,
-  isScriptLoading: false,
-  callbacks: [] as Array<() => void>,
-  pushQueue: [] as Array<() => void>,
-
-  loadScript(callback: () => void) {
-    if (this.isScriptLoaded) {
-      callback();
-      return;
-    }
-    this.callbacks.push(callback);
-
-    if (this.isScriptLoading) return;
-    this.isScriptLoading = true;
-
-    const script = document.createElement('script');
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480&nonce=${Math.random().toString(36).substring(2)}`;
-    script.onload = () => {
-      this.isScriptLoaded = true;
-      this.isScriptLoading = false;
-      console.log('AdSense script loaded');
-      this.callbacks.forEach(cb => cb());
-      this.callbacks = [];
-      this.processQueue();
-    };
-    script.onerror = () => {
-      this.isScriptLoading = false;
-      console.error('Failed to load ad script');
-      this.callbacks.forEach(cb => cb());
-      this.callbacks = [];
-    };
-    document.head.appendChild(script);
-  },
-
-  queuePush(pushFn: () => void) {
-    if (this.isScriptLoaded) {
-      pushFn();
-    } else {
-      this.pushQueue.push(pushFn);
-    }
-  },
-
-  processQueue() {
-    while (this.pushQueue.length > 0) {
-      const pushFn = this.pushQueue.shift();
-      if (pushFn) pushFn();
-    }
-  }
-};
 
 export const AdComponent: React.FC<AdProps> = React.memo(({ 
   slot, 
@@ -109,6 +54,31 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
 
   useEffect(() => {
     let mounted = true;
+
+    const loadAdScript = () => {
+      if (document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+        pushAd();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480&nonce=${Math.random().toString(36).substring(2)}`;
+      script.onload = () => {
+        if (mounted) {
+          console.log('AdSense script loaded');
+          pushAd();
+        }
+      };
+      script.onerror = () => {
+        if (mounted) {
+          console.error('Failed to load ad script');
+          retryLoad();
+        }
+      };
+      document.head.appendChild(script);
+    };
 
     const pushAd = () => {
       if (!adRef.current || !mounted || isLoaded) return;
@@ -168,7 +138,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
 
       setTimeout(() => {
         if (!mounted) return;
-        adScriptManager.queuePush(pushAd);
+        pushAd();
       }, delay);
     };
 
@@ -177,16 +147,8 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
     setAdError(null);
     retryCount.current = 0;
 
-    // Load script and queue ad push
-    adScriptManager.loadScript(() => {
-      if (mounted) {
-        // Add slight delay for in-content ads to ensure DOM readiness
-        const delay = isStickyBottomAd ? 0 : 100;
-        setTimeout(() => {
-          if (mounted) adScriptManager.queuePush(pushAd);
-        }, delay);
-      }
-    });
+    // Initial load
+    loadAdScript();
 
     return () => {
       mounted = false;
@@ -195,7 +157,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
       }
       insRef.current = null;
     };
-  }, [effectiveSlot, effectiveFormat, responsive, isStickyBottomAd]);
+  }, [effectiveSlot, effectiveFormat, responsive]);
 
   if (!isProduction) {
     return (
@@ -228,7 +190,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
           {adError ? (
             <span className="text-red-600 dark:text-red-400 text-sm">
               {adError === 'Ad blocked or network error' 
-                ? `Ad Placeholder - ${effectiveSlot}`
+                ? 'Please disable ad blocker or check network'
                 : adError}
             </span>
           ) : (
