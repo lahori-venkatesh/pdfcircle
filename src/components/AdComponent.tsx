@@ -24,6 +24,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
   isStickyBottomAd = false 
 }: AdProps) => {
   const adRef = useRef<HTMLDivElement>(null);
+  const insRef = useRef<HTMLElement | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const retryCount = useRef(0);
@@ -83,8 +84,12 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
       if (!adRef.current || !mounted || isLoaded) return;
 
       try {
-        // Clear existing content and recreate ins element
-        adRef.current.innerHTML = '';
+        // Remove existing ins element if it exists
+        if (insRef.current && insRef.current.parentNode) {
+          insRef.current.parentNode.removeChild(insRef.current);
+        }
+
+        // Create new ins element
         const ins = document.createElement('ins');
         ins.className = 'adsbygoogle';
         ins.style.display = 'block';
@@ -95,6 +100,7 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
         ins.setAttribute('data-full-width-responsive', responsive.toString());
         ins.setAttribute('data-overlap', 'false');
         adRef.current.appendChild(ins);
+        insRef.current = ins;
 
         // Initialize adsbygoogle array
         window.adsbygoogle = window.adsbygoogle || [];
@@ -146,9 +152,10 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
 
     return () => {
       mounted = false;
-      if (adRef.current) {
-        adRef.current.innerHTML = '';
+      if (insRef.current && insRef.current.parentNode) {
+        insRef.current.parentNode.removeChild(insRef.current);
       }
+      insRef.current = null;
     };
   }, [effectiveSlot, effectiveFormat, responsive]);
 
