@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 interface AdProps {
-  slot?: string; // Optional, defaults set based on device
+  slot?: string;
   format?: 'auto' | 'fluid' | 'rectangle' | 'vertical' | 'horizontal';
   style?: React.CSSProperties;
   className?: string;
   responsive?: boolean;
-  isStickyBottomAd?: boolean; // Flag for StickyBottomAd
+  isStickyBottomAd?: boolean;
 }
 
 declare global {
@@ -15,15 +15,20 @@ declare global {
   }
 }
 
-export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto', style, className = '', responsive = true, isStickyBottomAd = false }: AdProps) => {
+export const AdComponent: React.FC<AdProps> = React.memo(({ 
+  slot, 
+  format = 'auto', 
+  style, 
+  className = '', 
+  responsive = true, 
+  isStickyBottomAd = false 
+}: AdProps) => {
   const adRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const retryCount = useRef(0);
   const maxRetries = 5;
   const isProduction = import.meta.env.PROD;
-
-  // Detect mobile device (≤ 768px)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
@@ -34,83 +39,118 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Select slot ID and format based on device and context
   const desktopSlots = ['4325618154', '1049089258'];
   const effectiveSlot = slot && !desktopSlots.includes(slot)
-    ? slot // Use provided slot if it's not a desktop slot
+    ? slot
     : isMobile
       ? isStickyBottomAd
-        ? '8611335761' // Mobile sticky ad
-        : '8225705840' // Mobile in-content ad
+        ? '8611335761'
+        : '8225705840'
       : isStickyBottomAd
-        ? '4325618154' // Desktop sticky ad
-        : '1049089258'; // Desktop in-content ad
+        ? '4325618154'
+        : '1049089258';
   const effectiveFormat = isMobile ? 'horizontal' : format;
 
   useEffect(() => {
-    // Load Google AdSense script only once
+    let mounted = true;
+
     const loadAdScript = () => {
-      if (!document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
-        const script = document.createElement('script');
-        script.async = true;
-        script.crossOrigin = 'anonymous';
-        script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
-        script.onload = () => {
+      if (document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+        pushAd();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480&nonce=${Math.random().toString(36).substring(2)}`;
+      script.onload = () => {
+        if (mounted) {
           console.log('AdSense script loaded');
           pushAd();
-        };
-        script.onerror = () => {
+        }
+      };
+      script.onerror = () => {
+        if (mounted) {
           console.error('Failed to load ad script');
           retryLoad();
-        };
-        document.head.appendChild(script);
-      } else {
-        pushAd();
-      }
+        }
+      };
+      document.head.appendChild(script);
     };
 
     const pushAd = () => {
-      if (!adRef.current || isLoaded) return;
+      if (!adRef.current || !mounted || isLoaded) return;
+
       try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        setIsLoaded(true);
-        setAdError(null);
-        console.log('Ad pushed for slot:', effectiveSlot);
-      } catch (e) {
+        // Clear existing content and recreate ins element
+        adRef.current.innerHTML = '';
+        const ins = document.createElement('ins');
+        ins.className = 'adsbygoogle';
+        ins.style.display = 'block';
+        if (responsive) ins.style.width = '100%';
+        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
+        ins.setAttribute('data-ad-slot', effectiveSlot);
+        ins.setAttribute('data-ad-format', effectiveFormat);
+        ins.setAttribute('data-full-width-responsive', responsive.toString());
+        ins.setAttribute('data-overlap', 'false');
+        adRef.current.appendChild(ins);
+
+        // Initialize adsbygoogle array
+        window.adsbygoogle = window.adsbygoogle || [];
+
+        // Push ad
+        window.adsbygoogle.push({});
+
+        if (mounted) {
+          setIsLoaded(true);
+          setAdError(null);
+          console.log('Ad pushed for slot:', effectiveSlot);
+        }
+      } catch (e: any) {
         console.error('Ad push failed', e);
-        retryLoad();
+        if (mounted && e.message.includes('adsbygoogle.push() error')) {
+          setAdError('Ad blocked or already loaded');
+          setIsLoaded(false);
+        } else if (mounted) {
+          retryLoad();
+        }
       }
     };
 
     const retryLoad = () => {
-      if (retryCount.current < maxRetries) {
-        retryCount.current += 1;
-        console.log(`Retrying ad load, attempt ${retryCount.current}`);
-        setTimeout(() => {
-          if (window.adsbygoogle) {
-            pushAd();
-          } else {
-            loadAdScript();
-          }
-        }, 500 * retryCount.current);
-      } else {
-        setAdError('Failed to load ad');
-        setIsLoaded(false);
+      if (!mounted || retryCount.current >= maxRetries) {
+        if (mounted) {
+          setAdError('Ad blocked or network error');
+          setIsLoaded(false);
+        }
+        return;
       }
+
+      retryCount.current += 1;
+      const delay = Math.min(1000 * Math.pow(2, retryCount.current - 1), 10000);
+
+      setTimeout(() => {
+        if (!mounted) return;
+        pushAd();
+      }, delay);
     };
 
-    // Start loading script immediately
+    // Reset state on slot change
+    setIsLoaded(false);
+    setAdError(null);
+    retryCount.current = 0;
+
+    // Initial load
     loadAdScript();
 
-    // Poll for adsbygoogle availability
-    const pollInterval = setInterval(() => {
-      if (window.adsbygoogle && adRef.current && !isLoaded) {
-        pushAd();
+    return () => {
+      mounted = false;
+      if (adRef.current) {
+        adRef.current.innerHTML = '';
       }
-    }, 100);
-
-    return () => clearInterval(pollInterval);
-  }, [isLoaded, effectiveSlot]);
+    };
+  }, [effectiveSlot, effectiveFormat, responsive]);
 
   if (!isProduction) {
     return (
@@ -141,24 +181,16 @@ export const AdComponent: React.FC<AdProps> = React.memo(({ slot, format = 'auto
       {!isLoaded && (
         <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-gray-900 text-gray-600 dark:text-gray-400">
           {adError ? (
-            <span className="text-red-600 dark:text-red-400 text-sm">Ads blocked? Please disable ad blocker!</span>
+            <span className="text-red-600 dark:text-red-400 text-sm">
+              {adError === 'Ad blocked or network error' 
+                ? 'Please disable ad blocker or check network'
+                : adError}
+            </span>
           ) : (
             <span className="text-sm">Loading ad...</span>
           )}
         </div>
       )}
-      <ins
-        className="adsbygoogle"
-        style={{
-          display: isLoaded ? 'block' : 'none',
-          ...(responsive && { width: '100%' })
-        }}
-        data-ad-client="ca-pub-2007908196419480"
-        data-ad-slot={effectiveSlot}
-        data-ad-format={effectiveFormat}
-        data-full-width-responsive={responsive.toString()}
-        data-overlap="false"
-      />
     </div>
   );
 });

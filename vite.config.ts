@@ -50,15 +50,14 @@ export default defineConfig({
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] }
             }
-          },
-          // Prevent caching ad scripts to ensure fresh fetches
-          {
-            urlPattern: /^https:\/\/pagead2\.googlesyndication\.com\/.*/i,
-            handler: 'NetworkOnly',
-            options: {
-              cacheName: 'ad-scripts',
-            }
           }
+        ],
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [
+          /^\/api/,
+          /^\/ads/,
+          /^\/pagead/,
+          /^\/adsbygoogle/
         ],
         skipWaiting: true,
         clientsClaim: true,
@@ -84,8 +83,7 @@ export default defineConfig({
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=self',
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      // Relax CORP to allow ad scripts
-      'Cross-Origin-Resource-Policy': 'same-site'
+      'Cross-Origin-Resource-Policy': 'cross-origin'
     }
   },
   build: {
