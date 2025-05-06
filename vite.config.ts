@@ -57,7 +57,12 @@ export default defineConfig({
           /^\/api/,
           /^\/ads/,
           /^\/pagead/,
-          /^\/adsbygoogle/
+          /^\/adsbygoogle/,
+          /^https:\/\/pagead2\.googlesyndication\.com/,
+          /^https:\/\/googleads\.g\.doubleclick\.net/,
+          /^https:\/\/www\.google-analytics\.com/,
+          /^https:\/\/partner\.googleadservices\.com/,
+          /^https:\/\/tpc\.googlesyndication\.com/,
         ],
         skipWaiting: true,
         clientsClaim: true,
@@ -78,12 +83,13 @@ export default defineConfig({
   server: {
     headers: {
       'X-Content-Type-Options': 'nosniff',
-      'X-Frame-Options': 'DENY',
+      'X-Frame-Options': 'SAMEORIGIN',
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=self',
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Resource-Policy': 'cross-origin'
+      'Cross-Origin-Resource-Policy': 'cross-origin',
+      'Access-Control-Allow-Origin': '*'
     }
   },
   build: {

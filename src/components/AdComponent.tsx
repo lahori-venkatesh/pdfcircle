@@ -40,20 +40,23 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Define ad slots based on device type
   const desktopSlots = ['4325618154', '1049089258'];
   const effectiveSlot = slot && !desktopSlots.includes(slot)
     ? slot
     : isMobile
       ? isStickyBottomAd
-        ? '8611335761'
-        : '8225705840'
+        ? '8611335761' // Mobile sticky bottom banner
+        : '8225705840' // Mobile in-content banner
       : isStickyBottomAd
-        ? '4325618154'
-        : '1049089258';
+        ? '4325618154' // Desktop sticky bottom
+        : '1049089258'; // Desktop in-content
+
   const effectiveFormat = isMobile ? 'horizontal' : format;
 
   useEffect(() => {
     let mounted = true;
+    let adPushTimeout: number;
 
     const loadAdScript = () => {
       if (document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
@@ -93,7 +96,9 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
         const ins = document.createElement('ins');
         ins.className = 'adsbygoogle';
         ins.style.display = 'block';
-        if (responsive) ins.style.width = '100%';
+        ins.style.width = '100%';
+        ins.style.minHeight = isMobile ? '50px' : isStickyBottomAd ? '90px' : '250px';
+        ins.style.maxHeight = isMobile ? '100px' : isStickyBottomAd ? '90px' : '250px';
         ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
         ins.setAttribute('data-ad-slot', effectiveSlot);
         ins.setAttribute('data-ad-format', effectiveFormat);
@@ -102,17 +107,29 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
         adRef.current.appendChild(ins);
         insRef.current = ins;
 
-        // Initialize adsbygoogle array
+        // Initialize adsbygoogle array if needed
         window.adsbygoogle = window.adsbygoogle || [];
 
-        // Push ad
-        window.adsbygoogle.push({});
-
-        if (mounted) {
-          setIsLoaded(true);
-          setAdError(null);
-          console.log('Ad pushed for slot:', effectiveSlot);
+        // Clear any existing timeout
+        if (adPushTimeout) {
+          window.clearTimeout(adPushTimeout);
         }
+
+        // Push ad with timeout
+        adPushTimeout = window.setTimeout(() => {
+          try {
+            window.adsbygoogle.push({});
+            if (mounted) {
+              setIsLoaded(true);
+              setAdError(null);
+              console.log('Ad pushed successfully for slot:', effectiveSlot);
+            }
+          } catch (e) {
+            console.error('Ad push timeout error:', e);
+            retryLoad();
+          }
+        }, 100);
+
       } catch (e: any) {
         console.error('Ad push failed', e);
         if (mounted && e.message.includes('adsbygoogle.push() error')) {
@@ -152,12 +169,15 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
 
     return () => {
       mounted = false;
+      if (adPushTimeout) {
+        window.clearTimeout(adPushTimeout);
+      }
       if (insRef.current && insRef.current.parentNode) {
         insRef.current.parentNode.removeChild(insRef.current);
       }
       insRef.current = null;
     };
-  }, [effectiveSlot, effectiveFormat, responsive]);
+  }, [effectiveSlot, effectiveFormat, responsive, isMobile]);
 
   if (!isProduction) {
     return (
@@ -165,7 +185,8 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
         ref={adRef}
         className={`bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-500 dark:text-gray-400 ${className}`}
         style={{
-          minHeight: isMobile ? '50px' : isStickyBottomAd ? '100px' : '90px',
+          minHeight: isMobile ? '50px' : isStickyBottomAd ? '90px' : '250px',
+          maxHeight: isMobile ? '100px' : isStickyBottomAd ? '90px' : '250px',
           ...style
         }}
       >
@@ -179,7 +200,8 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
       ref={adRef}
       className={`ad-container bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden ${className}`}
       style={{
-        minHeight: isMobile ? '50px' : isStickyBottomAd ? '100px' : '90px',
+        minHeight: isMobile ? '50px' : isStickyBottomAd ? '90px' : '250px',
+        maxHeight: isMobile ? '100px' : isStickyBottomAd ? '90px' : '250px',
         opacity: isLoaded ? 1 : 0.5,
         transition: 'opacity 0.3s ease-in-out',
         ...style
@@ -203,13 +225,15 @@ export const AdComponent: React.FC<AdProps> = React.memo(({
 });
 
 export const StickyBottomAd: React.FC = React.memo(() => {
+  const [isMobile] = useState(window.innerWidth <= 768);
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg dark:shadow-gray-800 z-50 safe-bottom">
       <AdComponent
-        className="mx-auto max-w-full sm:max-w-4xl py-1 px-2 sm:px-4 bg-gray-100 dark:bg-gray-800 h-[50px] sm:h-[100px]"
+        className="mx-auto max-w-full sm:max-w-4xl py-1 px-2 sm:px-4 bg-gray-100 dark:bg-gray-800"
         style={{
-          minHeight: '50px',
-          maxHeight: '50px',
+          minHeight: isMobile ? '50px' : '90px',
+          maxHeight: isMobile ? '50px' : '90px',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center'
