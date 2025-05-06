@@ -1110,7 +1110,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
-      <StickyBottomAd />
+     
     </>
   );
 }

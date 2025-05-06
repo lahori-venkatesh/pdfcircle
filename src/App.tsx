@@ -807,7 +807,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
       </header>
 
       {children}
-      <ConditionalAd />
+      
       <ConsentBanner />
 
       <button
