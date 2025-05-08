@@ -586,10 +586,11 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div className="max-w-6xl mx-auto px-4 py-6 bg-white dark:bg-gray-900">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent
+          slot="8611335761"
           format="horizontal"
           responsive={true}
-          className="my-4 mx-auto max-w-full sm:max-w-4xl h-[50px] sm:h-[90px]"
-          style={{ minHeight: '50px', maxHeight: '90px', width: '100%' }}
+          className="mb-6"
+          style={{ minHeight: '90px' }}
         />
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (

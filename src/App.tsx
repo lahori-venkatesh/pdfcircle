@@ -257,16 +257,52 @@ function HomePage() {
 
   return (
     <>
-      <SEOHeaders 
-        title={t('seo.home.title', 'pdfCircle | Free & Secure PDF and Image Tools')}
-        description={t('seo.home.description', 'Convert, compress, merge, and edit PDFs and images online for free with pdfCircle. Fast, secure, and user-friendly tools for all your document needs.')}
+      <SEOHeaders
+        title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
+        description={t(
+          'seo.pdfTools.description',
+          'Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle’s free online tools. No sign-up needed.'
+        )}
         keywords={[
-          'pdfcircle', 'pdf converter', 'image converter', 'compress pdf', 'convert pdf to jpg', 'free pdf tools',
-          'pdf compression', 'image optimization', 'online document tools', 'secure file conversion', 'pdf to word',
-          'pdf to excel', 'image resize', 'image to pdf', 'ocr pdf', 'merge pdf', 'split pdf', 
-          'free online tools', 'pdf editing'
+          'pdfcircle',
+          'free online pdf merger tool',
+          'split pdf online free tool',
+          'compress pdf online free fast',
+          'convert pdf to jpg online free',
+          'merge pdf files free online',
+          'combine pdf files online free',
+          'pdf splitter free online tool',
+          'reduce pdf size online free',
+          'pdf compressor free online',
+          'pdf to image converter free',
+          'edit pdf online free no sign up',
+          'add watermark to pdf free online',
+          'free pdf merge and split tool',
+          'online pdf compressor no limit',
+          'pdf to jpg converter free tool',
+          'merge multiple pdfs online free',
+          'split pdf pages free online',
+          'compress large pdf online free',
+          'free pdf editing tool online',
+          'pdf watermark adder free',
+          'merge pdf documents online free',
+          'split pdf file online free',
+          'reduce pdf file size free tool',
+          'pdf compression online free',
+          'convert pdf to image free online',
+          'free online pdf editor tool',
+          'add watermark pdf online free',
+          'merge pdfs free online tool',
+          'split pdf online no sign up',
+          'compress pdf free online tool',
+          'pdf to jpg free online converter',
+          'combine pdfs online free tool',
+          'pdf splitter online free fast',
+          'reduce pdf size free online',
+          'pdf compressor online free tool',
+          'pdf to image free converter',
         ]}
-        canonicalUrl="https://pdfcircle.com/"
+        canonicalUrl="https://pdfcircle.com/pdf-tools"
       />
 
       <section className="relative bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 py-16 sm:py-24 overflow-hidden">
