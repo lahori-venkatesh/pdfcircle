@@ -590,7 +590,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           format="horizontal"
           responsive={true}
           className="mb-6 mx-auto"
-          style={{ height: '90px', maxWidth: '728px' }}
+          style={{ height: '90px', width: '100%', maxWidth: '728px' }}
         />
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
