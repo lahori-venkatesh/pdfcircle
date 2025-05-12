@@ -156,8 +156,8 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           slot="4325618154"
           format="horizontal"
           responsive={true}
-          className="mb-6"
-          style={{ minHeight: '90px' }}
+          className="mb-6 mx-auto"
+          style={{ height: '90px', maxWidth: '728px' }}
         />
 
 

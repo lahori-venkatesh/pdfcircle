@@ -19,38 +19,52 @@ export default defineConfig({
         categories: ['productivity', 'utilities'],
         icons: [
           { src: '/icons/icon-72x72.png', sizes: '72x72', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any maskable' }
-        ]
+          { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any maskable' },
+        ],
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
         runtimeCaching: [
+          // Bypass caching for all ad-related requests
+          {
+            urlPattern: ({ url }) =>
+              url.href.match(
+                /https:\/\/(pagead2\.googlesyndication\.com|googleads\.g\.doubleclick\.net|partner\.googleadservices\.com|tpc\.googlesyndication\.com|googlesyndication\.com|www\.googletagservices\.com|ep[1-2]\.adtrafficquality\.google|www\.google\.com)/
+              ),
+            handler: 'NetworkOnly',
+            options: {
+              cacheName: 'ads-bypass',
+            },
+          },
+          // Cache OpenCV docs
           {
             urlPattern: /^https:\/\/docs\.opencv\.org\/.*/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'opencv-cache',
               expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 5 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
+          // Cache static assets
           {
             urlPattern: /\.(js|css|woff2|json|wasm)$/i,
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'static-resources',
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 }
-            }
+              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 },
+            },
           },
+          // Cache images
           {
             urlPattern: /\.(png|jpg|jpeg|gif|svg|webp)$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'images',
               expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] }
-            }
-          }
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
         ],
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [
@@ -58,27 +72,22 @@ export default defineConfig({
           /^\/ads/,
           /^\/pagead/,
           /^\/adsbygoogle/,
-          /^https:\/\/pagead2\.googlesyndication\.com/,
-          /^https:\/\/googleads\.g\.doubleclick\.net/,
-          /^https:\/\/www\.google-analytics\.com/,
-          /^https:\/\/partner\.googleadservices\.com/,
-          /^https:\/\/tpc\.googlesyndication\.com/,
         ],
         skipWaiting: true,
         clientsClaim: true,
-        cleanupOutdatedCaches: true
-      }
-    })
+        cleanupOutdatedCaches: true,
+      },
+    }),
   ],
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
     exclude: ['@imgly/background-removal'],
     esbuildOptions: {
-      target: 'esnext'
-    }
+      target: 'esnext',
+    },
   },
   resolve: {
-    alias: { path: 'path-browserify' }
+    alias: { path: 'path-browserify' },
   },
   server: {
     headers: {
@@ -89,8 +98,8 @@ export default defineConfig({
       'Permissions-Policy': 'camera=self',
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       'Cross-Origin-Resource-Policy': 'cross-origin',
-      'Access-Control-Allow-Origin': '*'
-    }
+      'Access-Control-Allow-Origin': '*',
+    },
   },
   build: {
     target: ['es2020'],
@@ -103,14 +112,14 @@ export default defineConfig({
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-pdf': ['pdf-lib', 'jspdf', 'pdfjs-dist'],
           'vendor-ui': ['lucide-react', '@dnd-kit/core'],
-        }
-      }
+        },
+      },
     },
     sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: { drop_console: true, drop_debugger: true },
-      output: { comments: false }
-    }
-  }
+      output: { comments: false },
+    },
+  },
 });
