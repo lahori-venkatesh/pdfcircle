@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit , ChevronDown, ChevronUp  } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent , StickyBottomAd } from './AdComponent';
+import { AdComponent  } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -589,8 +589,8 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           slot="8611335761"
           format="horizontal"
           responsive={true}
-          className="mb-6 mx-auto"
-          style={{ height: '90px', width: '100%', maxWidth: '728px' }}
+          className="mb-6 w-full"
+          style={{ minHeight: '90px' , width: '100%', minWidth:'728px' }}
         />
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
