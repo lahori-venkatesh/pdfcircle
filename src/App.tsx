@@ -10,7 +10,7 @@ import { ImageTools } from './components/ImageTools';
 import { PDFTools } from './components/PDFTools';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
-import { Blog } from './components/Blog';
+import { Blog } from './components/blog';
 import { Contact } from './components/Contact';
 import { AboutUs } from './components/AboutUs';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -22,17 +22,8 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { ResetPassword } from './components/ResetPassword';
 
 // Error Boundary Component
-interface ErrorBoundaryState {
-  hasError: boolean;
-  error: Error | null;
-}
-
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-}
-
-class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { hasError: false, error: null };
+class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+  state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
@@ -172,26 +163,6 @@ function WhyChooseCard({ icon: Icon, title, description }: WhyChooseCardProps) {
   );
 }
 
-// Export useAdConsent for use in AdComponent
-export function useAdConsent() {
-  const [consent, setConsent] = useState<boolean>(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    const checkConsent = () => {
-      const userConsent = localStorage.getItem('adConsent') === 'true';
-      setConsent(userConsent);
-      console.log('Ad consent checked:', userConsent, 'Path:', location.pathname);
-    };
-
-    checkConsent();
-    window.addEventListener('consentUpdated', checkConsent);
-    return () => window.removeEventListener('consentUpdated', checkConsent);
-  }, [location.pathname]);
-
-  return consent;
-}
-
 // Consent Banner Component
 function ConsentBanner() {
   const [isVisible, setIsVisible] = useState(false);
@@ -247,6 +218,26 @@ function ConsentBanner() {
   );
 }
 
+// Hook to check ad consent
+function useAdConsent() {
+  const [consent, setConsent] = useState<boolean>(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    const checkConsent = () => {
+      const userConsent = localStorage.getItem('adConsent') === 'true';
+      setConsent(userConsent);
+      console.log('Ad consent checked:', userConsent, 'Path:', location.pathname);
+    };
+
+    checkConsent();
+    window.addEventListener('consentUpdated', checkConsent);
+    return () => window.removeEventListener('consentUpdated', checkConsent);
+  }, [location.pathname]);
+
+  return consent;
+}
+
 // Component to conditionally render ads
 function ConditionalAd() {
   const location = useLocation();
@@ -258,26 +249,6 @@ function ConditionalAd() {
   if (consent === true && contentRichPages.includes(location.pathname)) {
     return <StickyBottomAd />;
   }
-  return null;
-}
-
-// Component to reinitialize ads on route change
-function AdInitializer() {
-  const location = useLocation();
-  const consent = useAdConsent();
-
-  useEffect(() => {
-    if (import.meta.env.PROD && consent && window.adsbygoogle) {
-      try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        console.log(`Ads reinitialized for route: ${location.pathname}`);
-      } catch (error) {
-        console.error(`Error reinitializing ads on route change: ${location.pathname}`, error);
-        window.gtag?.('event', 'ad_reinit_error', { path: location.pathname, error: (error as Error).message });
-      }
-    }
-  }, [location.pathname, consent]);
-
   return null;
 }
 
@@ -337,37 +308,42 @@ function HomePage() {
       <section className="relative bg-gradient-to-br from-indigo-600 to-purple-700 dark:from-indigo-900 dark:to-purple-900 py-16 sm:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/hero-pattern.svg')] bg-cover bg-center opacity-10"></div>
         <div className="absolute inset-0 pointer-events-none">
-          <svg className="w-full h-full opacity-10" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g transform="translate(120, 60) scale(0.9)">
-              <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
-              <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
-            </g>
-            <g transform="translate(1050, 320) scale(0.8)">
-              <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
-              <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
-              <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
-            </g>
-            <g transform="translate(580, 220) scale(0.9)">
-              <path d="M0 50H140L120 30M140 50L120 70" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-              <text x="20" y="90" fontSize="22" fill="#ffffff" fontFamily="sans-serif" fontWeight="500">Convert</text>
-            </g>
-            <g transform="translate(320, 360) scale(0.7)">
-              <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
-              <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
-              <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
-            </g>
-            <g transform="translate(880, 100) scale(0.7)">
-              <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
-              <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
-              <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
-            </g>
-          </svg>
-        </div>
+    <svg className="w-full h-full opacity-10" viewBox="0 0 1440 600" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* PDF Document Illustration */}
+      <g transform="translate(120, 60) scale(0.9)">
+        <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
+      </g>
+      {/* Image File Illustration */}
+      <g transform="translate(1050, 320) scale(0.8)">
+        <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
+      </g>
+      {/* Conversion Arrows */}
+      <g transform="translate(580, 220) scale(0.9)">
+        <path d="M0 50H140L120 30M140 50L120 70" stroke="#ffffff" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <text x="20" y="90" fontSize="22" fill="#ffffff" fontFamily="sans-serif" fontWeight="500">Convert</text>
+      </g>
+      {/* Secondary PDF Illustration */}
+      <g transform="translate(320, 360) scale(0.7)">
+        <rect width="120" height="160" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#4F46E5" strokeWidth="2" />
+        <rect x="15" y="30" width="90" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="50" width="70" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <rect x="15" y="70" width="80" height="12" rx="3" fill="#4F46E5" fillOpacity="0.6" />
+        <text x="35" y="120" fontSize="24" fill="#ffffff" fontFamily="sans-serif" fontWeight="bold">PDF</text>
+      </g>
+      {/* Secondary Image Illustration */}
+      <g transform="translate(880, 100) scale(0.7)">
+        <rect width="120" height="120" rx="12" fill="#ffffff" fillOpacity="0.25" stroke="#A855F7" strokeWidth="2" />
+        <rect x="20" y="20" width="80" height="80" rx="8" fill="#A855F7" fillOpacity="0.6" />
+        <circle cx="60" cy="60" r="20" fill="#ffffff" fillOpacity="0.8" />
+      </g>
+    </svg>
+  </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center animate-fade-in">
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-6 tracking-tight">
@@ -390,7 +366,7 @@ function HomePage() {
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-flex items-center text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 shadow-sm border border-white"
+                className="inline-flex items-center  text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 shadow-sm border border-white"
               >
                 {t('hero.imageTools', 'Explore Image Tools')}
               </Link>
@@ -539,7 +515,7 @@ function HomePage() {
             <SecurityFeature 
               icon={LockIcon} 
               title={t('security.connection.title', 'Secure Connection')} 
-              description={t('security.connection.description', 'All interactions use encrypted HTTPS connections.')} 
+              description={t('security.connection.title', 'All interactions use encrypted HTTPS connections.')} 
             />
             <SecurityFeature 
               icon={CheckCircle} 
@@ -847,7 +823,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
                     <div className="mt-2 w-full bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700">
                       <button
                         onClick={handleSignOut}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center"
                       >
                         <LogOut className="w-4 h-4 mr-2 stroke-indigo-600" />
                         Logout
@@ -866,12 +842,8 @@ function Layout({ children }: PropsWithChildren<{}>) {
         )}
       </header>
 
-      <main>
-        {children}
-      </main>
-
-      <AdInitializer />
-      <ConditionalAd />
+      {children}
+      
       <ConsentBanner />
 
       <button

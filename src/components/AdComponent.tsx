@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useCallback } from 'react';
-import { useAdConsent } from '../App'; // Adjust path based on your project structure
 
 interface AdProps {
   slot: string;

@@ -3,16 +3,12 @@
   <head>
     <!-- Charset & Favicon -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="renderer" content="webkit">
     <meta name="force-rendering" content="webkit">
     <meta name="prerender-status-code" content="200">
     <link rel="preload" href="/icons/icon-72x72.webp" as="image" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-
-    <!-- Responsive & PWA Support -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <link rel="manifest" href="/manifest.json" />
 
     <!-- Title & Metadata -->
     <title>pdfCircle | Free Document & Image Converter Tools</title>
@@ -26,6 +22,8 @@
     <meta property="og:image" content="https://www.pdfcircle.com/apple-touch-icon.webp" />
     <meta property="og:type" content="website" />
 
+
+    
     <!-- Cookiebot -->
     <script id="Cookiebot" src="https://consent.cookiebot.com/uc.js" data-cbid="700cf4a6-8d4b-48ce-9054-4efd9fc907e1" type="text/javascript" async></script>
 
@@ -89,6 +87,19 @@
 
   <body>
     <div id="root"></div>
+
+    <script>
+      window.addEventListener('load', function() {
+        if (window.CookieConsent && window.CookieConsent.consented) {
+          // Dynamically load Google Ads if consent is given
+          const script = document.createElement('script');
+          script.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js";
+          script.async = true;
+          document.head.appendChild(script);
+        }
+      });
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

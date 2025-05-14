@@ -1,4 +1,4 @@
-```typescript
+
 export interface CachedOperation {
   id: string;
   type: string;
@@ -28,4 +28,3 @@ export interface CachedSettings {
   };
   pageRanges?: string;
 }
-```
