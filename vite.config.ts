@@ -1,83 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
     react(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      includeAssets: ['icons/*', 'screenshots/*'],
-      manifest: {
-        name: 'PdfCircle - Document & Image Converter Tools',
-        short_name: 'PdfCircle',
-        description: 'Convert, Compress, and Enhance Your Documents and Images for Better Performance and Quality',
-        theme_color: '#4f46e5',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'any',
-        categories: ['productivity', 'utilities'],
-        icons: [
-          { src: '/icons/icon-72x72.png', sizes: '72x72', type: 'image/png', purpose: 'any maskable' },
-          { src: '/icons/icon-96x96.png', sizes: '96x96', type: 'image/png', purpose: 'any maskable' },
-        ],
-      },
-      workbox: {
-        maximumFileSizeToCacheInBytes: 25 * 1024 * 1024,
-        runtimeCaching: [
-          // Bypass caching for all ad-related requests
-          {
-            urlPattern: ({ url }) =>
-              url.href.match(
-                /https:\/\/(pagead2\.googlesyndication\.com|googleads\.g\.doubleclick\.net|partner\.googleadservices\.com|tpc\.googlesyndication\.com|googlesyndication\.com|www\.googletagservices\.com|ep[1-2]\.adtrafficquality\.google|www\.google\.com)/
-              ),
-            handler: 'NetworkOnly',
-            options: {
-              cacheName: 'ads-bypass',
-            },
-          },
-          // Cache OpenCV docs
-          {
-            urlPattern: /^https:\/\/docs\.opencv\.org\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'opencv-cache',
-              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 5 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          // Cache static assets
-          {
-            urlPattern: /\.(js|css|woff2|json|wasm)$/i,
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'static-resources',
-              expiration: { maxEntries: 30, maxAgeSeconds: 60 * 60 * 24 * 2 },
-            },
-          },
-          // Cache images
-          {
-            urlPattern: /\.(png|jpg|jpeg|gif|svg|webp)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images',
-              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 30 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-        ],
-        navigateFallback: '/index.html',
-        navigateFallbackDenylist: [
-          /^\/api/,
-          /^\/ads/,
-          /^\/pagead/,
-          /^\/adsbygoogle/,
-        ],
-        skipWaiting: true,
-        clientsClaim: true,
-        cleanupOutdatedCaches: true,
-      },
-    }),
   ],
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
