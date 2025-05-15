@@ -31,8 +31,24 @@ export function AdComponent({
   const adRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
   const isProduction = import.meta.env.PROD;
   const refreshTimerRef = useRef<number | null>(null);
+
+  // Load AdSense script asynchronously
+  useEffect(() => {
+    if (isProduction && !window.adsbygoogle) {
+      const script = document.createElement('script');
+      script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
+      script.async = true;
+      script.crossOrigin = 'anonymous';
+      script.onerror = () => {
+        setAdError('Failed to load AdSense script');
+        console.error('AdSense script failed to load');
+      };
+      document.head.appendChild(script);
+    }
+  }, [isProduction]);
 
   const loadAd = useCallback(() => {
     if (isProduction && adRef.current && !isAdLoaded) {
@@ -40,6 +56,7 @@ export function AdComponent({
         (window.adsbygoogle = window.adsbygoogle || []).push({});
         setIsAdLoaded(true);
       } catch (error) {
+        setAdError('Error loading ad');
         console.error('Error loading AdSense ad:', error);
       }
     }
@@ -54,13 +71,14 @@ export function AdComponent({
         ins.style.display = 'block';
         ins.style.width = `${AD_SIZES[adSize].width}px`;
         ins.style.height = `${AD_SIZES[adSize].height}px`;
-        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480'); // Replace with your AdSense client ID
+        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480'); // Your AdSense client ID
         ins.setAttribute('data-ad-slot', slot);
         ins.setAttribute('data-ad-format', 'horizontal');
         ins.setAttribute('data-full-width-responsive', 'false');
         adRef.current.appendChild(ins);
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (error) {
+        setAdError('Error refreshing ad');
         console.error('Error refreshing AdSense ad:', error);
       }
     }
@@ -111,6 +129,22 @@ export function AdComponent({
     );
   }
 
+  if (adError) {
+    return (
+      <div className={`flex justify-center ${className}`} style={style}>
+        <div
+          className="bg-red-100 border border-red-400 flex items-center justify-center"
+          style={{
+            width: `${AD_SIZES[adSize].width}px`,
+            height: `${AD_SIZES[adSize].height}px`
+          }}
+        >
+          <span className="text-red-600 text-sm font-medium">Ad Failed to Load</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex justify-center ${className}`} style={style}>
       <div
@@ -128,7 +162,7 @@ export function AdComponent({
             width: `${AD_SIZES[adSize].width}px`,
             height: `${AD_SIZES[adSize].height}px`
           }}
-          data-ad-client="ca-pub-2007908196419480" // Replace with your AdSense client ID
+          data-ad-client="ca-pub-2007908196419480" // Your AdSense client ID
           data-ad-slot={slot}
           data-ad-format="horizontal"
           data-full-width-responsive="false"
