@@ -1,11 +1,12 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 
 interface AdProps {
   slot: string;
-  format?: 'auto' | 'fluid' | 'rectangle' | 'vertical' | 'horizontal';
+  adSize?: 'leaderboard' | 'banner';
   style?: React.CSSProperties;
   className?: string;
-  responsive?: boolean;
+  refreshInterval?: number; // in seconds
 }
 
 declare global {
@@ -14,59 +15,145 @@ declare global {
   }
 }
 
-export function AdComponent({ slot, format = 'auto', style, className, responsive = true }: AdProps) {
-  const adRef = useRef<HTMLDivElement>(null);
-  const isProduction = import.meta.env.PROD;
+// AdSense standard horizontal ad sizes
+const AD_SIZES = {
+  leaderboard: { width: 728, height: 90 },
+  banner: { width: 468, height: 60 }
+};
 
-  useEffect(() => {
-    if (isProduction && adRef.current) {
+export function AdComponent({
+  slot,
+  adSize = 'leaderboard',
+  style,
+  className = '',
+  refreshInterval = 0
+}: AdProps) {
+  const adRef = useRef<HTMLDivElement>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const [isAdLoaded, setIsAdLoaded] = useState(false);
+  const isProduction = import.meta.env.PROD;
+  const refreshTimerRef = useRef<number | null>(null);
+
+  const loadAd = useCallback(() => {
+    if (isProduction && adRef.current && !isAdLoaded) {
       try {
         (window.adsbygoogle = window.adsbygoogle || []).push({});
+        setIsAdLoaded(true);
       } catch (error) {
         console.error('Error loading AdSense ad:', error);
       }
     }
-  }, []);
+  }, [isProduction, isAdLoaded]);
+
+  const refreshAd = useCallback(() => {
+    if (isProduction && adRef.current && isAdLoaded) {
+      try {
+        adRef.current.innerHTML = ''; // Clear previous ad
+        const ins = document.createElement('ins');
+        ins.className = 'adsbygoogle';
+        ins.style.display = 'block';
+        ins.style.width = `${AD_SIZES[adSize].width}px`;
+        ins.style.height = `${AD_SIZES[adSize].height}px`;
+        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480'); // Replace with your AdSense client ID
+        ins.setAttribute('data-ad-slot', slot);
+        ins.setAttribute('data-ad-format', 'horizontal');
+        ins.setAttribute('data-full-width-responsive', 'false');
+        adRef.current.appendChild(ins);
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (error) {
+        console.error('Error refreshing AdSense ad:', error);
+      }
+    }
+  }, [isProduction, isAdLoaded, adSize, slot]);
+
+  useEffect(() => {
+    if (isProduction && adRef.current) {
+      // Lazy loading with IntersectionObserver
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            loadAd();
+            if (refreshInterval > 0) {
+              refreshTimerRef.current = window.setInterval(refreshAd, refreshInterval * 1000);
+            }
+          }
+        },
+        { threshold: 0.1 }
+      );
+
+      observerRef.current.observe(adRef.current);
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+      if (refreshTimerRef.current) {
+        clearInterval(refreshTimerRef.current);
+      }
+    };
+  }, [loadAd, refreshAd, isProduction, refreshInterval]);
 
   if (!isProduction) {
     return (
-      <div
-        ref={adRef}
-        className={`bg-gray-100 border-2 border-dashed border-gray-300 flex items-center justify-center ${className}`}
-        style={{
-          minHeight: '100px',
-          ...style
-        }}
-      >
-        <span className="text-gray-500 text-sm">Ad Placeholder - {slot}</span>
+      <div className={`flex justify-center ${className}`} style={style}>
+        <div
+          ref={adRef}
+          className="bg-gray-200 border border-gray-400 flex items-center justify-center transition-all duration-200 hover:bg-gray-100 cursor-pointer"
+          style={{
+            width: `${AD_SIZES[adSize].width}px`,
+            height: `${AD_SIZES[adSize].height}px`
+          }}
+        >
+          <span className="text-gray-600 text-sm font-medium">Ad Placeholder - {slot} ({adSize})</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div ref={adRef} className={className} style={style}>
-      <ins
-        className="adsbygoogle"
+    <div className={`flex justify-center ${className}`} style={style}>
+      <div
+        ref={adRef}
+        className="transition-all duration-200 hover:shadow-md hover:scale-[1.01] cursor-pointer"
         style={{
-          display: 'block',
-          ...(responsive && { width: '100%' })
+          width: `${AD_SIZES[adSize].width}px`,
+          height: `${AD_SIZES[adSize].height}px`
         }}
-        data-ad-client="ca-pub-2007908196419480" // Replace with your AdSense client ID
-        data-ad-slot={slot}
-        data-ad-format={format}
-        data-full-width-responsive={responsive}
-      />
+      >
+        <ins
+          className="adsbygoogle"
+          style={{
+            display: 'block',
+            width: `${AD_SIZES[adSize].width}px`,
+            height: `${AD_SIZES[adSize].height}px`
+          }}
+          data-ad-client="ca-pub-2007908196419480" // Replace with your AdSense client ID
+          data-ad-slot={slot}
+          data-ad-format="horizontal"
+          data-full-width-responsive="false"
+        />
+      </div>
     </div>
   );
 }
 
+AdComponent.propTypes = {
+  slot: PropTypes.string.isRequired,
+  adSize: PropTypes.oneOf(['leaderboard', 'banner']),
+  style: PropTypes.object,
+  className: PropTypes.string,
+  refreshInterval: PropTypes.number
+};
+
 export function StickyBottomAd() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-xl z-50 transition-all duration-200">
       <AdComponent
         slot="sticky-bottom"
-        className="mx-auto max-w-4xl py-2 px-4"
-        style={{ minHeight: '50px', maxHeight: '100px' }}
+        adSize="leaderboard"
+        className="mx-auto py-2 px-4"
+        refreshInterval={30} // Refresh every 30 seconds
       />
     </div>
   );

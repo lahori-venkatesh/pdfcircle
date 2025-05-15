@@ -154,10 +154,10 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
         <AdComponent
           slot="4325618154"
-          format="horizontal"
-          responsive={true}
-          className="mb-6 w-full "
-          style={{ minHeight: '90px' , width: '100%', minWidth:'728px' }}
+          adSize="leaderboard"
+          refreshInterval={60}
+          className="mb-6 w-full"
+                  
         />
 
 
