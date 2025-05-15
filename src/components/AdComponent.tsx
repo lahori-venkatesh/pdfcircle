@@ -35,26 +35,15 @@ export function AdComponent({
   const isProduction = import.meta.env.PROD;
   const refreshTimerRef = useRef<number | null>(null);
 
-  // Load AdSense script asynchronously
-  useEffect(() => {
-    if (isProduction && !window.adsbygoogle) {
-      const script = document.createElement('script');
-      script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
-      script.async = true;
-      script.crossOrigin = 'anonymous';
-      script.onerror = () => {
-        setAdError('Failed to load AdSense script');
-        console.error('AdSense script failed to load');
-      };
-      document.head.appendChild(script);
-    }
-  }, [isProduction]);
-
   const loadAd = useCallback(() => {
     if (isProduction && adRef.current && !isAdLoaded) {
       try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-        setIsAdLoaded(true);
+        if (window.adsbygoogle) {
+          (window.adsbygoogle = window.adsbygoogle || []).push({});
+          setIsAdLoaded(true);
+        } else {
+          throw new Error('AdSense script not loaded');
+        }
       } catch (error) {
         setAdError('Error loading ad');
         console.error('Error loading AdSense ad:', error);
@@ -141,7 +130,7 @@ export function AdComponent({
         >
           <span className="text-red-600 text-sm font-medium">Ad Failed to Load</span>
         </div>
-      </div>
+HHHHH    </div>
     );
   }
 
