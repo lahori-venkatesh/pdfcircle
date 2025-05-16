@@ -2,19 +2,13 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  plugins: [
-    react(),
-  ],
+  plugins: [react()],
   assetsInclude: ['**/*.wasm'],
   optimizeDeps: {
     exclude: ['@imgly/background-removal'],
-    esbuildOptions: {
-      target: 'esnext',
-    },
+    esbuildOptions: { target: 'esnext' }
   },
-  resolve: {
-    alias: { path: 'path-browserify' },
-  },
+  resolve: { alias: { path: 'path-browserify' } },
   server: {
     headers: {
       'X-Content-Type-Options': 'nosniff',
@@ -22,10 +16,10 @@ export default defineConfig({
       'X-XSS-Protection': '1; mode=block',
       'Referrer-Policy': 'strict-origin-when-cross-origin',
       'Permissions-Policy': 'camera=self',
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Resource-Policy': 'cross-origin',
-      'Access-Control-Allow-Origin': '*',
-    },
+      'Cross-Origin-Opener-Policy': 'same-origin',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+      'Cross-Origin-Resource-Policy': 'cross-origin'
+    }
   },
   build: {
     target: ['es2020'],
@@ -37,15 +31,15 @@ export default defineConfig({
         manualChunks: {
           'vendor-react': ['react', 'react-dom', 'react-router-dom'],
           'vendor-pdf': ['pdf-lib', 'jspdf', 'pdfjs-dist'],
-          'vendor-ui': ['lucide-react', '@dnd-kit/core'],
-        },
-      },
+          'vendor-ui': ['lucide-react', '@dnd-kit/core']
+        }
+      }
     },
     sourcemap: false,
     minify: 'terser',
     terserOptions: {
       compress: { drop_console: true, drop_debugger: true },
-      output: { comments: false },
-    },
-  },
+      output: { comments: false }
+    }
+  }
 });
