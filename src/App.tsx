@@ -359,14 +359,14 @@ function HomePage() {
               <Link
                 to="/pdf-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-flex items-center bg-white text-indigo-600 px-6 py-3 rounded-lg font-medium hover:bg-indigo-100 transition-colors duration-200 shadow-sm"
+                className="inline-flex justify-center items-center bg-white text-indigo-600 px-6 py-3 rounded-lg font-medium hover:bg-indigo-100 transition-colors duration-200 shadow-sm"
               >
                 {t('hero.getStarted', 'Explore PDF Tools')}
               </Link>
               <Link
                 to="/image-tools"
                 onClick={() => window.scrollTo(0, 0)}
-                className="inline-flex items-center  text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 shadow-sm border border-white"
+                className="inline-flex justify-center items-center  text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors duration-200 shadow-sm border border-white"
               >
                 {t('hero.imageTools', 'Explore Image Tools')}
               </Link>
@@ -854,7 +854,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
         <ArrowUp className="w-6 h-6" />
       </button>
 
-      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12">
+      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-16 mb-10">
         <div className="max-w-7xl mx-auto py-12 sm:py-8 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
             <div>
