@@ -7,7 +7,7 @@ interface AdProps {
   style?: React.CSSProperties;
   className?: string;
   refreshInterval?: number;
-  isSticky?: boolean;
+  isSticky?: boolean; // New prop to identify sticky ads
 }
 
 declare global {
@@ -34,7 +34,7 @@ function useViewport() {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         requestAnimationFrame(() => setWidth(window.innerWidth));
-      }, 100);
+      }, 100); // Debounce resize events
     };
 
     window.addEventListener('resize', handleResize);
@@ -63,23 +63,23 @@ export function AdComponent({
   const isMobile = width <= 768;
 
   const getAdDimensions = () => {
-    if (isMobile && isSticky) {
-      return AD_SIZES.mobile_banner; // Force 320x50 for sticky mobile ads
+    if (isMobile) {
+      switch (adSize) {
+        case 'leaderboard':
+          return AD_SIZES.mobile_banner;
+        case 'banner':
+          return AD_SIZES.mobile_rectangle;
+        default:
+          return AD_SIZES[adSize];
+      }
     }
-    switch (adSize) {
-      case 'leaderboard':
-        return isMobile ? AD_SIZES.mobile_banner : AD_SIZES.leaderboard;
-      case 'banner':
-        return isMobile ? AD_SIZES.mobile_rectangle : AD_SIZES.banner;
-      default:
-        return AD_SIZES[adSize];
-    }
+    return AD_SIZES[adSize];
   };
   const dimensions = useRef(getAdDimensions());
 
   useEffect(() => {
     dimensions.current = getAdDimensions();
-  }, [width, adSize, isSticky]);
+  }, [width, adSize]);
 
   const loadAd = useCallback(() => {
     if (!isProduction || !adRef.current || isAdLoaded) return;
@@ -89,7 +89,8 @@ export function AdComponent({
         window.adsbygoogle.push({});
         setIsAdLoaded(true);
       } else {
-        setTimeout(loadAd, 100); // Faster retry for mobile
+        // Retry loading if AdSense script isn't ready
+        setTimeout(loadAd, 500);
       }
     } catch (error) {
       setAdError('Error loading ad');
@@ -101,16 +102,14 @@ export function AdComponent({
     if (!isProduction || !adRef.current || !isAdLoaded) return;
 
     try {
-      adRef.current.innerHTML = '';
+      adRef.current.innerHTML = ''; // Clear existing ad
       const ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
-      ins.style.cssText = `display:block;width:${dimensions.current.width}px;height:${dimensions.current.height}px`;
+      ins.style.cssText = `display:block;width:100%;height:${dimensions.current.height}px`;
       ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
       ins.setAttribute('data-ad-slot', slot);
-      if (!isMobile || !isSticky) {
-        ins.setAttribute('data-ad-format', isMobile ? 'auto' : 'horizontal');
-        ins.setAttribute('data-full-width-responsive', 'true');
-      }
+      ins.setAttribute('data-ad-format', isMobile && isSticky ? 'rectangle' : isMobile ? 'auto' : 'horizontal');
+      ins.setAttribute('data-full-width-responsive', 'true');
       adRef.current.appendChild(ins);
 
       window.adsbygoogle = window.adsbygoogle || [];
@@ -125,6 +124,7 @@ export function AdComponent({
     if (!isProduction || !adRef.current) return;
 
     if (isSticky) {
+      // Load sticky ads immediately
       loadAd();
       return;
     }
@@ -133,7 +133,7 @@ export function AdComponent({
       ([entry]) => {
         if (entry.isIntersecting) {
           loadAd();
-          observer.disconnect();
+          observer.disconnect(); // Disconnect after loading
         }
       },
       { threshold: 0.1 }
@@ -160,7 +160,8 @@ export function AdComponent({
           ref={adRef}
           className="bg-gray-200 border border-gray-400 flex items-center justify-center"
           style={{
-            width: dimensions.current.width,
+            maxWidth: dimensions.current.width,
+            width: '100%',
             height: dimensions.current.height,
             overflow: 'hidden',
           }}
@@ -179,7 +180,8 @@ export function AdComponent({
         <div
           className="bg-red-100 border border-red-400 flex items-center justify-center"
           style={{
-            width: dimensions.current.width,
+            maxWidth: dimensions.current.width,
+            width: '100%',
             height: dimensions.current.height,
             overflow: 'hidden',
           }}
@@ -195,7 +197,8 @@ export function AdComponent({
       <div
         ref={adRef}
         style={{
-          width: dimensions.current.width,
+          maxWidth: dimensions.current.width,
+          width: '100%',
           height: dimensions.current.height,
           overflow: 'hidden',
           ...style,
@@ -205,17 +208,13 @@ export function AdComponent({
           className="adsbygoogle"
           style={{
             display: 'block',
-            width: dimensions.current.width,
+            width: '100%',
             height: dimensions.current.height,
           }}
           data-ad-client="ca-pub-2007908196419480"
           data-ad-slot={slot}
-          {...(!isMobile || !isSticky
-            ? {
-                'data-ad-format': isMobile ? 'auto' : 'horizontal',
-                'data-full-width-responsive': 'true',
-              }
-            : {})}
+          data-ad-format={isMobile && isSticky ? 'rectangle' : isMobile ? 'auto' : 'horizontal'}
+          data-full-width-responsive="true"
         />
       </div>
     </div>
@@ -237,10 +236,10 @@ export function StickyBottomAd() {
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 sticky-bottom-ad safe-bottom"
-      style={{ height: isMobile ? 50 : 90, overflow: 'hidden' }}
+      className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50"
+      style={{ maxHeight: isMobile ? 50 : 90, overflow: 'hidden' }}
     >
-      <div className="mx-auto ad-container" style={{ width: isMobile ? 320 : 728 }}>
+      <div className="mx-auto" style={{ maxWidth: isMobile ? 320 : 728 }}>
         <AdComponent
           slot="1049089258"
           adSize={isMobile ? 'mobile_banner' : 'leaderboard'}
@@ -248,7 +247,6 @@ export function StickyBottomAd() {
           refreshInterval={30}
           isSticky={true}
           style={{
-            width: isMobile ? 320 : 728,
             height: isMobile ? 50 : 90,
             backgroundColor: 'rgba(240, 240, 240, 0.95)',
             overflow: 'hidden',
