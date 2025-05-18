@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit , ChevronDown, ChevronUp  } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent  } from './AdComponent';
+import { AdComponent , StickyBottomAd } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -1111,7 +1111,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
-     
+      <StickyBottomAd />
     </>
   );
 }

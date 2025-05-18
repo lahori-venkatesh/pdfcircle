@@ -266,7 +266,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
-     
+      <StickyBottomAd />
     </>
   );
 }
