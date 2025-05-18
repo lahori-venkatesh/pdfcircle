@@ -3,10 +3,10 @@ import PropTypes from 'prop-types';
 
 interface AdProps {
   slot: string;
-  adSize?: 'leaderboard' | 'banner';
+  adSize?: 'leaderboard' | 'banner' | 'mobile_banner' | 'mobile_rectangle';
   style?: React.CSSProperties;
   className?: string;
-  refreshInterval?: number; // in seconds
+  refreshInterval?: number;
 }
 
 declare global {
@@ -15,11 +15,26 @@ declare global {
   }
 }
 
-// AdSense standard horizontal ad sizes
 const AD_SIZES = {
-  leaderboard: { width: 728, height: 90 },
-  banner: { width: 468, height: 60 }
+  leaderboard: { width: 728, height: 90 },    // Desktop leaderboard
+  banner: { width: 468, height: 60 },         // Desktop banner
+  mobile_banner: { width: 320, height: 50 },  // Mobile sticky banner
+  mobile_rectangle: { width: 300, height: 250 } // Mobile content rectangle
 };
+
+function useViewport() {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return { width };
+}
 
 export function AdComponent({
   slot,
@@ -34,6 +49,21 @@ export function AdComponent({
   const [adError, setAdError] = useState<string | null>(null);
   const isProduction = import.meta.env.PROD;
   const refreshTimerRef = useRef<number | null>(null);
+  const { width } = useViewport();
+  const isMobile = width <= 768;
+
+  const getAdDimensions = () => {
+    if (isMobile) {
+      switch(adSize) {
+        case 'leaderboard': return AD_SIZES.mobile_banner;
+        case 'banner': return AD_SIZES.mobile_rectangle;
+        default: return AD_SIZES[adSize];
+      }
+    }
+    return AD_SIZES[adSize];
+  };
+
+  const dimensions = getAdDimensions();
 
   const loadAd = useCallback(() => {
     if (isProduction && adRef.current && !isAdLoaded) {
@@ -54,16 +84,16 @@ export function AdComponent({
   const refreshAd = useCallback(() => {
     if (isProduction && adRef.current && isAdLoaded) {
       try {
-        adRef.current.innerHTML = ''; // Clear previous ad
+        adRef.current.innerHTML = '';
         const ins = document.createElement('ins');
         ins.className = 'adsbygoogle';
         ins.style.display = 'block';
-        ins.style.width = `${AD_SIZES[adSize].width}px`;
-        ins.style.height = `${AD_SIZES[adSize].height}px`;
-        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480'); // Your AdSense client ID
+        ins.style.width = '100%';
+        ins.style.height = `${dimensions.height}px`;
+        ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
         ins.setAttribute('data-ad-slot', slot);
-        ins.setAttribute('data-ad-format', 'horizontal');
-        ins.setAttribute('data-full-width-responsive', 'false');
+        ins.setAttribute('data-ad-format', isMobile ? 'auto' : 'horizontal');
+        ins.setAttribute('data-full-width-responsive', 'true');
         adRef.current.appendChild(ins);
         (window.adsbygoogle = window.adsbygoogle || []).push({});
       } catch (error) {
@@ -71,11 +101,10 @@ export function AdComponent({
         console.error('Error refreshing AdSense ad:', error);
       }
     }
-  }, [isProduction, isAdLoaded, adSize, slot]);
+  }, [isProduction, isAdLoaded, slot, dimensions.height, isMobile]);
 
   useEffect(() => {
     if (isProduction && adRef.current) {
-      // Lazy loading with IntersectionObserver
       observerRef.current = new IntersectionObserver(
         (entries) => {
           if (entries[0].isIntersecting) {
@@ -87,17 +116,12 @@ export function AdComponent({
         },
         { threshold: 0.1 }
       );
-
       observerRef.current.observe(adRef.current);
     }
 
     return () => {
-      if (observerRef.current) {
-        observerRef.current.disconnect();
-      }
-      if (refreshTimerRef.current) {
-        clearInterval(refreshTimerRef.current);
-      }
+      observerRef.current?.disconnect();
+      if (refreshTimerRef.current) clearInterval(refreshTimerRef.current);
     };
   }, [loadAd, refreshAd, isProduction, refreshInterval]);
 
@@ -108,11 +132,15 @@ export function AdComponent({
           ref={adRef}
           className="bg-gray-200 border border-gray-400 flex items-center justify-center transition-all duration-200 hover:bg-gray-100 cursor-pointer"
           style={{
-            width: `${AD_SIZES[adSize].width}px`,
-            height: `${AD_SIZES[adSize].height}px`
+            maxWidth: `${dimensions.width}px`,
+            width: '100%',
+            height: `${dimensions.height}px`
           }}
         >
-          <span className="text-gray-600 text-sm font-medium">Ad Placeholder - {slot} ({adSize})</span>
+          <span className="text-gray-600 text-sm font-medium text-center p-2">
+            {isMobile ? 'Mobile' : 'Desktop'} Ad ({dimensions.width}x{dimensions.height})<br/>
+            {slot}
+          </span>
         </div>
       </div>
     );
@@ -124,13 +152,14 @@ export function AdComponent({
         <div
           className="bg-red-100 border border-red-400 flex items-center justify-center"
           style={{
-            width: `${AD_SIZES[adSize].width}px`,
-            height: `${AD_SIZES[adSize].height}px`
+            maxWidth: `${dimensions.width}px`,
+            width: '100%',
+            height: `${dimensions.height}px`
           }}
         >
           <span className="text-red-600 text-sm font-medium">Ad Failed to Load</span>
         </div>
-HHHHH    </div>
+      </div>
     );
   }
 
@@ -140,21 +169,23 @@ HHHHH    </div>
         ref={adRef}
         className="transition-all duration-200 hover:shadow-md hover:scale-[1.01] cursor-pointer"
         style={{
-          width: `${AD_SIZES[adSize].width}px`,
-          height: `${AD_SIZES[adSize].height}px`
+          maxWidth: `${dimensions.width}px`,
+          width: '100%',
+          height: `${dimensions.height}px`,
+          ...style
         }}
       >
         <ins
           className="adsbygoogle"
           style={{
             display: 'block',
-            width: `${AD_SIZES[adSize].width}px`,
-            height: `${AD_SIZES[adSize].height}px`
+            width: '100%',
+            height: `${dimensions.height}px`
           }}
-          data-ad-client="ca-pub-2007908196419480" // Your AdSense client ID
+          data-ad-client="ca-pub-2007908196419480"
           data-ad-slot={slot}
-          data-ad-format="horizontal"
-          data-full-width-responsive="false"
+          data-ad-format={isMobile ? 'auto' : 'horizontal'}
+          data-full-width-responsive="true"
         />
       </div>
     </div>
@@ -163,21 +194,30 @@ HHHHH    </div>
 
 AdComponent.propTypes = {
   slot: PropTypes.string.isRequired,
-  adSize: PropTypes.oneOf(['leaderboard', 'banner']),
+  adSize: PropTypes.oneOf(['leaderboard', 'banner', 'mobile_banner', 'mobile_rectangle']),
   style: PropTypes.object,
   className: PropTypes.string,
   refreshInterval: PropTypes.number
 };
 
 export function StickyBottomAd() {
+  const { width } = useViewport();
+  const isMobile = width <= 768;
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-xl z-50 transition-all duration-200">
-      <AdComponent
-        slot="sticky-bottom"
-        adSize="leaderboard"
-        className="mx-auto py-2 px-4"
-        refreshInterval={30} // Refresh every 30 seconds
-      />
+      <div className="mx-auto" style={{ maxWidth: isMobile ? '320px' : '728px' }}>
+        <AdComponent
+          slot="1049089258"
+          adSize={isMobile ? 'mobile_banner' : 'leaderboard'}
+          className="py-2 px-4"
+          refreshInterval={30}
+          style={{ 
+            height: isMobile ? '50px' : '90px',
+            backgroundColor: '#f0f0f0'
+          }}
+        />
+      </div>
     </div>
   );
 }
