@@ -45,7 +45,7 @@
 
 @layer utilities {
   .safe-bottom {
-    padding-bottom: max(env(safe-area-inset-bottom), 0px); /* Ensure visibility above safe area */
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
   }
   
   .safe-top {
@@ -69,12 +69,9 @@
 
 /* Ad-specific styles */
 .ad-container {
-  min-width: 300px;
-  max-width: 100%;
   margin: 0 auto;
-  overflow: hidden; /* Prevent overflow from AdSense resizing */
-  contain: layout; /* Simplify containment, remove paint and translateZ */
-  z-index: 50; /* Ensure ads are visible above other content */
+  overflow: hidden;
+  z-index: 50;
 }
 
 .adsbygoogle {
@@ -82,41 +79,45 @@
   display: block;
   text-align: center;
   width: 100%;
-  max-width: 100%; /* Prevent AdSense from exceeding container */
+  max-width: 100%;
 }
 
 @media (max-width: 768px) {
   .ad-container {
-    min-height: 50px;
-    max-height: 50px; /* Enforce 50px for mobile_banner */
-    max-width: 320px; /* Match mobile_banner width */
+    width: 320px !important;
+    height: 50px !important;
+    max-width: 320px !important;
+    max-height: 50px !important;
   }
   
   .sticky-bottom-ad {
-    height: 50px;
-    max-height: 50px;
-    max-width: 320px;
+    width: 320px !important;
+    height: 50px !important;
+    max-width: 320px !important;
+    max-height: 50px !important;
     margin: 0 auto;
     overflow: hidden;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 100; /* Higher z-index for sticky ad */
+    z-index: 100;
   }
 }
 
 @media (min-width: 769px) {
   .ad-container {
-    min-height: 90px;
-    max-height: 90px; /* Enforce 90px for leaderboard */
-    max-width: 728px; /* Match leaderboard width */
+    width: 728px;
+    height: 90px;
+    max-width: 728px;
+    max-height: 90px;
   }
   
   .sticky-bottom-ad {
+    width: 728px;
     height: 90px;
-    max-height: 90px;
     max-width: 728px;
+    max-height: 90px;
     margin: 0 auto;
     overflow: hidden;
   }
