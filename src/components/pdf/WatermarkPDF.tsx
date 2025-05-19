@@ -144,7 +144,8 @@ export function WatermarkPDF() {
       }
 
       const watermarkedBytes = await pdfDoc.save();
-      const blob = new Blob([watermarkedBytes], { type: 'application/pdf' });
+      const buffer = Buffer.from(watermarkedBytes);
+      const blob = new Blob([buffer], { type: 'application/pdf' });
 
       if (result) revokeBlobUrl(result);
       const newResult = createSecureObjectURL(blob);

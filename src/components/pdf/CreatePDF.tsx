@@ -318,7 +318,7 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
         }
   
         const pdfBytes = await pdfDoc.save();
-        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const blob = new Blob([pdfBytes] as BlobPart[], { type: 'application/pdf' });
   
         if (result) revokeBlobUrl(result);
         const newResult = createSecureObjectURL(blob);

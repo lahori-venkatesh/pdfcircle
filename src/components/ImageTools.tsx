@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit , ChevronDown, ChevronUp  } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
-import { AdComponent , StickyBottomAd } from './AdComponent';
+import { AdComponent } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -586,7 +586,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       <div className="max-w-6xl mx-auto px-4 py-6 bg-white dark:bg-gray-900">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
         <AdComponent
-          slot="8611335761"
+          slot="4325618154"
           adSize="leaderboard"
           refreshInterval={30}
           className="my-4"
@@ -775,7 +775,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
                   <AdComponent
-          slot="8611335761"
+          slot="1049089258"
           adSize="leaderboard"
           refreshInterval={30}
           className="my-4"
@@ -1071,7 +1071,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </div>
         <AdComponent
-          slot="8611335761"
+          slot="8225705840"
           adSize="leaderboard"
           refreshInterval={30}
           className="my-4"
@@ -1125,7 +1125,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
         </section>
       </div>
-      <StickyBottomAd />
+      
     </>
   );
 }

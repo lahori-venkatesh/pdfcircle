@@ -159,7 +159,7 @@ export function SplitPDF() {
       copiedPages.forEach((page) => newPdf.addPage(page));
 
       const pdfBytesResult = await newPdf.save();
-      const blob = new Blob([pdfBytesResult], { type: 'application/pdf' });
+      const blob = new Blob([new Uint8Array(pdfBytesResult)], { type: 'application/pdf' });
 
       if (result) revokeBlobUrl(result);
       const newResult = createSecureObjectURL(blob);
