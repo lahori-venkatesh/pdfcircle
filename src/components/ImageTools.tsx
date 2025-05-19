@@ -588,8 +588,8 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         <AdComponent
           slot="8611335761"
           adSize="leaderboard"
-          refreshInterval={60}
-          className="mb-6 w-full"
+          refreshInterval={30}
+          className="my-4"
           
         />
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
@@ -774,6 +774,13 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     <p className="text-gray-600 dark:text-gray-300">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
+                  <AdComponent
+          slot="8611335761"
+          adSize="leaderboard"
+          refreshInterval={30}
+          className="my-4"
+          
+        />
                   <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
                     <p>How to Create Files:</p>
                     <ul className="list-disc pl-5">
@@ -1039,7 +1046,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             </div>
           </div>
         )}
-
+        
         <div className="mt-6">
           <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More PDF Tools</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
@@ -1063,6 +1070,13 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </div>
+        <AdComponent
+          slot="8611335761"
+          adSize="leaderboard"
+          refreshInterval={30}
+          className="my-4"
+          
+        />
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
           <p className="mb-4">

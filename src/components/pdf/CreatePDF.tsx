@@ -558,7 +558,7 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
         </button>
         <p className="text-sm text-gray-500 mt-2 dark:text-white">Supports images (JPEG, PNG, WebP, max 30)</p>
       </div>
-
+      
       <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
         <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">How to Use Create PDF:</h3>
         <ul className="list-disc list-inside text-sm text-gray-600 dark:text-gray-300 space-y-1">
@@ -842,7 +842,7 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
       )}
 
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} mode={authMode} />
-
+      
       <div className="mt-6">
         <h3 className="text-lg font-semibold dark:text-white text-gray-800 mb-4">More Image Tools</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">

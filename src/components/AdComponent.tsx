@@ -1,22 +1,7 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-interface AdProps {
-  slot: string;
-  adSize?: 'leaderboard' | 'banner' | 'mobile_banner' | 'mobile_rectangle';
-  style?: React.CSSProperties;
-  className?: string;
-  refreshInterval?: number;
-  isSticky?: boolean;
-}
-
-declare global {
-  interface Window {
-    adsbygoogle: any[];
-  }
-}
-
+// Define ad size configurations
 const AD_SIZES = {
   leaderboard: { width: 728, height: 90 },
   banner: { width: 468, height: 60 },
@@ -24,6 +9,7 @@ const AD_SIZES = {
   mobile_rectangle: { width: 300, height: 250 },
 };
 
+// Custom hook for viewport width
 function useViewport() {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
 
@@ -48,6 +34,25 @@ function useViewport() {
   return { width };
 }
 
+// AdComponent props type
+type AdSize = 'leaderboard' | 'banner' | 'mobile_banner' | 'mobile_rectangle';
+
+interface AdProps {
+  slot: string;
+  adSize?: AdSize;
+  style?: React.CSSProperties;
+  className?: string;
+  refreshInterval?: number;
+  isSticky?: boolean;
+}
+
+// Extend window interface for adsbygoogle
+declare global {
+  interface Window {
+    adsbygoogle: unknown[];
+  }
+}
+
 export function AdComponent({
   slot,
   adSize = 'leaderboard',
@@ -60,19 +65,19 @@ export function AdComponent({
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const isProduction = import.meta.env.PROD;
+  // Safely check production environment
+  const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
-  const isMobile = width <= 768;
 
   const getAdDimensions = () => {
-    if (isMobile && isSticky) {
-      return AD_SIZES.mobile_banner; // Force 320x50 for sticky mobile ads
+    if (isSticky) {
+      return AD_SIZES.leaderboard; // Desktop sticky ads: 728x90
     }
     switch (adSize) {
       case 'leaderboard':
-        return isMobile ? AD_SIZES.mobile_banner : AD_SIZES.leaderboard;
+        return width <= 768 ? AD_SIZES.mobile_banner : AD_SIZES.leaderboard;
       case 'banner':
-        return isMobile ? AD_SIZES.mobile_rectangle : AD_SIZES.banner;
+        return width <= 768 ? AD_SIZES.mobile_rectangle : AD_SIZES.banner;
       default:
         return AD_SIZES[adSize];
     }
@@ -93,7 +98,7 @@ export function AdComponent({
         setIsAdLoaded(true);
         setIsLoading(false);
       } else {
-        setTimeout(loadAd, 100); // Fast retry for mobile
+        setTimeout(loadAd, 100); // Retry if adsbygoogle not ready
       }
     } catch (error) {
       setAdError('Error loading ad');
@@ -113,8 +118,8 @@ export function AdComponent({
       ins.style.cssText = `display:block;width:${dimensions.current.width}px;height:${dimensions.current.height}px`;
       ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
       ins.setAttribute('data-ad-slot', slot);
-      if (!isMobile || !isSticky) {
-        ins.setAttribute('data-ad-format', isMobile ? 'auto' : 'horizontal');
+      if (!isSticky) {
+        ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
         ins.setAttribute('data-full-width-responsive', 'true');
       }
       adRef.current.appendChild(ins);
@@ -128,7 +133,7 @@ export function AdComponent({
       console.error('Ad refresh error:', error);
       setTimeout(loadAd, 5000); // Retry after 5 seconds
     }
-  }, [isProduction, isAdLoaded, slot, isMobile, isSticky, loadAd]);
+  }, [isProduction, isAdLoaded, slot, width, isSticky, loadAd]);
 
   useEffect(() => {
     if (!isProduction || !adRef.current) return;
@@ -175,7 +180,7 @@ export function AdComponent({
           }}
         >
           <span className="text-gray-600 text-sm text-center p-2">
-            {isMobile ? 'Mobile' : 'Desktop'} Ad ({dimensions.current.width}x{dimensions.current.height})
+            {width <= 768 ? 'Mobile' : 'Desktop'} Ad ({dimensions.current.width}x{dimensions.current.height})
           </span>
         </div>
       </div>
@@ -228,9 +233,9 @@ export function AdComponent({
           }}
           data-ad-client="ca-pub-2007908196419480"
           data-ad-slot={slot}
-          {...(!isMobile || !isSticky
+          {...(!isSticky
             ? {
-                'data-ad-format': isMobile ? 'auto' : 'horizontal',
+                'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
                 'data-full-width-responsive': 'true',
               }
             : {})}
@@ -251,23 +256,27 @@ AdComponent.propTypes = {
 
 export function StickyBottomAd() {
   const { width } = useViewport();
-  const isMobile = width <= 768;
+
+  // Render sticky ad only on desktop (width > 768)
+  if (width <= 768) {
+    return null;
+  }
 
   return (
     <div
       className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50 sticky-bottom-ad safe-bottom"
-      style={{ height: isMobile ? 50 : 90, overflow: 'hidden' }}
+      style={{ height: 90, overflow: 'hidden' }}
     >
-      <div className="mx-auto ad-container" style={{ width: isMobile ? 320 : 728 }}>
+      <div className="mx-auto ad-container" style={{ width: 728 }}>
         <AdComponent
           slot="1049089258"
-          adSize={isMobile ? 'mobile_banner' : 'leaderboard'}
+          adSize="leaderboard"
           className="py-2 px-4"
           refreshInterval={30}
           isSticky={true}
           style={{
-            width: isMobile ? 320 : 728,
-            height: isMobile ? 50 : 90,
+            width: 728,
+            height: 90,
             backgroundColor: 'rgba(240, 240, 240, 0.95)',
             overflow: 'hidden',
           }}

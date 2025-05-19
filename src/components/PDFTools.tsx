@@ -155,8 +155,8 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         <AdComponent
           slot="4325618154"
           adSize="leaderboard"
-          refreshInterval={60}
-          className="mb-6 w-full"
+          refreshInterval={30}
+          className="my-4"
                   
         />
 
@@ -183,12 +183,18 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
               </button>
             ))}
           </div>
-
+          
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-lg p-4 sm:p-6">
             {renderActiveComponent()}
           </div>
         </section>
-
+        <AdComponent
+                  slot="8611335761"
+                  adSize="leaderboard"
+                  refreshInterval={30}
+                  className="my-4"
+                  
+                />
         {/* Additional Information and Links */}
         <section className="mt-8 text-center">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
@@ -214,7 +220,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             </a>.
           </p>
         </section>
-
+        
         {/* High-Quality Content Section */}
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Choose pdfCircle’s PDF Tools?</h2>
@@ -235,7 +241,13 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             <em>Pro Tip: Sign up for unlimited conversions and process up to 10 PDFs at once, directly from your browser.</em>
           </p>
         </section>
-
+        <AdComponent
+                  slot="8611335761"
+                  adSize="leaderboard"
+                  refreshInterval={30}
+                  className="my-4"
+                  
+                />
         {/* Interactive FAQ Section */}
         <section className="mt-8 text-gray-700 dark:text-gray-200">
           <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">Frequently Asked Questions</h2>
