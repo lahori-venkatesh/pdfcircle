@@ -780,6 +780,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           refreshInterval={30}
           className="my-4"
           
+          
         />
                   <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
                     <p>How to Create Files:</p>
