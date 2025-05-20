@@ -55,6 +55,8 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         return <WatermarkPDF />;
       case 'to-images':
         return <PDFToImages isLoggedIn={isLoggedIn} />;
+      case 'compress':
+        return <CompressPDF />;
       case 'bank-statement':
         return <BankStatementPDF />;
       case 'sign':
