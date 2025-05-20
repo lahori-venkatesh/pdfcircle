@@ -124,7 +124,7 @@ export function HomePage() {
         title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
         description={t(
           'seo.pdfTools.description',
-          'Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle's free online tools. No sign-up needed.'
+          'Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle\'s free online tools. No sign-up needed.'
         )}
         keywords={[
           'pdfcircle',
@@ -199,8 +199,6 @@ export function HomePage() {
             </div>
           </div>
         </div>
-      )
-      }
       </section>
 
       <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
@@ -389,8 +387,6 @@ export function HomePage() {
             />
           </div>
         </div>
-      )
-      }
       </section>
 
       <AdComponent
