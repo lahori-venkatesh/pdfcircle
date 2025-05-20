@@ -82,7 +82,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         title={t('seo.pdfTools.title', 'Free Online PDF Tools: Merge, Split, Compress, Convert')}
         description={t(
           'seo.pdfTools.description',
-          'Create PDFs, add watermarks on pdfs, Merge, split, compress, and convert PDFs to images with pdfCircle's free online tools. No sign-up needed.'
+          'Create PDFs, add watermarks on PDFs, Merge, split, compress, and convert PDFs to images with pdfCircle\'s free online tools. No sign-up needed.'
         )}
         keywords={[
           'pdfcircle',
@@ -134,7 +134,7 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
             {t(
               'pdfTools.subtitle',
-              'Effortlessly Create PDFs, add watermarks on PDFs, merge, split, compress, and convert your PDFs with pdfCircle's secure, no-sign-up tools.'
+              'Effortlessly Create PDFs, add watermarks on PDFs, merge, split, compress, and convert your PDFs with pdfCircle\'s secure, no-sign-up tools.'
             )}
           </p>
         </section>
