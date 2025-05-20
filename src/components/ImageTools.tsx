@@ -774,14 +774,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                     <p className="text-gray-600 dark:text-gray-300">{isDragActive ? 'Drop here' : 'Or drag & drop here'}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">JPEG, PNG, WebP, SVG, AVIF, HEIC (Max 15MB, {MAX_IMAGES} images)</p>
                   </div>
-                  <AdComponent
-          slot="1049089258"
-          adSize="leaderboard"
-          refreshInterval={30}
-          className="my-4"
-          
-          
-        />
+                  
                   <div className="mt-4 text-sm text-gray-600 dark:text-gray-300">
                     <p>How to Create Files:</p>
                     <ul className="list-disc pl-5">
@@ -1071,13 +1064,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </div>
-        <AdComponent
-          slot="8225705840"
-          adSize="leaderboard"
-          refreshInterval={30}
-          className="my-4"
-          
-        />
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
           <p className="mb-4">
