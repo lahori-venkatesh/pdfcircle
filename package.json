@@ -48,17 +48,22 @@
     "sanitize-filename": "^1.6.3",
     "sharp": "^0.33.2",
     "tesseract.js": "^5.0.5",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "diff": "^5.2.0",
+    "html-to-pdfmake": "^2.5.1",
+    "pdfmake": "^0.2.9"
   },
   "devDependencies": {
     "@eslint/js": "^8.56.0",
     "@tailwindcss/typography": "^0.5.10",
+    "@types/diff": "^5.0.9",
     "@types/file-saver": "^2.0.7",
     "@types/gtag.js": "^0.0.20",
     "@types/lodash": "^4.17.16",
     "@types/mime-types": "^2.1.4",
     "@types/path-browserify": "^1.0.2",
     "@types/pdfjs-dist": "^2.10.378",
+    "@types/pdfmake": "^0.2.9",
     "@types/react": "^18.2.48",
     "@types/react-dom": "^18.2.18",
     "@types/react-signature-canvas": "^1.0.5",
