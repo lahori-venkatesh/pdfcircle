@@ -25,6 +25,7 @@ const tabs = [
   { id: 'split', label: 'Split PDF', icon: Split },
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
+  
   { id: 'sign', label: 'E-Sign PDF', icon: FileSignature },
   { id: 'to-word', label: 'PDF to Word', icon: FileText },
   { id: 'to-excel', label: 'PDF to Excel', icon: FileSearch },
