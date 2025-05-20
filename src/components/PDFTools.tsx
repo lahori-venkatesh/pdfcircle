@@ -19,6 +19,7 @@ import { EditPDF } from './pdf/EditPDF';
 import { LockPDF } from './pdf/LockPDF';
 import { UnlockPDF } from './pdf/UnlockPDF';
 import { BankStatementPDF } from './pdf/BankStatementPDF';
+import { CompressPDF } from './pdf/CompressPDF';
 
 const tabs = [
   { id: 'create', label: 'Create PDF', icon: FileText },
@@ -36,6 +37,7 @@ const tabs = [
   { id: 'edit', label: 'Edit PDF', icon: FileEdit },
   { id: 'lock', label: 'Lock PDF', icon: FileLock },
   { id: 'unlock', label: 'Unlock PDF', icon: Unlock },
+  { id: 'compress', label: 'Compress PDF', icon: Minimize2 },
 ];
 
 export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
