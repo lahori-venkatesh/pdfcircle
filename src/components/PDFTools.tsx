@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images, Stamp, FileSignature, FileSearch, FileCode2, FileKey, GitCompare, FileEdit, FileLock, Unlock } from 'lucide-react';
+import { FileText, FilePlus, Split, Images, Stamp, FileSignature, FileSearch, FileCode2, FileKey, GitCompare, FileEdit, FileLock, Unlock, Table } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -18,6 +18,7 @@ import { ComparePDFs } from './pdf/ComparePDFs';
 import { EditPDF } from './pdf/EditPDF';
 import { LockPDF } from './pdf/LockPDF';
 import { UnlockPDF } from './pdf/UnlockPDF';
+import { BankStatementPDF } from './pdf/BankStatementPDF';
 
 const tabs = [
   { id: 'create', label: 'Create PDF', icon: FileText },
@@ -25,7 +26,7 @@ const tabs = [
   { id: 'split', label: 'Split PDF', icon: Split },
   { id: 'watermark', label: 'Add Watermark', icon: Stamp },
   { id: 'to-images', label: 'PDF to Images', icon: Images },
-  
+  { id: 'bank-statement', label: 'Bank Statement', icon: Table },
   { id: 'sign', label: 'E-Sign PDF', icon: FileSignature },
   { id: 'to-word', label: 'PDF to Word', icon: FileText },
   { id: 'to-excel', label: 'PDF to Excel', icon: FileSearch },
@@ -54,6 +55,8 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         return <WatermarkPDF />;
       case 'to-images':
         return <PDFToImages isLoggedIn={isLoggedIn} />;
+      case 'bank-statement':
+        return <BankStatementPDF />;
       case 'sign':
         return <SignPDF />;
       case 'to-word':
