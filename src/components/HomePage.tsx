@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { FileUp, Image, FileText, FilePlus, Split, Shield, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle, Stamp, Upload, Download, Zap, ShieldCheck, Clock, Smartphone, ChevronDown, ChevronUp, FileSignature, FileSearch, FileText as FileText2, FileCode2, FileKey, FileEdit, FileLock, Unlock as FileUnlock, GitCompare as FileCompare } from 'lucide-react';
+import { FileUp, Image, FileText, FilePlus, Split, Shield, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle, Stamp, Upload, Download, Zap, ShieldCheck, Clock, Smartphone, ChevronDown, ChevronUp, FileSignature, FileSearch, FileText as FileText2, FileCode2, FileKey, FileEdit, FileLock, Unlock as FileUnlock, GitCompare as FileCompare , Table, Minimize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -297,17 +297,17 @@ export function HomePage() {
               to="/pdf-tools?tab=unlock"
             />
             <FeatureCard 
-  icon={Table} 
-  title="Bank Statement to Excel" 
-  description="Convert PDF bank statements to Excel or CSV format easily." 
-  to="/pdf-tools?tab=bank-statement"
-/>
-<FeatureCard 
-  icon={Minimize2} 
-  title="Compress PDF" 
-  description="Reduce PDF file size while maintaining quality." 
-  to="/pdf-tools?tab=compress"
-/>
+              icon={Table} 
+              title="Bank Statement to Excel" 
+              description="Convert PDF bank statements to Excel or CSV format easily." 
+              to="/pdf-tools?tab=bank-statement"
+             />
+            <FeatureCard 
+              icon={Minimize2} 
+              title="Compress PDF" 
+              description="Reduce PDF file size while maintaining quality." 
+              to="/pdf-tools?tab=compress"
+            />
 
           </div>
         </div>
