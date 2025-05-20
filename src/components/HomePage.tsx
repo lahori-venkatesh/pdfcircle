@@ -296,6 +296,19 @@ export function HomePage() {
               description="Remove password protection from PDF files." 
               to="/pdf-tools?tab=unlock"
             />
+            <FeatureCard 
+  icon={Table} 
+  title="Bank Statement to Excel" 
+  description="Convert PDF bank statements to Excel or CSV format easily." 
+  to="/pdf-tools?tab=bank-statement"
+/>
+<FeatureCard 
+  icon={Minimize2} 
+  title="Compress PDF" 
+  description="Reduce PDF file size while maintaining quality." 
+  to="/pdf-tools?tab=compress"
+/>
+
           </div>
         </div>
       </section>
