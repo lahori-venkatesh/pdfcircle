@@ -179,7 +179,7 @@ export function HomePage() {
               {t('hero.subtitle', 'Free, secure, and powerful tools to convert, compress, merge, and edit PDFs and images effortlessly.')}
             </h2>
             <p className="text-lg text-indigo-200 mb-10 max-w-2xl mx-auto">
-              {t('hero.description', 'Whether you're a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required.')}
+              {t('hero.description', 'Whether you\'re a student converting lecture notes to PDF, a professional merging reports, or a creator optimizing images for the web, pdfCircle delivers professional-grade tools with no sign-up required.')}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
               <Link
@@ -199,8 +199,6 @@ export function HomePage() {
             </div>
           </div>
         </div>
-      )
-      }
       </section>
 
       <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
@@ -389,8 +387,6 @@ export function HomePage() {
             />
           </div>
         </div>
-      )
-      }
       </section>
 
       <AdComponent
