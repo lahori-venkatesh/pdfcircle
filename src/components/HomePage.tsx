@@ -359,6 +359,8 @@ export function HomePage() {
           </h2>
           <p className="text-base text-gray-600 dark:text-gray-300 text-center mb-8 max-w-2xl mx-auto">
             {t('faq.subtitle', 'Find answers to your questions about pdfCircle's tools and services.')}
+            )
+            }
           </p>
           <div className="space-y-4">
             <FAQItem 
