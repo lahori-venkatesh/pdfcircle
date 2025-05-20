@@ -1,10 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  FileUp, Image, FileText, FilePlus, Split, Shield, Lock as LockIcon, 
-  Server, Key, RefreshCw, CheckCircle, Stamp, Upload, Download, Zap,
-  ShieldCheck, Clock, Smartphone, ChevronDown, ChevronUp
-} from 'lucide-react';
+import { FileUp, Image, FileText, FilePlus, Split, Shield, Lock as LockIcon, Server, Key, RefreshCw, CheckCircle, Stamp, Upload, Download, Zap, ShieldCheck, Clock, Smartphone, ChevronDown, ChevronUp, FileSignature, FileSearch, FileText as FileText2, FileCode2, FileKey, FileEdit, FileLock, Unlock as FileUnlock, GitCompare as FileCompare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -245,6 +241,60 @@ export function HomePage() {
               title={t('features.addWatermark.title', 'Add Watermark')} 
               description={t('features.addWatermark.description', 'Protect your PDFs with custom watermarks.')} 
               to="/pdf-tools?tab=watermark"
+            />
+            <FeatureCard 
+              icon={FileSignature} 
+              title="E-Sign PDF" 
+              description="Add electronic signatures to your PDF documents securely." 
+              to="/pdf-tools?tab=sign"
+            />
+            <FeatureCard 
+              icon={FileText2} 
+              title="PDF to Word" 
+              description="Convert PDFs to editable Word documents accurately." 
+              to="/pdf-tools?tab=to-word"
+            />
+            <FeatureCard 
+              icon={FileSearch} 
+              title="PDF to Excel" 
+              description="Extract tables from PDFs to Excel spreadsheets." 
+              to="/pdf-tools?tab=to-excel"
+            />
+            <FeatureCard 
+              icon={FileCode2} 
+              title="HTML to PDF" 
+              description="Convert web pages and HTML content to PDF format." 
+              to="/pdf-tools?tab=from-html"
+            />
+            <FeatureCard 
+              icon={FileKey} 
+              title="OCR PDF" 
+              description="Make scanned PDFs searchable with text recognition." 
+              to="/pdf-tools?tab=ocr"
+            />
+            <FeatureCard 
+              icon={FileCompare} 
+              title="Compare PDFs" 
+              description="Find differences between two PDF documents." 
+              to="/pdf-tools?tab=compare"
+            />
+            <FeatureCard 
+              icon={FileEdit} 
+              title="Edit PDF" 
+              description="Modify text, images, and pages in your PDFs." 
+              to="/pdf-tools?tab=edit"
+            />
+            <FeatureCard 
+              icon={FileLock} 
+              title="Lock PDF" 
+              description="Secure your PDFs with password protection." 
+              to="/pdf-tools?tab=lock"
+            />
+            <FeatureCard 
+              icon={FileUnlock} 
+              title="Unlock PDF" 
+              description="Remove password protection from PDF files." 
+              to="/pdf-tools?tab=unlock"
             />
           </div>
         </div>
