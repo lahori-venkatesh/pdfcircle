@@ -199,6 +199,8 @@ export function HomePage() {
             </div>
           </div>
         </div>
+      )
+      }
       </section>
 
       <section className="py-16 sm:py-24 bg-gray-50 dark:bg-gray-900">
@@ -387,6 +389,8 @@ export function HomePage() {
             />
           </div>
         </div>
+      )
+      }
       </section>
 
       <AdComponent
