@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { FileText, FilePlus, Split, Images, Stamp, FileSignature, FileSearch, FileCode2, FileKey, GitCompare, FileEdit, FileLock, Unlock, Table , Minimize2 } from 'lucide-react';
+import { FileText, FilePlus, Split, Images, Stamp, FileSignature, FileSearch, FileCode2, FileKey, GitCompare, FileEdit, FileLock, Unlock, Table, Minimize2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
@@ -57,10 +57,10 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
         return <WatermarkPDF />;
       case 'to-images':
         return <PDFToImages isLoggedIn={isLoggedIn} />;
-      case 'compress':
-        return <CompressPDF />;
       case 'bank-statement':
         return <BankStatementPDF />;
+      case 'compress':
+        return <CompressPDF />;
       case 'sign':
         return <SignPDF />;
       case 'to-word':
