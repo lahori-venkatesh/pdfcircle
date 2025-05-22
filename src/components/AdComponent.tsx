@@ -50,11 +50,40 @@ interface AdProps {
   isSticky?: boolean;
 }
 
-// Extend window interface for adsbygoogle
+// Extend window interface for adsbygoogle and gtag
 declare global {
   interface Window {
     adsbygoogle: unknown[];
+    gtag: (...args: any[]) => void;
   }
+}
+
+// Consent banner component
+function ConsentBanner({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-[9999] p-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          We use cookies and similar technologies to personalize ads and improve your experience. 
+          By clicking "Accept", you consent to our use of these technologies.
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={onDecline}
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+          >
+            Decline
+          </button>
+          <button
+            onClick={onAccept}
+            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
+          >
+            Accept
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function AdComponent({
@@ -70,11 +99,49 @@ export function AdComponent({
   const [adError, setAdError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [adAttempts, setAdAttempts] = useState(0);
+  const [showConsent, setShowConsent] = useState(false);
   const maxAttempts = 3;
   const retryDelay = 2000;
   const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
   const dimensions = useRef(getAdDimensions());
+
+  useEffect(() => {
+    // Check if consent was previously given
+    const consent = localStorage.getItem('ad_consent');
+    if (!consent) {
+      setShowConsent(true);
+    } else {
+      // Set consent in Google's system
+      window.gtag('consent', 'update', {
+        ad_storage: consent === 'granted' ? 'granted' : 'denied',
+        ad_user_data: consent === 'granted' ? 'granted' : 'denied',
+        ad_personalization: consent === 'granted' ? 'granted' : 'denied'
+      });
+    }
+  }, []);
+
+  const handleAcceptConsent = () => {
+    localStorage.setItem('ad_consent', 'granted');
+    window.gtag('consent', 'update', {
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+    setShowConsent(false);
+    loadAd(); // Reload ads with new consent
+  };
+
+  const handleDeclineConsent = () => {
+    localStorage.setItem('ad_consent', 'denied');
+    window.gtag('consent', 'update', {
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
+    });
+    setShowConsent(false);
+    loadAd(); // Reload ads with new consent
+  };
 
   function getAdDimensions() {
     if (isSticky) {
@@ -212,43 +279,46 @@ export function AdComponent({
   }
 
   return (
-    <div className={`flex justify-center ${className}`} style={style}>
-      <div
-        ref={adRef}
-        style={{
-          width: dimensions.current.width,
-          height: dimensions.current.height,
-          overflow: 'hidden',
-          position: 'relative',
-          ...style,
-        }}
-      >
-        {isLoading && (
-          <div
-            className="absolute inset-0 bg-gray-100 flex items-center justify-center"
-            style={{ width: '100%', height: '100%' }}
-          >
-            <span className="text-gray-500 text-sm">Loading Ad...</span>
-          </div>
-        )}
-        <ins
-          className="adsbygoogle"
+    <>
+      <div className={`flex justify-center ${className}`} style={style}>
+        <div
+          ref={adRef}
           style={{
-            display: 'block',
             width: dimensions.current.width,
             height: dimensions.current.height,
+            overflow: 'hidden',
+            position: 'relative',
+            ...style,
           }}
-          data-ad-client="ca-pub-2007908196419480"
-          data-ad-slot={slot}
-          {...(!isSticky
-            ? {
-                'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
-                'data-full-width-responsive': 'true',
-              }
-            : {})}
-        />
+        >
+          {isLoading && (
+            <div
+              className="absolute inset-0 bg-gray-100 flex items-center justify-center"
+              style={{ width: '100%', height: '100%' }}
+            >
+              <span className="text-gray-500 text-sm">Loading Ad...</span>
+            </div>
+          )}
+          <ins
+            className="adsbygoogle"
+            style={{
+              display: 'block',
+              width: dimensions.current.width,
+              height: dimensions.current.height,
+            }}
+            data-ad-client="ca-pub-2007908196419480"
+            data-ad-slot={slot}
+            {...(!isSticky
+              ? {
+                  'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
+                  'data-full-width-responsive': 'true',
+                }
+              : {})}
+          />
+        </div>
       </div>
-    </div>
+      {showConsent && <ConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} />}
+    </>
   );
 }
 
