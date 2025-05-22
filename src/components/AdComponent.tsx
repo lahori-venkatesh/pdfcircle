@@ -100,11 +100,13 @@ export function AdComponent({
   const [isLoading, setIsLoading] = useState(true);
   const [adAttempts, setAdAttempts] = useState(0);
   const [showConsent, setShowConsent] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const maxAttempts = 3;
   const retryDelay = 2000;
   const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
   const dimensions = useRef(getAdDimensions());
+  const adSlotRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     // Check if consent was previously given
@@ -154,22 +156,54 @@ export function AdComponent({
   }
 
   const loadAd = useCallback(async () => {
-    if (!isProduction || !adRef.current || isAdLoaded || adAttempts >= maxAttempts) return;
+    if (!isProduction || !adRef.current || isAdLoaded || adAttempts >= maxAttempts || !isVisible) return;
 
     setIsLoading(true);
     try {
       // Pre-calculate space for ad to prevent layout shift
       const { width, height } = dimensions.current;
-      adRef.current.style.minHeight = `${height}px`;
-      adRef.current.style.minWidth = `${width}px`;
+      if (adRef.current) {
+        adRef.current.style.minHeight = `${height}px`;
+        adRef.current.style.minWidth = `${width}px`;
+        adRef.current.style.opacity = '0';
+        adRef.current.style.transition = 'opacity 0.3s ease-in-out';
+      }
 
       // Initialize ad with retry mechanism
       const initAd = () => {
-        if (window.adsbygoogle) {
-          window.adsbygoogle.push({});
-          setIsAdLoaded(true);
-          setIsLoading(false);
-          setAdError(null);
+        if (window.adsbygoogle && adRef.current) {
+          // Clear existing ad content
+          if (adSlotRef.current) {
+            adRef.current.removeChild(adSlotRef.current);
+          }
+
+          // Create new ad slot
+          const ins = document.createElement('ins');
+          ins.className = 'adsbygoogle';
+          ins.style.display = 'block';
+          ins.style.width = `${width}px`;
+          ins.style.height = `${height}px`;
+          ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
+          ins.setAttribute('data-ad-slot', slot);
+          
+          if (!isSticky) {
+            ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
+            ins.setAttribute('data-full-width-responsive', 'true');
+          }
+
+          adRef.current.appendChild(ins);
+          adSlotRef.current = ins;
+
+          // Push new ad with a slight delay to ensure proper rendering
+          setTimeout(() => {
+            window.adsbygoogle.push({});
+            if (adRef.current) {
+              adRef.current.style.opacity = '1';
+            }
+            setIsAdLoaded(true);
+            setIsLoading(false);
+            setAdError(null);
+          }, 100);
         } else {
           setAdAttempts(prev => {
             if (prev < maxAttempts) {
@@ -189,42 +223,15 @@ export function AdComponent({
       setAdError('Error loading advertisement');
       setIsLoading(false);
     }
-  }, [isProduction, isAdLoaded, adAttempts]);
+  }, [isProduction, isAdLoaded, adAttempts, slot, width, isSticky, isVisible]);
 
   const refreshAd = useCallback(() => {
-    if (!isProduction || !adRef.current || !isAdLoaded) return;
+    if (!isProduction || !adRef.current || !isAdLoaded || !isVisible) return;
 
     setIsLoading(true);
-    try {
-      // Clear existing ad
-      adRef.current.innerHTML = '';
-      
-      // Create new ad slot
-      const ins = document.createElement('ins');
-      ins.className = 'adsbygoogle';
-      ins.style.display = 'block';
-      ins.style.width = `${dimensions.current.width}px`;
-      ins.style.height = `${dimensions.current.height}px`;
-      ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
-      ins.setAttribute('data-ad-slot', slot);
-      
-      if (!isSticky) {
-        ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
-        ins.setAttribute('data-full-width-responsive', 'true');
-      }
-      
-      adRef.current.appendChild(ins);
-
-      // Push new ad
-      window.adsbygoogle = window.adsbygoogle || [];
-      window.adsbygoogle.push({});
-      setIsLoading(false);
-    } catch (error) {
-      console.error('Ad refresh error:', error);
-      setAdError('Error refreshing advertisement');
-      setIsLoading(false);
-    }
-  }, [isProduction, isAdLoaded, slot, width, isSticky]);
+    setIsAdLoaded(false);
+    loadAd();
+  }, [isProduction, isAdLoaded, loadAd, isVisible]);
 
   useEffect(() => {
     if (!isProduction || !adRef.current) return;
@@ -232,9 +239,9 @@ export function AdComponent({
     // Use Intersection Observer for lazy loading
     const observer = new IntersectionObserver(
       ([entry]) => {
+        setIsVisible(entry.isIntersecting);
         if (entry.isIntersecting && !isAdLoaded) {
           loadAd();
-          observer.disconnect();
         }
       },
       { threshold: 0.1 }
@@ -245,14 +252,23 @@ export function AdComponent({
   }, [loadAd, isAdLoaded, isProduction]);
 
   useEffect(() => {
-    if (!refreshInterval || !isAdLoaded) return;
+    if (!refreshInterval || !isAdLoaded || !isVisible) return;
 
     const timer = setInterval(() => {
       requestAnimationFrame(refreshAd);
     }, refreshInterval * 1000);
 
     return () => clearInterval(timer);
-  }, [refreshInterval, isAdLoaded, refreshAd]);
+  }, [refreshInterval, isAdLoaded, refreshAd, isVisible]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (adSlotRef.current && adRef.current) {
+        adRef.current.removeChild(adSlotRef.current);
+      }
+    };
+  }, []);
 
   if (!isProduction) {
     return (
@@ -288,6 +304,8 @@ export function AdComponent({
             height: dimensions.current.height,
             overflow: 'hidden',
             position: 'relative',
+            opacity: 0,
+            transition: 'opacity 0.3s ease-in-out',
             ...style,
           }}
         >
@@ -299,22 +317,6 @@ export function AdComponent({
               <span className="text-gray-500 text-sm">Loading Ad...</span>
             </div>
           )}
-          <ins
-            className="adsbygoogle"
-            style={{
-              display: 'block',
-              width: dimensions.current.width,
-              height: dimensions.current.height,
-            }}
-            data-ad-client="ca-pub-2007908196419480"
-            data-ad-slot={slot}
-            {...(!isSticky
-              ? {
-                  'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
-                  'data-full-width-responsive': 'true',
-                }
-              : {})}
-          />
         </div>
       </div>
       {showConsent && <ConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} />}
