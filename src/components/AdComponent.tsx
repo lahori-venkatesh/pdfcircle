@@ -1,27 +1,25 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-// Define ad size configurations with aspect ratios
+// Define ad size configurations
 const AD_SIZES = {
-  leaderboard: { width: 728, height: 90, ratio: 8.089 },
-  banner: { width: 468, height: 60, ratio: 7.8 },
-  mobile_banner: { width: 320, height: 50, ratio: 6.4 },
-  mobile_rectangle: { width: 300, height: 250, ratio: 1.2 },
+  leaderboard: { width: 728, height: 90 },
+  banner: { width: 468, height: 60 },
+  mobile_banner: { width: 320, height: 50 },
+  mobile_rectangle: { width: 300, height: 250 },
 };
 
-// Custom hook for viewport width with debouncing
+// Custom hook for viewport width
 function useViewport() {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
-  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    let timeoutId: NodeJS.Timeout;
     const handleResize = () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
         requestAnimationFrame(() => setWidth(window.innerWidth));
       }, 100);
     };
@@ -29,9 +27,7 @@ function useViewport() {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
+      clearTimeout(timeoutId);
     };
   }, []);
 
@@ -50,40 +46,11 @@ interface AdProps {
   isSticky?: boolean;
 }
 
-// Extend window interface for adsbygoogle and gtag
+// Extend window interface for adsbygoogle
 declare global {
   interface Window {
     adsbygoogle: unknown[];
-    gtag: (...args: any[]) => void;
   }
-}
-
-// Consent banner component
-function ConsentBanner({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-lg z-[9999] p-4 border-t border-gray-200 dark:border-gray-700">
-      <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-          We use cookies and similar technologies to personalize ads and improve your experience. 
-          By clicking "Accept", you consent to our use of these technologies.
-        </p>
-        <div className="flex gap-3">
-          <button
-            onClick={onDecline}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            Decline
-          </button>
-          <button
-            onClick={onAccept}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-          >
-            Accept
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export function AdComponent({
@@ -98,150 +65,89 @@ export function AdComponent({
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [adAttempts, setAdAttempts] = useState(0);
-  const [showConsent, setShowConsent] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const maxAttempts = 3;
-  const retryDelay = 2000;
+  // Safely check production environment
   const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
+
+  const getAdDimensions = () => {
+    if (isSticky) {
+      return AD_SIZES.leaderboard; // Desktop sticky ads: 728x90
+    }
+    switch (adSize) {
+      case 'leaderboard':
+        return width <= 768 ? AD_SIZES.mobile_banner : AD_SIZES.leaderboard;
+      case 'banner':
+        return width <= 768 ? AD_SIZES.mobile_rectangle : AD_SIZES.banner;
+      default:
+        return AD_SIZES[adSize];
+    }
+  };
   const dimensions = useRef(getAdDimensions());
-  const adSlotRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    // Check if consent was previously given
-    const consent = localStorage.getItem('ad_consent');
-    if (!consent) {
-      setShowConsent(true);
-    } else {
-      // Set consent in Google's system
-      window.gtag('consent', 'update', {
-        ad_storage: consent === 'granted' ? 'granted' : 'denied',
-        ad_user_data: consent === 'granted' ? 'granted' : 'denied',
-        ad_personalization: consent === 'granted' ? 'granted' : 'denied'
-      });
-    }
-  }, []);
+    dimensions.current = getAdDimensions();
+  }, [width, adSize, isSticky]);
 
-  const handleAcceptConsent = () => {
-    localStorage.setItem('ad_consent', 'granted');
-    window.gtag('consent', 'update', {
-      ad_storage: 'granted',
-      ad_user_data: 'granted',
-      ad_personalization: 'granted'
-    });
-    setShowConsent(false);
-    loadAd(); // Reload ads with new consent
-  };
-
-  const handleDeclineConsent = () => {
-    localStorage.setItem('ad_consent', 'denied');
-    window.gtag('consent', 'update', {
-      ad_storage: 'denied',
-      ad_user_data: 'denied',
-      ad_personalization: 'denied'
-    });
-    setShowConsent(false);
-    loadAd(); // Reload ads with new consent
-  };
-
-  function getAdDimensions() {
-    if (isSticky) {
-      return AD_SIZES.leaderboard;
-    }
-    if (width <= 768) {
-      return adSize === 'leaderboard' ? AD_SIZES.mobile_banner : AD_SIZES.mobile_rectangle;
-    }
-    return AD_SIZES[adSize];
-  }
-
-  const loadAd = useCallback(async () => {
-    if (!isProduction || !adRef.current || isAdLoaded || adAttempts >= maxAttempts || !isVisible) return;
+  const loadAd = useCallback(() => {
+    if (!isProduction || !adRef.current || isAdLoaded) return;
 
     setIsLoading(true);
     try {
-      // Pre-calculate space for ad to prevent layout shift
-      const { width, height } = dimensions.current;
-      if (adRef.current) {
-        adRef.current.style.minHeight = `${height}px`;
-        adRef.current.style.minWidth = `${width}px`;
-        adRef.current.style.opacity = '0';
-        adRef.current.style.transition = 'opacity 0.3s ease-in-out';
+      if (window.adsbygoogle) {
+        window.adsbygoogle.push({});
+        setIsAdLoaded(true);
+        setIsLoading(false);
+      } else {
+        setTimeout(loadAd, 100); // Retry if adsbygoogle not ready
       }
-
-      // Initialize ad with retry mechanism
-      const initAd = () => {
-        if (window.adsbygoogle && adRef.current) {
-          // Clear existing ad content
-          if (adSlotRef.current) {
-            adRef.current.removeChild(adSlotRef.current);
-          }
-
-          // Create new ad slot
-          const ins = document.createElement('ins');
-          ins.className = 'adsbygoogle';
-          ins.style.display = 'block';
-          ins.style.width = `${width}px`;
-          ins.style.height = `${height}px`;
-          ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
-          ins.setAttribute('data-ad-slot', slot);
-          
-          if (!isSticky) {
-            ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
-            ins.setAttribute('data-full-width-responsive', 'true');
-          }
-
-          adRef.current.appendChild(ins);
-          adSlotRef.current = ins;
-
-          // Push new ad with a slight delay to ensure proper rendering
-          setTimeout(() => {
-            window.adsbygoogle.push({});
-            if (adRef.current) {
-              adRef.current.style.opacity = '1';
-            }
-            setIsAdLoaded(true);
-            setIsLoading(false);
-            setAdError(null);
-          }, 100);
-        } else {
-          setAdAttempts(prev => {
-            if (prev < maxAttempts) {
-              setTimeout(initAd, retryDelay);
-            } else {
-              setAdError('Failed to load advertisement');
-              setIsLoading(false);
-            }
-            return prev + 1;
-          });
-        }
-      };
-
-      initAd();
     } catch (error) {
-      console.error('Ad load error:', error);
-      setAdError('Error loading advertisement');
+      setAdError('Error loading ad');
       setIsLoading(false);
+      console.error('Ad load error:', error);
     }
-  }, [isProduction, isAdLoaded, adAttempts, slot, width, isSticky, isVisible]);
+  }, [isProduction, isAdLoaded]);
 
   const refreshAd = useCallback(() => {
-    if (!isProduction || !adRef.current || !isAdLoaded || !isVisible) return;
+    if (!isProduction || !adRef.current || !isAdLoaded) return;
 
     setIsLoading(true);
-    setIsAdLoaded(false);
-    loadAd();
-  }, [isProduction, isAdLoaded, loadAd, isVisible]);
+    try {
+      adRef.current.innerHTML = '';
+      const ins = document.createElement('ins');
+      ins.className = 'adsbygoogle';
+      ins.style.cssText = `display:block;width:${dimensions.current.width}px;height:${dimensions.current.height}px`;
+      ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
+      ins.setAttribute('data-ad-slot', slot);
+      if (!isSticky) {
+        ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
+        ins.setAttribute('data-full-width-responsive', 'true');
+      }
+      adRef.current.appendChild(ins);
+
+      window.adsbygoogle = window.adsbygoogle || [];
+      window.adsbygoogle.push({});
+      setIsLoading(false);
+    } catch (error) {
+      setAdError('Error refreshing ad');
+      setIsLoading(false);
+      console.error('Ad refresh error:', error);
+      setTimeout(loadAd, 5000); // Retry after 5 seconds
+    }
+  }, [isProduction, isAdLoaded, slot, width, isSticky, loadAd]);
 
   useEffect(() => {
     if (!isProduction || !adRef.current) return;
 
-    // Use Intersection Observer for lazy loading
+    if (isSticky) {
+      loadAd();
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
-        setIsVisible(entry.isIntersecting);
-        if (entry.isIntersecting && !isAdLoaded) {
+        if (entry.isIntersecting) {
           loadAd();
+          observer.disconnect();
         }
       },
       { threshold: 0.1 }
@@ -249,26 +155,17 @@ export function AdComponent({
 
     observer.observe(adRef.current);
     return () => observer.disconnect();
-  }, [loadAd, isAdLoaded, isProduction]);
+  }, [loadAd, isProduction, isSticky]);
 
   useEffect(() => {
-    if (!refreshInterval || !isAdLoaded || !isVisible) return;
+    if (!refreshInterval || !isAdLoaded) return;
 
     const timer = setInterval(() => {
       requestAnimationFrame(refreshAd);
     }, refreshInterval * 1000);
 
     return () => clearInterval(timer);
-  }, [refreshInterval, isAdLoaded, refreshAd, isVisible]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (adSlotRef.current && adRef.current) {
-        adRef.current.removeChild(adSlotRef.current);
-      }
-    };
-  }, []);
+  }, [refreshInterval, isAdLoaded, refreshAd]);
 
   if (!isProduction) {
     return (
@@ -291,36 +188,60 @@ export function AdComponent({
   }
 
   if (adError) {
-    return null; // Hide ad space on error to prevent layout issues
-  }
-
-  return (
-    <>
+    return (
       <div className={`flex justify-center ${className}`} style={style}>
         <div
-          ref={adRef}
+          className="bg-red-100 border border-red-400 flex items-center justify-center"
           style={{
             width: dimensions.current.width,
             height: dimensions.current.height,
             overflow: 'hidden',
-            position: 'relative',
-            opacity: 0,
-            transition: 'opacity 0.3s ease-in-out',
-            ...style,
           }}
         >
-          {isLoading && (
-            <div
-              className="absolute inset-0 bg-gray-100 flex items-center justify-center"
-              style={{ width: '100%', height: '100%' }}
-            >
-              <span className="text-gray-500 text-sm">Loading Ad...</span>
-            </div>
-          )}
+          <span className="text-red-600 text-sm">Ad Failed to Load</span>
         </div>
       </div>
-      {showConsent && <ConsentBanner onAccept={handleAcceptConsent} onDecline={handleDeclineConsent} />}
-    </>
+    );
+  }
+
+  return (
+    <div className={`flex justify-center ${className}`} style={style}>
+      <div
+        ref={adRef}
+        style={{
+          width: dimensions.current.width,
+          height: dimensions.current.height,
+          overflow: 'hidden',
+          position: 'relative',
+          ...style,
+        }}
+      >
+        {isLoading && (
+          <div
+            className="absolute inset-0 bg-gray-100 flex items-center justify-center"
+            style={{ width: '100%', height: '100%' }}
+          >
+            <span className="text-gray-500 text-sm">Loading Ad...</span>
+          </div>
+        )}
+        <ins
+          className="adsbygoogle"
+          style={{
+            display: 'block',
+            width: dimensions.current.width,
+            height: dimensions.current.height,
+          }}
+          data-ad-client="ca-pub-2007908196419480"
+          data-ad-slot={slot}
+          {...(!isSticky
+            ? {
+                'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
+                'data-full-width-responsive': 'true',
+              }
+            : {})}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -336,7 +257,7 @@ AdComponent.propTypes = {
 export function StickyBottomAd() {
   const { width } = useViewport();
 
-  // Only render sticky ad on desktop
+  // Render sticky ad only on desktop (width > 768)
   if (width <= 768) {
     return null;
   }
