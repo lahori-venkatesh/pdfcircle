@@ -1,25 +1,27 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import PropTypes from 'prop-types';
 
-// Define ad size configurations
+// Define ad size configurations with aspect ratios
 const AD_SIZES = {
-  leaderboard: { width: 728, height: 90 },
-  banner: { width: 468, height: 60 },
-  mobile_banner: { width: 320, height: 50 },
-  mobile_rectangle: { width: 300, height: 250 },
+  leaderboard: { width: 728, height: 90, ratio: 8.089 },
+  banner: { width: 468, height: 60, ratio: 7.8 },
+  mobile_banner: { width: 320, height: 50, ratio: 6.4 },
+  mobile_rectangle: { width: 300, height: 250, ratio: 1.2 },
 };
 
-// Custom hook for viewport width
+// Custom hook for viewport width with debouncing
 function useViewport() {
   const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 0);
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    let timeoutId: NodeJS.Timeout;
     const handleResize = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
         requestAnimationFrame(() => setWidth(window.innerWidth));
       }, 100);
     };
@@ -27,7 +29,9 @@ function useViewport() {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
-      clearTimeout(timeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, []);
 
@@ -65,87 +69,103 @@ export function AdComponent({
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // Safely check production environment
+  const [adAttempts, setAdAttempts] = useState(0);
+  const maxAttempts = 3;
+  const retryDelay = 2000;
   const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
-
-  const getAdDimensions = () => {
-    if (isSticky) {
-      return AD_SIZES.leaderboard; // Desktop sticky ads: 728x90
-    }
-    switch (adSize) {
-      case 'leaderboard':
-        return width <= 768 ? AD_SIZES.mobile_banner : AD_SIZES.leaderboard;
-      case 'banner':
-        return width <= 768 ? AD_SIZES.mobile_rectangle : AD_SIZES.banner;
-      default:
-        return AD_SIZES[adSize];
-    }
-  };
   const dimensions = useRef(getAdDimensions());
 
-  useEffect(() => {
-    dimensions.current = getAdDimensions();
-  }, [width, adSize, isSticky]);
+  function getAdDimensions() {
+    if (isSticky) {
+      return AD_SIZES.leaderboard;
+    }
+    if (width <= 768) {
+      return adSize === 'leaderboard' ? AD_SIZES.mobile_banner : AD_SIZES.mobile_rectangle;
+    }
+    return AD_SIZES[adSize];
+  }
 
-  const loadAd = useCallback(() => {
-    if (!isProduction || !adRef.current || isAdLoaded) return;
+  const loadAd = useCallback(async () => {
+    if (!isProduction || !adRef.current || isAdLoaded || adAttempts >= maxAttempts) return;
 
     setIsLoading(true);
     try {
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({});
-        setIsAdLoaded(true);
-        setIsLoading(false);
-      } else {
-        setTimeout(loadAd, 100); // Retry if adsbygoogle not ready
-      }
+      // Pre-calculate space for ad to prevent layout shift
+      const { width, height } = dimensions.current;
+      adRef.current.style.minHeight = `${height}px`;
+      adRef.current.style.minWidth = `${width}px`;
+
+      // Initialize ad with retry mechanism
+      const initAd = () => {
+        if (window.adsbygoogle) {
+          window.adsbygoogle.push({});
+          setIsAdLoaded(true);
+          setIsLoading(false);
+          setAdError(null);
+        } else {
+          setAdAttempts(prev => {
+            if (prev < maxAttempts) {
+              setTimeout(initAd, retryDelay);
+            } else {
+              setAdError('Failed to load advertisement');
+              setIsLoading(false);
+            }
+            return prev + 1;
+          });
+        }
+      };
+
+      initAd();
     } catch (error) {
-      setAdError('Error loading ad');
-      setIsLoading(false);
       console.error('Ad load error:', error);
+      setAdError('Error loading advertisement');
+      setIsLoading(false);
     }
-  }, [isProduction, isAdLoaded]);
+  }, [isProduction, isAdLoaded, adAttempts]);
 
   const refreshAd = useCallback(() => {
     if (!isProduction || !adRef.current || !isAdLoaded) return;
 
     setIsLoading(true);
     try {
+      // Clear existing ad
       adRef.current.innerHTML = '';
+      
+      // Create new ad slot
       const ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
-      ins.style.cssText = `display:block;width:${dimensions.current.width}px;height:${dimensions.current.height}px`;
+      ins.style.display = 'block';
+      ins.style.width = `${dimensions.current.width}px`;
+      ins.style.height = `${dimensions.current.height}px`;
       ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
       ins.setAttribute('data-ad-slot', slot);
+      
       if (!isSticky) {
         ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
         ins.setAttribute('data-full-width-responsive', 'true');
       }
+      
       adRef.current.appendChild(ins);
 
+      // Push new ad
       window.adsbygoogle = window.adsbygoogle || [];
       window.adsbygoogle.push({});
       setIsLoading(false);
     } catch (error) {
-      setAdError('Error refreshing ad');
-      setIsLoading(false);
       console.error('Ad refresh error:', error);
-      setTimeout(loadAd, 5000); // Retry after 5 seconds
+      setAdError('Error refreshing advertisement');
+      setIsLoading(false);
     }
-  }, [isProduction, isAdLoaded, slot, width, isSticky, loadAd]);
+  }, [isProduction, isAdLoaded, slot, width, isSticky]);
 
   useEffect(() => {
     if (!isProduction || !adRef.current) return;
 
-    if (isSticky) {
-      loadAd();
-      return;
-    }
-
+    // Use Intersection Observer for lazy loading
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        if (entry.isIntersecting && !isAdLoaded) {
           loadAd();
           observer.disconnect();
         }
@@ -155,7 +175,7 @@ export function AdComponent({
 
     observer.observe(adRef.current);
     return () => observer.disconnect();
-  }, [loadAd, isProduction, isSticky]);
+  }, [loadAd, isAdLoaded, isProduction]);
 
   useEffect(() => {
     if (!refreshInterval || !isAdLoaded) return;
@@ -188,20 +208,7 @@ export function AdComponent({
   }
 
   if (adError) {
-    return (
-      <div className={`flex justify-center ${className}`} style={style}>
-        <div
-          className="bg-red-100 border border-red-400 flex items-center justify-center"
-          style={{
-            width: dimensions.current.width,
-            height: dimensions.current.height,
-            overflow: 'hidden',
-          }}
-        >
-          <span className="text-red-600 text-sm">Ad Failed to Load</span>
-        </div>
-      </div>
-    );
+    return null; // Hide ad space on error to prevent layout issues
   }
 
   return (
@@ -257,7 +264,7 @@ AdComponent.propTypes = {
 export function StickyBottomAd() {
   const { width } = useViewport();
 
-  // Render sticky ad only on desktop (width > 768)
+  // Only render sticky ad on desktop
   if (width <= 768) {
     return null;
   }
