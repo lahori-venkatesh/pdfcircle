@@ -112,7 +112,7 @@ export function ComparePDFs() {
 
       // Create PDF with comparison results
       const resultDoc = await PDFDocument.create();
-      const page = resultDoc.addPage();
+      let page = resultDoc.addPage();
       const { width, height } = page.getSize();
       
       let y = height - 50;
