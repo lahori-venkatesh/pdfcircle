@@ -4,7 +4,7 @@ import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archi
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
-import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
+import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl, safeDownload } from '../utils/security';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
 import { AuthModal } from './AuthModal';
@@ -383,8 +383,8 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     if (!convertedBlobs[index]) return;
     const { blob, originalName } = convertedBlobs[index];
     const extension = settings.format === 'jpeg' ? 'jpg' : settings.format === 'ico' ? 'zip' : settings.format;
-    const link = createSecureDownloadLink(blob, `${originalName.split('.').slice(0, -1).join('.')}.${extension}`);
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    const filename = `${originalName.split('.').slice(0, -1).join('.')}.${extension}`;
+    safeDownload(blob, filename);
     if (!isLoggedIn) setDownloadCount(prev => prev + 1);
   }, [convertedBlobs, settings.format, isLoggedIn, downloadCount]);
 
@@ -396,8 +396,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       zip.file(`${originalName.split('.').slice(0, -1).join('.')}.${extension}`, blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
-    const link = createSecureDownloadLink(content, 'converted_images.zip');
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    safeDownload(content, 'converted_images.zip');
     if (!isLoggedIn) setDownloadCount(prev => prev + 1);
   }, [convertedBlobs, settings.format, isLoggedIn, downloadCount]);
 
