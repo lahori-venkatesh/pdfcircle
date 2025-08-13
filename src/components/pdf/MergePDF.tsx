@@ -99,10 +99,7 @@ export function MergePDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'merged.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, 'merged.pdf');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

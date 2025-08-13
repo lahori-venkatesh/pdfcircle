@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileText, Minimize2 } from 'lucide-react';
-import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl, safeDownload } from '../../utils/security';
 import { Link } from 'react-router-dom';
 
 interface PDFFile {
@@ -93,10 +93,7 @@ export function CompressPDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'compressed.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, 'compressed.pdf');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

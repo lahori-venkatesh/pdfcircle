@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileSignature, Type, Image, Trash2, Plus, Move, RotateCw } from 'lucide-react';
 import { PDFDocument, rgb } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
-import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl, safeDownload } from '../../utils/security';
 import { Link } from 'react-router-dom';
 
 interface PDFFile {
@@ -236,10 +236,7 @@ export function SignPDF() {
 
     try {
       const originalName = files[0].file.name.replace('.pdf', '');
-      const link = createSecureDownloadLink(resultBlob, `${originalName}_signed.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, `${originalName}_signed.pdf`);
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Loader2, X, FileText } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
-import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl, safeDownload } from '../../utils/security';
 import { Link } from 'react-router-dom';
 import mammoth from 'mammoth';
 
@@ -100,10 +100,7 @@ export function PDFToWord() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'converted.docx');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, 'converted.docx');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

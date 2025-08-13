@@ -128,10 +128,7 @@ export function OCRPDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'searchable.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, 'searchable.pdf');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');
