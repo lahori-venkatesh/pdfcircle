@@ -451,12 +451,6 @@ export function HomePage() {
         </div>
       </section>
 
-      <AdComponent
-        slot="4325618154"
-        adSize="leaderboard"
-        refreshInterval={30}
-        className="my-4"
-      />
     </>
   );
 }

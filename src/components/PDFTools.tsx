@@ -147,11 +147,12 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
           </p>
         </section>
 
+        {/* Top Ad */}
         <AdComponent
           slot="4325618154"
           adSize="leaderboard"
           refreshInterval={30}
-          className="my-4"
+          className="my-6"
         />
 
         <section>
@@ -180,6 +181,43 @@ export function PDFTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             {renderActiveComponent()}
           </div>
         </section>
+
+     
+
+        {/* Features Section with Ad */}
+        <section className="mt-12">
+          <h2 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-white mb-8 text-center">
+            {t('pdfTools.featuresTitle', 'Why Choose pdfCircle?')}
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {t('pdfTools.feature1.title', '100% Free')}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {t('pdfTools.feature1.description', 'All tools are completely free to use with no hidden fees or limitations.')}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {t('pdfTools.feature2.title', 'Secure & Private')}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {t('pdfTools.feature2.description', 'Your files are processed locally in your browser and never uploaded to our servers.')}
+              </p>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                {t('pdfTools.feature3.title', 'No Registration')}
+              </h3>
+              <p className="text-gray-600 dark:text-gray-300">
+                {t('pdfTools.feature3.description', 'Start using our tools immediately without creating an account or providing personal information.')}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        
       </div>
     </>
   );
