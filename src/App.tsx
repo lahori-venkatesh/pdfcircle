@@ -17,28 +17,50 @@ import { AuthModal } from './components/AuthModal';
 import { ResetPassword } from './components/ResetPassword';
 import { LanguageSelector } from './components/LanguageSelector';
 import { HomePage } from './components/HomePage';
+import { debugLog, debugError, trackRouteChange } from './utils/debug';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
   state: { hasError: boolean; error: Error | null } = { hasError: false, error: null };
 
   static getDerivedStateFromError(error: Error) {
+    console.error('ErrorBoundary caught an error:', error);
     return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary error details:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold text-red-600">Something went wrong</h1>
-            <p className="mt-2 text-gray-600">{this.state.error?.message || 'An unexpected error occurred.'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700"
-            >
-              Reload Page
-            </button>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="text-center max-w-md mx-auto p-6">
+            <h1 className="text-2xl font-bold text-red-600 mb-4">Something went wrong</h1>
+            <p className="mt-2 text-gray-600 dark:text-gray-400 mb-6">
+              {this.state.error?.message || 'An unexpected error occurred while loading the page.'}
+            </p>
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.reload();
+                }}
+                className="w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                Reload Page
+              </button>
+              <button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null });
+                  window.location.href = '/';
+                }}
+                className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Go to Home
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -51,6 +73,7 @@ const ScrollToTop = ({ children }: PropsWithChildren<{}>) => {
   const location = useLocation();
 
   useEffect(() => {
+    trackRouteChange('', location.pathname);
     window.scrollTo(0, 0);
   }, [location.pathname]);
 
@@ -69,7 +92,7 @@ function Layout({ children }: PropsWithChildren<{}>) {
   const location = useLocation();
 
   useEffect(() => {
-    console.log('Layout - User:', user ? 'Logged in' : 'Not logged in');
+    debugLog('Layout', 'User:', user ? 'Logged in' : 'Not logged in');
   }, [user]);
 
   useEffect(() => {
@@ -355,10 +378,29 @@ function Layout({ children }: PropsWithChildren<{}>) {
 
 function AppRoutes() {
   const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log('AppRoutes - User:', user ? 'Logged in' : 'Not logged in');
+    debugLog('AppRoutes', 'User:', user ? 'Logged in' : 'Not logged in');
+    
+    // Add a small delay to ensure proper component mounting
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, [user]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Routes>
@@ -371,11 +413,46 @@ function AppRoutes() {
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/contact" element={<Contact />} />
       <Route path="/reset-password" element={<ResetPassword />} />
+      {/* Fallback route for any unmatched paths */}
+      <Route path="*" element={<HomePage />} />
     </Routes>
   );
 }
 
 function App() {
+  useEffect(() => {
+    // Global error handler for DOM manipulation errors
+    const handleGlobalError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error);
+      
+      // Handle specific DOM manipulation errors
+      if (event.error && event.error.message && 
+          (event.error.message.includes('removeChild') || 
+           event.error.message.includes('appendChild') ||
+           event.error.message.includes('insertBefore'))) {
+        console.warn('DOM manipulation error detected, attempting recovery...');
+        
+        // Try to recover by forcing a re-render
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      }
+    };
+
+    // Handle unhandled promise rejections
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   return (
     <Router>
       <AuthProvider>
