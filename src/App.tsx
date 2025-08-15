@@ -18,6 +18,7 @@ import { ResetPassword } from './components/ResetPassword';
 import { LanguageSelector } from './components/LanguageSelector';
 import { HomePage } from './components/HomePage';
 import { debugLog, debugError, trackRouteChange } from './utils/debug';
+import { SafeComponent } from './components/SafeComponent';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -405,8 +406,22 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/image-tools" element={<ImageTools isLoggedIn={!!user} />} />
-      <Route path="/pdf-tools" element={<PDFTools isLoggedIn={!!user} />} />
+      <Route 
+        path="/image-tools" 
+        element={
+          <SafeComponent componentName="ImageTools">
+            <ImageTools isLoggedIn={!!user} />
+          </SafeComponent>
+        } 
+      />
+      <Route 
+        path="/pdf-tools" 
+        element={
+          <SafeComponent componentName="PDFTools">
+            <PDFTools isLoggedIn={!!user} />
+          </SafeComponent>
+        } 
+      />
       <Route path="/about" element={<AboutUs />} />
       <Route path="/blog" element={<Blog />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />

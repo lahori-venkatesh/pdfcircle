@@ -3,6 +3,7 @@ import { PDFDocument } from 'pdf-lib';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, ImageIcon, FileText, Settings, Crop, Loader2, X, Split, Info } from 'lucide-react';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
 
@@ -193,10 +194,8 @@ export function SplitPDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, `${splitMode === 'remove' ? 'split' : 'extracted'}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const filename = `${splitMode === 'remove' ? 'split' : 'extracted'}.pdf`;
+      safeDownloadBlob(resultBlob, filename);
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

@@ -4,6 +4,7 @@ import { Download, Upload, X, Image as ImageIcon, Loader2, Crop, Settings, FileT
 import JSZip from 'jszip';
 import { pdfjsLib } from '../../utils/pdfjs';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
 import { AuthModal } from '../AuthModal';
@@ -160,10 +161,7 @@ export function PDFToImages({ isLoggedIn }: { isLoggedIn: boolean }) {
 
     try {
       const extension = format === 'jpeg' ? 'jpg' : format;
-      const link = createSecureDownloadLink(resultBlob, `pdf-images-${extension}.zip`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownloadBlob(resultBlob, `pdf-images-${extension}.zip`);
       setHasDownloaded(true);
     } catch (err) {
       console.error('Error downloading file:', err);

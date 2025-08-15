@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Upload, Download, Loader2, X, FileText, Globe, Code, Image, Settings, Eye, EyeOff } from 'lucide-react';
 import { createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { Link } from 'react-router-dom';
 
 interface ConversionSettings {
@@ -225,10 +226,7 @@ export function HTMLToPDF() {
 
     try {
       const originalName = inputMethod === 'url' ? 'webpage' : 'html';
-      const link = createSecureDownloadLink(resultBlob, `${originalName}_converted.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownloadBlob(resultBlob, `${originalName}_converted.pdf`);
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');
