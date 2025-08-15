@@ -19,6 +19,7 @@ import { LanguageSelector } from './components/LanguageSelector';
 import { HomePage } from './components/HomePage';
 import { debugLog, debugError, trackRouteChange } from './utils/debug';
 import { SafeComponent } from './components/SafeComponent';
+import { DOMErrorBoundary } from './components/DOMErrorBoundary';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -409,17 +410,21 @@ function AppRoutes() {
       <Route 
         path="/image-tools" 
         element={
-          <SafeComponent componentName="ImageTools">
-            <ImageTools isLoggedIn={!!user} />
-          </SafeComponent>
+          <DOMErrorBoundary componentName="ImageTools">
+            <SafeComponent componentName="ImageTools">
+              <ImageTools isLoggedIn={!!user} />
+            </SafeComponent>
+          </DOMErrorBoundary>
         } 
       />
       <Route 
         path="/pdf-tools" 
         element={
-          <SafeComponent componentName="PDFTools">
-            <PDFTools isLoggedIn={!!user} />
-          </SafeComponent>
+          <DOMErrorBoundary componentName="PDFTools">
+            <SafeComponent componentName="PDFTools">
+              <PDFTools isLoggedIn={!!user} />
+            </SafeComponent>
+          </DOMErrorBoundary>
         } 
       />
       <Route path="/about" element={<AboutUs />} />
