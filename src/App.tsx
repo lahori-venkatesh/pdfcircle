@@ -20,6 +20,7 @@ import { HomePage } from './components/HomePage';
 import { debugLog, debugError, trackRouteChange } from './utils/debug';
 import { SafeComponent } from './components/SafeComponent';
 import { DOMErrorBoundary } from './components/DOMErrorBoundary';
+import { useNavigationGuard } from './utils/navigation';
 
 // Error Boundary Component
 class ErrorBoundary extends Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -87,11 +88,26 @@ function Layout({ children }: PropsWithChildren<{}>) {
   const { theme, toggleTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
-  const [authMode, setAuthMode] = useState<'signup' | 'login' | 'forgot-password'>('signup');
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
+  const { canNavigate, startNavigation } = useNavigationGuard();
   const [isVisible, setIsVisible] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
+
+  // Navigation guard to prevent rapid navigation
+  useEffect(() => {
+    if (canNavigate()) {
+      startNavigation();
+    }
+  }, [location.pathname, canNavigate, startNavigation]);
+
+  const handleNavigation = useCallback((to: string) => {
+    if (canNavigate()) {
+      startNavigation();
+    }
+    // Navigation will be handled by Link component
+  }, [canNavigate, startNavigation]);
 
   useEffect(() => {
     debugLog('Layout', 'User:', user ? 'Logged in' : 'Not logged in');

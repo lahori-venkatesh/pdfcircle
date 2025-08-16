@@ -320,16 +320,22 @@ export function EnhancedImageCrop({ imageSrc, onCropComplete, onCancel, loading 
     const handleGlobalEnd = () => handleEnd();
     
     if (isDragging || isResizing) {
+      // Use passive: false only when necessary to prevent default behavior
       document.addEventListener('mousemove', handleGlobalMove, { passive: false });
       document.addEventListener('mouseup', handleGlobalEnd);
       document.addEventListener('touchmove', handleGlobalMove, { passive: false });
       document.addEventListener('touchend', handleGlobalEnd);
       
       return () => {
-        document.removeEventListener('mousemove', handleGlobalMove);
-        document.removeEventListener('mouseup', handleGlobalEnd);
-        document.removeEventListener('touchmove', handleGlobalMove);
-        document.removeEventListener('touchend', handleGlobalEnd);
+        // Safe cleanup with error handling
+        try {
+          document.removeEventListener('mousemove', handleGlobalMove);
+          document.removeEventListener('mouseup', handleGlobalEnd);
+          document.removeEventListener('touchmove', handleGlobalMove);
+          document.removeEventListener('touchend', handleGlobalEnd);
+        } catch (error) {
+          console.warn('Error during event listener cleanup:', error);
+        }
       };
     }
   }, [isDragging, isResizing, handleMove, handleEnd]);
@@ -349,7 +355,28 @@ export function EnhancedImageCrop({ imageSrc, onCropComplete, onCancel, loading 
     
     resizeObserver.observe(containerRef.current);
     
-    return () => resizeObserver.disconnect();
+    return () => {
+      try {
+        resizeObserver.disconnect();
+      } catch (error) {
+        console.warn('Error during ResizeObserver cleanup:', error);
+      }
+    };
+  }, []);
+
+  // Component cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Clean up any remaining event listeners
+      try {
+        document.removeEventListener('mousemove', handleMove);
+        document.removeEventListener('mouseup', handleEnd);
+        document.removeEventListener('touchmove', handleMove);
+        document.removeEventListener('touchend', handleEnd);
+      } catch (error) {
+        // Ignore cleanup errors during unmount
+      }
+    };
   }, []);
 
   // Get crop area style
