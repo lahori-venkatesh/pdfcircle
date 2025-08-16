@@ -50,6 +50,7 @@ interface AdProps {
 declare global {
   interface Window {
     adsbygoogle: unknown[];
+    googletag?: any;
   }
 }
 
@@ -65,6 +66,9 @@ export function AdComponent({
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [retryCount, setRetryCount] = useState(0);
+  const maxRetries = 3;
+  
   // Safely check production environment
   const isProduction = process.env.NODE_ENV === 'production';
   const { width } = useViewport();
@@ -88,61 +92,101 @@ export function AdComponent({
     dimensions.current = getAdDimensions();
   }, [width, adSize, isSticky]);
 
+  // Initialize Google Ads
+  const initializeAds = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
+    // Initialize adsbygoogle if not already done
+    if (!window.adsbygoogle) {
+      window.adsbygoogle = [];
+    }
+
+    // Load Google Ads script if not already loaded
+    if (!document.querySelector('script[src*="pagead2.googlesyndication.com"]')) {
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480';
+      script.crossOrigin = 'anonymous';
+      document.head.appendChild(script);
+    }
+  }, []);
+
   const loadAd = useCallback(() => {
     if (!isProduction || !adRef.current || isAdLoaded) return;
 
     setIsLoading(true);
-    try {
-      if (window.adsbygoogle) {
-        window.adsbygoogle.push({});
-        setIsAdLoaded(true);
-        setIsLoading(false);
-      } else {
-        setTimeout(loadAd, 100); // Retry if adsbygoogle not ready
-      }
-    } catch (error) {
-      setAdError('Error loading ad');
-      setIsLoading(false);
-      console.error('Ad load error:', error);
-    }
-  }, [isProduction, isAdLoaded]);
+    setAdError(null);
 
-  const refreshAd = useCallback(() => {
-    if (!isProduction || !adRef.current || !isAdLoaded) return;
-
-    setIsLoading(true);
     try {
-      adRef.current.innerHTML = '';
+      // Initialize ads if needed
+      initializeAds();
+
+      // Create ad element
       const ins = document.createElement('ins');
       ins.className = 'adsbygoogle';
       ins.style.cssText = `display:block;width:${dimensions.current.width}px;height:${dimensions.current.height}px`;
       ins.setAttribute('data-ad-client', 'ca-pub-2007908196419480');
       ins.setAttribute('data-ad-slot', slot);
+      
       if (!isSticky) {
         ins.setAttribute('data-ad-format', width <= 768 ? 'auto' : 'horizontal');
         ins.setAttribute('data-full-width-responsive', 'true');
       }
+
+      // Clear previous content and add new ad
+      adRef.current.innerHTML = '';
       adRef.current.appendChild(ins);
 
-      window.adsbygoogle = window.adsbygoogle || [];
-      window.adsbygoogle.push({});
-      setIsLoading(false);
+      // Push ad to Google Ads
+      if (window.adsbygoogle) {
+        window.adsbygoogle.push({});
+        setIsAdLoaded(true);
+        setIsLoading(false);
+        setRetryCount(0);
+      } else {
+        // Retry if adsbygoogle not ready
+        setTimeout(() => {
+          if (retryCount < maxRetries) {
+            setRetryCount(prev => prev + 1);
+            loadAd();
+          } else {
+            setAdError('Ad failed to load after multiple attempts');
+            setIsLoading(false);
+          }
+        }, 1000);
+      }
     } catch (error) {
-      setAdError('Error refreshing ad');
-      setIsLoading(false);
-      console.error('Ad refresh error:', error);
-      setTimeout(loadAd, 5000); // Retry after 5 seconds
+      console.error('Ad load error:', error);
+      if (retryCount < maxRetries) {
+        setRetryCount(prev => prev + 1);
+        setTimeout(loadAd, 2000);
+      } else {
+        setAdError('Error loading ad');
+        setIsLoading(false);
+      }
     }
-  }, [isProduction, isAdLoaded, slot, width, isSticky, loadAd]);
+  }, [isProduction, isAdLoaded, slot, width, isSticky, retryCount, maxRetries, initializeAds]);
 
+  const refreshAd = useCallback(() => {
+    if (!isProduction || !adRef.current) return;
+
+    setIsAdLoaded(false);
+    setAdError(null);
+    setRetryCount(0);
+    loadAd();
+  }, [isProduction, loadAd]);
+
+  // Load ad when component mounts or when it becomes visible
   useEffect(() => {
     if (!isProduction || !adRef.current) return;
 
     if (isSticky) {
+      // For sticky ads, load immediately
       loadAd();
       return;
     }
 
+    // For regular ads, use intersection observer
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -150,23 +194,30 @@ export function AdComponent({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: '50px' }
     );
 
     observer.observe(adRef.current);
     return () => observer.disconnect();
   }, [loadAd, isProduction, isSticky]);
 
+  // Auto-refresh ads
   useEffect(() => {
     if (!refreshInterval || !isAdLoaded) return;
 
     const timer = setInterval(() => {
-      requestAnimationFrame(refreshAd);
+      refreshAd();
     }, refreshInterval * 1000);
 
     return () => clearInterval(timer);
   }, [refreshInterval, isAdLoaded, refreshAd]);
 
+  // Initialize ads on mount
+  useEffect(() => {
+    initializeAds();
+  }, [initializeAds]);
+
+  // Development mode placeholder
   if (!isProduction) {
     return (
       <div className={`flex justify-center ${className}`} style={style}>
@@ -187,6 +238,7 @@ export function AdComponent({
     );
   }
 
+  // Error state
   if (adError) {
     return (
       <div className={`flex justify-center ${className}`} style={style}>
@@ -224,22 +276,6 @@ export function AdComponent({
             <span className="text-gray-500 text-sm">Loading Ad...</span>
           </div>
         )}
-        <ins
-          className="adsbygoogle"
-          style={{
-            display: 'block',
-            width: dimensions.current.width,
-            height: dimensions.current.height,
-          }}
-          data-ad-client="ca-pub-2007908196419480"
-          data-ad-slot={slot}
-          {...(!isSticky
-            ? {
-                'data-ad-format': width <= 768 ? 'auto' : 'horizontal',
-                'data-full-width-responsive': 'true',
-              }
-            : {})}
-        />
       </div>
     </div>
   );

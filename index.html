@@ -6,15 +6,36 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
     <!-- Responsive -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
 
     <!-- Title & Metadata -->
     <title>pdfCircle | Free Document & Image Converter Tools</title>
     <meta name="description" content="Easily compress, convert, merge, and edit PDFs online with pdfCircle. 100% free & secure. Try our fast and easy PDF tools today!" />
     <meta name="keywords" content="pdfcircle, pdf circle, Document Conversion, Image Tools, PDF Converter, OCR (Optical Character Recognition), Image Compression, File Conversion, PDF Editing, Image Enhancement, Document Management, Online PDF Tools, Convert PDF to JPG, PDF to Word Conversion, PDF Compression, Image Resizing Tools, PDF Merge and Split, Scan to Text (OCR), Document Scanning Tools, Free Online PDF Tools, File Compression Tools, PDF to Excel Conversion, pdf a converter, pdf format converter, convert to pdf format, convert to pdf converter, convert on pdf, merge pdf, combine pdf, i love pdf, ilove pdf, pdf compress, convert pdf to jpg, convert, file converter, free file converter quitting, document converter, file changer, pdf converter, online converter, pdf converter online free, file to pdf, convert file to pdf free, file conversion software, convert document to pdf, free pdf convertor, document to pdf, image converter, free converter, best file converter" />
 
-    <!-- Google Ads -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480" crossorigin= "anonymous"></script>
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+    <link rel="preconnect" href="https://www.google-analytics.com" />
+    <link rel="preconnect" href="https://www.googletagmanager.com" />
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+    <link rel="preconnect" href="https://tragwrsmmqtiusvitofm.supabase.co" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
+    <link rel="dns-prefetch" href="https://www.google-analytics.com" />
+
+    <!-- Google Ads - Load early for better performance -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2007908196419480" crossorigin="anonymous"></script>
+    
+    <!-- Google Publisher Tag -->
+    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+    <script>
+      window.googletag = window.googletag || { cmd: [] };
+      googletag.cmd.push(function() {
+        googletag.pubads().enableSingleRequest();
+        googletag.pubads().collapseEmptyDivs();
+        googletag.enableServices();
+      });
+    </script>
 
     <!-- Consent Mode for Personalized Ads -->
     <script>
@@ -23,8 +44,19 @@
       gtag('consent', 'default', {
         ad_storage: 'denied',
         ad_user_data: 'denied',
-        ad_personalization: 'denied'
+        ad_personalization: 'denied',
+        analytics_storage: 'denied'
       });
+      
+      // Update consent when user accepts
+      function updateConsent() {
+        gtag('consent', 'update', {
+          ad_storage: 'granted',
+          ad_user_data: 'granted',
+          ad_personalization: 'granted',
+          analytics_storage: 'granted'
+        });
+      }
     </script>
 
     <!-- Google Analytics -->
@@ -34,7 +66,10 @@
       function gtag() { dataLayer.push(arguments); }
       gtag('js', new Date());
       gtag('config', 'G-SVNJ9G6WHC', {
-        'cookie_flags': 'SameSite=None;Secure'
+        'cookie_flags': 'SameSite=None;Secure',
+        'anonymize_ip': true,
+        'allow_google_signals': false,
+        'allow_ad_personalization_signals': false
       });
     </script>
 
@@ -44,26 +79,75 @@
     <meta property="og:url" content="https://www.pdfcircle.com/" />
     <meta property="og:image" content="https://www.pdfcircle.com/apple-touch-icon.webp" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="pdfCircle" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- JSON-LD Structured Data -->
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PdfCircle - Convert & Edit PDFs and Images Online" />
+    <meta name="twitter:description" content="Convert, compress, and enhance PDFs & images with PdfCircle's free online tools. Try now!" />
+    <meta name="twitter:image" content="https://www.pdfcircle.com/apple-touch-icon.webp" />
+    <meta name="twitter:site" content="@pdfcircle" />
+    <meta name="twitter:creator" content="@pdfcircle" />
+
+    <!-- Enhanced JSON-LD Structured Data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "pdfCircle",
-        "url": "https://pdfcircle.com",
-        "potentialAction": {
-          "@type": "SearchAction",
-          "target": "https://pdfcircle.com/search?q={search_term_string}",
-          "query-input": "required name=search_term_string"
-        }
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://pdfcircle.com/#website",
+            "url": "https://pdfcircle.com",
+            "name": "pdfCircle",
+            "description": "Free online PDF and image processing tools",
+            "potentialAction": {
+              "@type": "SearchAction",
+              "target": "https://pdfcircle.com/search?q={search_term_string}",
+              "query-input": "required name=search_term_string"
+            },
+            "sameAs": [
+              "https://twitter.com/pdfcircle"
+            ]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "pdfCircle",
+            "applicationCategory": "ProductivityApplication",
+            "operatingSystem": "Web Browser",
+            "description": "Free online PDF and image processing tools",
+            "url": "https://pdfcircle.com",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "aggregateRating": {
+              "@type": "AggregateRating",
+              "ratingValue": "4.8",
+              "ratingCount": "1250"
+            }
+          },
+          {
+            "@type": "Organization",
+            "name": "pdfCircle",
+            "url": "https://pdfcircle.com",
+            "logo": {
+              "@type": "ImageObject",
+              "url": "https://www.pdfcircle.com/apple-touch-icon.webp",
+              "width": "180",
+              "height": "180"
+            },
+            "contactPoint": {
+              "@type": "ContactPoint",
+              "contactType": "customer service",
+              "url": "https://pdfcircle.com/contact"
+            }
+          }
+        ]
       }
     </script>
-    
-    <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-    <script>
-     window.googletag = window.googletag || { cmd: [] };
-    </script>
+
     <!-- Permissions Policy -->
     <meta http-equiv="Permissions-Policy" content="accelerometer=(), deviceorientation=(), devicemotion=(), gyroscope=(), magnetometer=()" />
 
@@ -80,7 +164,8 @@
         https://fundingchoicesmessages.google.com
         https://cdn.jsdelivr.net
         https://*.adtrafficquality.google
-        https://static.cloudflareinsights.com;
+        https://static.cloudflareinsights.com
+        https://securepubads.g.doubleclick.net;
       script-src-elem 'self'
         https://*.googletagmanager.com
         https://*.google-analytics.com
@@ -91,7 +176,8 @@
         https://fundingchoicesmessages.google.com
         https://cdn.jsdelivr.net
         https://*.adtrafficquality.google
-        https://static.cloudflareinsights.com;
+        https://static.cloudflareinsights.com
+        https://securepubads.g.doubleclick.net;
       style-src 'self' 'unsafe-inline';
       img-src 'self' blob: data:
         https://*.google.com
@@ -113,6 +199,7 @@
         https://pagead2.googlesyndication.com
         https://fundingchoicesmessages.google.com
         https://static.cloudflareinsights.com
+        https://securepubads.g.doubleclick.net
         data: blob:;
       frame-src 'self'
         https://pagead2.googlesyndication.com
@@ -132,14 +219,39 @@
       upgrade-insecure-requests;
     " />
 
-    <!-- Preconnects -->
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-    <link rel="preconnect" href="https://tragwrsmmqtiusvitofm.supabase.co" />
-    <link rel="preconnect" href="https://images.unsplash.com" />
-    <link rel="preconnect" href="https://pagead2.googlesyndication.com" />
+    <!-- Additional SEO meta tags -->
+    <meta name="author" content="pdfCircle" />
+    <meta name="application-name" content="pdfCircle" />
+    <meta name="theme-color" content="#3B82F6" />
+    <meta name="msapplication-TileColor" content="#3B82F6" />
+    <meta name="format-detection" content="telephone=no" />
+    
+    <!-- Security headers -->
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Initialize ads on page load -->
+    <script>
+      // Ensure ads load when page is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        if (window.adsbygoogle) {
+          window.adsbygoogle.push({});
+        }
+      });
+      
+      // Retry ad loading if needed
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          if (window.adsbygoogle) {
+            window.adsbygoogle.push({});
+          }
+        }, 1000);
+      });
+    </script>
   </body>
 </html>

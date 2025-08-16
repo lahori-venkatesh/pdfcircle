@@ -6,6 +6,7 @@ import { DndContext, rectIntersection, KeyboardSensor, PointerSensor, TouchSenso
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { SortableImage } from './SortableImage';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { useOperationsCache } from '../../utils/operationsCache';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
@@ -446,10 +447,8 @@ export function CreatePDF({ isLoggedIn }: { isLoggedIn: boolean }) {
 
     setDownloading(true);
     try {
-      const link = createSecureDownloadLink(resultBlob, mergePDF ? 'document.pdf' : 'documents.zip');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      const filename = mergePDF ? 'document.pdf' : 'documents.zip';
+      safeDownloadBlob(resultBlob, filename);
       setShowNewConversion(true);
     } catch (err) {
       console.error('Error downloading file:', err);

@@ -383,7 +383,7 @@ export function HomePage() {
         </div>
       </section>
 
-      
+
     </>
   );
 }

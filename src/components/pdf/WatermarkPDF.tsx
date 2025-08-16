@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, Download, Edit, Images, Minimize2, SplitSquareVertical, Merge, Loader2, Settings, Crop, FileText, X, Stamp, Type, Image as ImageIcon } from 'lucide-react';
 import { PDFDocument, rgb, degrees } from 'pdf-lib';
-import { validateFile, ALLOWED_PDF_TYPES, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { validateFile, ALLOWED_PDF_TYPES, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl, safeDownload } from '../../utils/security';
 import { useOperationsCache } from '../../utils/operationsCache';
 import { Link } from 'react-router-dom';
 
@@ -178,10 +178,7 @@ export function WatermarkPDF() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'watermarked.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownload(resultBlob, 'watermarked.pdf');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

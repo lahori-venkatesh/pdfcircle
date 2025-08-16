@@ -86,6 +86,7 @@ export function createSecureDownloadLink(blob: Blob, filename: string): HTMLAnch
   const link = document.createElement('a');
   link.href = url;
   link.download = getSafeDownloadFilename(filename);
+  link.style.display = 'none'; // Hide the link
   
   // Automatically revoke the URL after a short delay
   setTimeout(() => {
@@ -110,6 +111,24 @@ export function revokeBlobUrl(url: string | null) {
   }
 }
 
+// Safe download helper function
+export function safeDownload(blob: Blob, filename: string): void {
+  const link = createSecureDownloadLink(blob, filename);
+  document.body.appendChild(link);
+  link.click();
+  
+  // Use setTimeout to ensure the click event is processed before removal
+  setTimeout(() => {
+    try {
+      if (document.body.contains(link)) {
+        document.body.removeChild(link);
+      }
+    } catch (error) {
+      console.warn('Link already removed or not found:', error);
+    }
+  }, 100);
+}
+
 // Download a file from a URL
 export async function downloadFromUrl(url: string, filename: string): Promise<void> {
   try {
@@ -119,18 +138,7 @@ export async function downloadFromUrl(url: string, filename: string): Promise<vo
     }
     
     const blob = await response.blob();
-    const link = createSecureDownloadLink(blob, filename);
-    
-    return new Promise<void>((resolve, reject) => {
-      link.onclick = () => {
-        setTimeout(resolve, 1000); // Give the browser time to start the download
-      };
-      link.onerror = () => reject(new Error('Failed to download file'));
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    });
+    safeDownload(blob, filename);
   } catch (error) {
     console.error('Error downloading file:', error);
     throw new Error('Failed to download file: ' + (error instanceof Error ? error.message : String(error)));

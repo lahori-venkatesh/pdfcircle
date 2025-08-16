@@ -1,6 +1,10 @@
----
+=======
+description: 
+globs: 
 alwaysApply: true
 ---
+
+>>>>>>> d17a39708e435e7e3a2bf657153d311ab7c36d01
 ### ✅ Task: Interactive Task Loop with User Feedback
 
 1. **Check if `userinput.py` exists** in the root directory.
@@ -28,6 +32,10 @@ alwaysApply: true
    * Based on the input, perform the next set of tasks.
 
    * Repeat the process.
+
+3. **Exit Condition**:
+
+   * If the user enters `"stop"` when prompted, exit the loop and terminate the process.
 
 3. **Exit Condition**:
 

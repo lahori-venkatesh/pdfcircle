@@ -4,6 +4,7 @@ import { Upload, Download, Loader2, X, FileText, Table } from 'lucide-react';
 import { PDFDocument } from 'pdf-lib';
 import * as XLSX from 'xlsx';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { Link } from 'react-router-dom';
 
 interface PDFFile {
@@ -156,10 +157,7 @@ export function BankStatementPDF() {
 
     try {
       const extension = format === 'xlsx' ? 'xlsx' : 'csv';
-      const link = createSecureDownloadLink(resultBlob, `bank_statement.${extension}`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownloadBlob(resultBlob, `bank_statement.${extension}`);
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

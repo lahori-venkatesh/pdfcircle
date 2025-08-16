@@ -4,6 +4,7 @@ import { Upload, Download, Loader2, X, FileText, GitCompare } from 'lucide-react
 import { PDFDocument } from 'pdf-lib';
 import { diffChars } from 'diff';
 import { validateFile, ALLOWED_PDF_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../../utils/security';
+import { safeDownloadBlob } from '../../utils/download';
 import { Link } from 'react-router-dom';
 
 interface PDFFile {
@@ -194,10 +195,7 @@ export function ComparePDFs() {
     if (!resultBlob) return;
 
     try {
-      const link = createSecureDownloadLink(resultBlob, 'comparison.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      safeDownloadBlob(resultBlob, 'comparison.pdf');
     } catch (err) {
       console.error('Error downloading file:', err);
       setError('Error downloading file. Please try again.');

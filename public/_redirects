@@ -1,1 +1,4 @@
 /ads.txt  https://pdfcircle.com/ads.txt  200
+
+# Handle client-side routing for SPA
+/*    /index.html   200

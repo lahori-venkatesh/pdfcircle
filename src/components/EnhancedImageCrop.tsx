@@ -378,6 +378,7 @@ export function EnhancedImageCrop({ imageSrc, onCropComplete, onCancel, loading 
     const resizeObserver = new ResizeObserver((entries) => {
       if (!isMounted()) return;
       
+
       for (const entry of entries) {
         setContainerSize({
           width: entry.contentRect.width,
