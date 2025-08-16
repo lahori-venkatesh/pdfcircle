@@ -33,7 +33,6 @@ const tabs = [
   { id: 'to-excel', label: 'PDF to Excel', icon: FileSearch },
   { id: 'from-html', label: 'HTML to PDF', icon: FileCode2 },
   { id: 'ocr', label: 'OCR PDF', icon: FileKey },
-  { id: 'compare', label: 'Compare PDFs', icon: GitCompare },
   { id: 'edit', label: 'Edit PDF', icon: FileEdit },
   { id: 'lock', label: 'Lock PDF', icon: FileLock },
   { id: 'unlock', label: 'Unlock PDF', icon: Unlock },

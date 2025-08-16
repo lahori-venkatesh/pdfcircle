@@ -1,13 +1,15 @@
-import React, { useState, useCallback, useEffect, useRef, memo } from 'react';
+import { useState, useCallback, useEffect, useRef, memo } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Download, Image as ImageIcon, Loader2, Crop, Settings2, FileText, Archive, Trash2, Plus, SplitSquareVertical, Merge, Images, Edit , ChevronDown, ChevronUp  } from 'lucide-react';
 import { useOperationsCache } from '../utils/operationsCache';
 import { SEOHeaders } from './SEOHeaders';
 import { AdComponent } from './AdComponent';
 import { validateFile, ALLOWED_IMAGE_TYPES, createSecureObjectURL, createSecureDownloadLink, revokeBlobUrl } from '../utils/security';
+import { safeDownloadBlob } from '../utils/download';
 import JSZip from 'jszip';
 import { Link } from 'react-router-dom';
 import { AuthModal } from './AuthModal';
+import { EnhancedImageCrop } from './EnhancedImageCrop';
 
 interface PreviewImage { file: File; preview: string; }
 interface ConversionSettings { 
@@ -23,7 +25,7 @@ interface ConversionSettings {
   watermarkText: string; 
 }
 interface FormatOption { value: string; label: string; mimeType: string; }
-interface CropSettings { width: number; height: number; positionX: number; positionY: number; aspectRatio: string | null; }
+interface CropSettings { x: number; y: number; width: number; height: number; aspectRatio: string | null; }
 
 const FORMAT_OPTIONS: FormatOption[] = [
   { value: 'jpeg', label: 'JPEG', mimeType: 'image/jpeg' },
@@ -37,18 +39,12 @@ const FORMAT_OPTIONS: FormatOption[] = [
 ];
 const SIZE_OPTIONS = [0.01, 0.05, 0.1, 0.25, 0.5, 1, 2];
 const UNIT_OPTIONS = ['px', 'in', 'cm', 'mm'];
-const ASPECT_RATIOS = [
-  { label: 'Freeform', value: null },
-  { label: '1:1', value: '1:1' },
-  { label: '4:3', value: '4:3' },
-  { label: '16:9', value: '16:9' },
-  { label: '3:2', value: '3:2' },
-];
+
 const MAX_RECOMMENDED_SIZE = 15 * 1024 * 1024; // 15MB
 const ICO_SIZES = [16, 32, 48, 128, 256];
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
-const parseAspectRatio = (ratio: string | null): number => ratio ? Number(ratio.split(':')[0]) / Number(ratio.split(':')[1]) : 1;
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 B';
   const k = 1024;
@@ -199,12 +195,8 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [showCropModal, setShowCropModal] = useState(false);
   const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
   const [cropImageIndex, setCropImageIndex] = useState<number | null>(null);
-  const [cropSettings, setCropSettings] = useState<CropSettings>({ width: 0, height: 0, positionX: 0, positionY: 0, aspectRatio: null });
-  const [isDragging, setIsDragging] = useState(false);
-  const [isResizing, setIsResizing] = useState<string | null>(null);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number } | null>(null);
-  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
-  const [scale, setScale] = useState(1);
+  const [cropSettings, setCropSettings] = useState<CropSettings>({ x: 0, y: 0, width: 0, height: 0, aspectRatio: null });
+
   const [showDropdown, setShowDropdown] = useState(false);
   const [conversionCount, setConversionCount] = useState(0);
   const [downloadCount, setDownloadCount] = useState(0);
@@ -215,8 +207,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
   const [showUrlModal, setShowUrlModal] = useState(false);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
 
-  const imgRef = useRef<HTMLImageElement | null>(null);
-  const cropContainerRef = useRef<HTMLDivElement | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [settings, setSettings] = useState<ConversionSettings>({
@@ -329,15 +320,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     onDrop, accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.avif', '.heic'] }, maxFiles: MAX_IMAGES, maxSize: MAX_RECOMMENDED_SIZE,
   });
 
-  const handleImageLoad = useCallback(() => {
-    if (!imgRef.current || !cropContainerRef.current) return;
-    const { naturalWidth, naturalHeight, width, height } = imgRef.current;
-    setImageDimensions({ width: naturalWidth, height: naturalHeight });
-    const scaleX = width / naturalWidth; const scaleY = height / naturalHeight;
-    const newScale = Math.min(scaleX, scaleY);
-    setScale(newScale);
-    setCropSettings({ width: naturalWidth, height: naturalHeight, positionX: 0, positionY: 0, aspectRatio: null });
-  }, []);
+
 
   const applyCrop = useCallback(async (imageSrc: string, cropSettings: CropSettings): Promise<string> => {
     const img = new Image();
@@ -346,21 +329,34 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('Canvas context unavailable');
     canvas.width = cropSettings.width; canvas.height = cropSettings.height;
-    ctx.drawImage(img, cropSettings.positionX, cropSettings.positionY, cropSettings.width, cropSettings.height, 0, 0, cropSettings.width, cropSettings.height);
+    ctx.drawImage(img, cropSettings.x, cropSettings.y, cropSettings.width, cropSettings.height, 0, 0, cropSettings.width, cropSettings.height);
     return blobToDataURL(await new Promise<Blob>((resolve, reject) => canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error('Failed to create blob')), 'image/jpeg', 0.95)));
   }, [blobToDataURL]);
 
-  const handleCropComplete = useCallback(async () => {
-    if (!cropImageSrc || cropImageIndex === null || !imageDimensions) { setError('Invalid crop selection'); return; }
+  const handleCropImage = useCallback((index: number) => {
+    const image = images[index];
+    setCropImageSrc(image.preview);
+    setCropImageIndex(index);
+    setShowCropModal(true);
+  }, [images]);
+
+  const handleCropComplete = useCallback(async (newCropSettings: CropSettings) => {
+    if (!cropImageSrc || cropImageIndex === null) { setError('Invalid crop selection'); return; }
     setLoading(true);
     try {
-      const croppedSrc = await applyCrop(cropImageSrc, cropSettings);
+      const croppedSrc = await applyCrop(cropImageSrc, newCropSettings);
       const croppedBlob = dataURLtoBlob(croppedSrc);
       const croppedFile = new File([croppedBlob], images[cropImageIndex].file.name, { type: 'image/jpeg' });
       setImages(prev => { const newImages = [...prev]; revokeBlobUrl(newImages[cropImageIndex].preview); newImages[cropImageIndex] = { file: croppedFile, preview: croppedSrc }; return newImages; });
       setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null);
     } catch (err) { setError(`Cropping failed: ${(err as Error).message}`); } finally { setLoading(false); }
-  }, [cropImageSrc, cropImageIndex, images, applyCrop, dataURLtoBlob, cropSettings, imageDimensions]);
+  }, [cropImageSrc, cropImageIndex, images, applyCrop, dataURLtoBlob]);
+
+  const handleCropCancel = useCallback(() => {
+    setShowCropModal(false);
+    setCropImageSrc(null);
+    setCropImageIndex(null);
+  }, []);
 
   const handleConversion = useCallback(async () => {
     if (images.length === 0) { setError('No images selected'); return; }
@@ -369,10 +365,6 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     try {
       const results = await Promise.all(images.map(async (image) => {
         let resultBlob: Blob = image.file;
-        if (cropImageSrc && images.findIndex(img => img.preview === cropImageSrc) === images.indexOf(image)) {
-          const croppedSrc = await applyCrop(image.preview, cropSettings);
-          resultBlob = dataURLtoBlob(croppedSrc);
-        }
         if (settings.format === 'svg') resultBlob = await convertToSVG(resultBlob, settings.quality);
         else if (settings.format === 'ico') resultBlob = await createICOSet(resultBlob);
         else if (settings.format === 'pdf') resultBlob = await createPDF(resultBlob, settings);
@@ -385,15 +377,15 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       setConvertedBlobs(results);
       if (!isLoggedIn) setConversionCount(prev => prev + 1);
     } catch (err) { setError(`Conversion failed: ${(err as Error).message}`); } finally { setLoading(false); }
-  }, [images, settings, cropImageSrc, cropSettings, saveOperation, isLoggedIn, conversionCount]);
+  }, [images, settings, saveOperation, isLoggedIn, conversionCount]);
 
   const handleDownload = useCallback((index: number) => {
     if (!isLoggedIn && downloadCount >= MAX_CONVERSIONS) { setShowSignupPopup(true); return; }
     if (!convertedBlobs[index]) return;
     const { blob, originalName } = convertedBlobs[index];
     const extension = settings.format === 'jpeg' ? 'jpg' : settings.format === 'ico' ? 'zip' : settings.format;
-    const link = createSecureDownloadLink(blob, `${originalName.split('.').slice(0, -1).join('.')}.${extension}`);
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    const filename = `${originalName.split('.').slice(0, -1).join('.')}.${extension}`;
+    safeDownloadBlob(blob, filename);
     if (!isLoggedIn) setDownloadCount(prev => prev + 1);
   }, [convertedBlobs, settings.format, isLoggedIn, downloadCount]);
 
@@ -405,8 +397,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
       zip.file(`${originalName.split('.').slice(0, -1).join('.')}.${extension}`, blob);
     });
     const content = await zip.generateAsync({ type: 'blob' });
-    const link = createSecureDownloadLink(content, 'converted_images.zip');
-    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+    safeDownloadBlob(content, 'converted_images.zip');
     if (!isLoggedIn) setDownloadCount(prev => prev + 1);
   }, [convertedBlobs, settings.format, isLoggedIn, downloadCount]);
 
@@ -446,82 +437,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     }
   };
 
-  const getPositionFromEvent = useCallback((e: MouseEvent | TouchEvent | React.MouseEvent | React.TouchEvent) => {
-    const rect = cropContainerRef.current?.getBoundingClientRect();
-    if (!rect || !imgRef.current || !imageDimensions) return { x: 0, y: 0 };
-    const isTouch = 'touches' in e;
-    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
-    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
-    const x = (clientX - rect.left) / scale;
-    const y = (clientY - rect.top) / scale;
-    return { x: clamp(x, 0, imageDimensions.width), y: clamp(y, 0, imageDimensions.height) };
-  }, [scale, imageDimensions]);
 
-  const handleDragStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const { x, y } = getPositionFromEvent(e);
-    if (x >= cropSettings.positionX && x <= cropSettings.positionX + cropSettings.width && y >= cropSettings.positionY && y <= cropSettings.positionY + cropSettings.height) {
-      setIsDragging(true); setDragStart({ x, y });
-    }
-  }, [cropSettings, getPositionFromEvent]);
-
-  const handleResizeStart = useCallback((e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>, corner: string) => {
-    e.preventDefault(); e.stopPropagation();
-    const { x, y } = getPositionFromEvent(e);
-    setIsResizing(corner); setDragStart({ x: x - cropSettings.positionX, y: y - cropSettings.positionY });
-  }, [getPositionFromEvent]);
-
-  const handleMove = useCallback((e: MouseEvent | TouchEvent) => {
-    if (!dragStart || !imageDimensions || !cropContainerRef.current) return;
-    if (!isDragging && !isResizing) return;
-    e.preventDefault();
-    const { x, y } = getPositionFromEvent(e);
-    const minSize = 50;
-    setCropSettings(prev => {
-      let newState = { ...prev };
-      if (isDragging) {
-        newState.positionX = clamp(x - dragStart.x, 0, imageDimensions.width - prev.width);
-        newState.positionY = clamp(y - dragStart.y, 0, imageDimensions.height - prev.height);
-      } else if (isResizing) {
-        const sensitivity = 0.3; const dx = (x - dragStart.x) * sensitivity; const dy = (y - dragStart.y) * sensitivity;
-        if (isResizing === 'tl') { 
-          const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width); 
-          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(prev.height - dy, minSize, prev.positionY + prev.height); 
-          newState.positionX = prev.positionX + (prev.width - newWidth); 
-          newState.positionY = prev.aspectRatio ? prev.positionY + (prev.height - newHeight) : prev.positionY + (prev.height - newHeight); 
-          newState.width = newWidth; 
-          newState.height = newHeight; 
-        } else if (isResizing === 'tr') { 
-          const newWidth = clamp(prev.positionX + dx, minSize, imageDimensions.width - prev.positionX); 
-          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(prev.height - dy, minSize, prev.positionY + prev.height); 
-          newState.positionY = prev.aspectRatio ? prev.positionY + (prev.height - newHeight) : prev.positionY + (prev.height - newHeight); 
-          newState.width = newWidth; 
-          newState.height = newHeight; 
-        } else if (isResizing === 'bl') { 
-          const newWidth = clamp(prev.width - dx, minSize, prev.positionX + prev.width); 
-          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
-          newState.positionX = prev.positionX + (prev.width - newWidth); 
-          newState.width = newWidth; 
-          newState.height = newHeight; 
-        } else if (isResizing === 'br') { 
-          const newWidth = clamp(x - prev.positionX, minSize, imageDimensions.width - prev.positionX); 
-          const newHeight = prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : clamp(y - prev.positionY, minSize, imageDimensions.height - prev.positionY); 
-          newState.width = newWidth; 
-          newState.height = newHeight; 
-        }
-        newState.positionX = clamp(newState.positionX, 0, imageDimensions.width - newState.width);
-        newState.positionY = clamp(newState.positionY, 0, imageDimensions.height - newState.height);
-      }
-      return newState;
-    });
-  }, [isDragging, isResizing, dragStart, imageDimensions, getPositionFromEvent]);
-
-  const handleEnd = useCallback(() => { setIsDragging(false); setIsResizing(null); setDragStart(null); }, []);
-
-  const resetCrop = useCallback(() => {
-    if (!imageDimensions) return;
-    setCropSettings({ width: imageDimensions.width, height: imageDimensions.height, positionX: 0, positionY: 0, aspectRatio: null });
-  }, [imageDimensions]);
 
   const handleSignupClose = useCallback(() => setShowSignupPopup(false), []);
 
@@ -548,21 +464,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
     } catch (err) { setError(`URL upload failed: ${(err as Error).message}`); } finally { setLoading(false); }
   }, [urlInput, onDrop]);
 
-  useEffect(() => {
-    if (!showCropModal) return;
-    const handleGlobalMove = (e: MouseEvent | TouchEvent) => handleMove(e);
-    const handleGlobalEnd = () => handleEnd();
-    window.addEventListener('mousemove', handleGlobalMove, { passive: false });
-    window.addEventListener('mouseup', handleGlobalEnd);
-    window.addEventListener('touchmove', handleGlobalMove, { passive: false });
-    window.addEventListener('touchend', handleGlobalEnd);
-    return () => { 
-      window.removeEventListener('mousemove', handleGlobalMove); 
-      window.removeEventListener('mouseup', handleGlobalEnd); 
-      window.removeEventListener('touchmove', handleGlobalMove); 
-      window.removeEventListener('touchend', handleGlobalEnd); 
-    };
-  }, [showCropModal, handleMove, handleEnd]);
+
 
   const handleUploadSource = (source: string) => { 
     setShowDropdown(false); 
@@ -585,151 +487,21 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
 
       <div className="max-w-6xl mx-auto px-4 py-6 bg-white dark:bg-gray-900">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6 text-center">Free Online Image Editor - Create, Resize, Crop & Convert</h1>
+        {/* Top Ad */}
         <AdComponent
           slot="4325618154"
           adSize="leaderboard"
           refreshInterval={30}
-          className="my-4"
-          
+          className="my-6"
         />
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
           {showCropModal && cropImageSrc && cropImageIndex !== null ? (
-            <div className="flex flex-col md:flex-row gap-6">
-              <div className="w-full md:w-1/3 bg-gray-100 dark:bg-gray-800 p-4 rounded-lg text-gray-900 dark:text-gray-100 space-y-4 border border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Crop Rectangle</h2>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <input
-                      type="number"
-                      value={Math.round(cropSettings.width)}
-                      onChange={(e) => {
-                        const newWidth = Math.max(50, +e.target.value);
-                        setCropSettings(prev => ({ ...prev, width: newWidth, height: prev.aspectRatio ? newWidth / parseAspectRatio(prev.aspectRatio) : prev.height }));
-                      }}
-                      className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
-                      placeholder="Width"
-                      min="50"
-                    />
-                    <input
-                      type="number"
-                      value={Math.round(cropSettings.height)}
-                      onChange={(e) => {
-                        const newHeight = Math.max(50, +e.target.value);
-                        setCropSettings(prev => ({ ...prev, height: newHeight, width: prev.aspectRatio ? newHeight * parseAspectRatio(prev.aspectRatio) : prev.width }));
-                      }}
-                      className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
-                      placeholder="Height"
-                      min="50"
-                    />
-                  </div>
-                  <select
-                    value={cropSettings.aspectRatio || 'Freeform'}
-                    onChange={(e) => {
-                      const value = e.target.value === 'Freeform' ? null : e.target.value;
-                      setCropSettings(prev => ({ ...prev, aspectRatio: value, height: value ? prev.width / parseAspectRatio(value) : prev.height }));
-                    }}
-                    className="w-full p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
-                  >
-                    {ASPECT_RATIOS.map(ratio => <option key={ratio.value || 'Freeform'} value={ratio.value || 'Freeform'}>{ratio.label}</option>)}
-                  </select>
-                  <div>
-                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Crop Position</h3>
-                    <div className="flex gap-2">
-                      <input
-                        type="number"
-                        value={Math.round(cropSettings.positionX)}
-                        onChange={(e) => setCropSettings(prev => ({ ...prev, positionX: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.width - prev.width : Infinity) }))}
-                        className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
-                        placeholder="Position X"
-                        min="0"
-                      />
-                      <input
-                        type="number"
-                        value={Math.round(cropSettings.positionY)}
-                        onChange={(e) => setCropSettings(prev => ({ ...prev, positionY: clamp(+e.target.value, 0, imageDimensions ? imageDimensions.height - prev.height : Infinity) }))}
-                        className="w-1/2 p-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 dark:focus:border-indigo-400"
-                        placeholder="Position Y"
-                        min="0"
-                      />
-                    </div>
-                  </div>
-                  <button onClick={resetCrop} className="w-full bg-gray-500 dark:bg-gray-600 text-white p-2 rounded hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors">Reset</button>
-                </div>
-              </div>
-              <div className="w-full md:w-2/3 relative overflow-hidden">
-                <div ref={cropContainerRef} className="relative overflow-auto touch-none select-none bg-gray-100 dark:bg-gray-900" style={{ maxHeight: '80vh', userSelect: 'none' }}>
-                  <img
-                    ref={imgRef}
-                    src={cropImageSrc}
-                    alt="Image to crop"
-                    onLoad={handleImageLoad}
-                    className="max-w-full max-h-full object-contain"
-                    style={{ width: '100%', height: 'auto' }}
-                  />
-                  {imageDimensions && scale > 0 && (
-                    <div
-                      className={`absolute border-2 border-indigo-500 dark:border-indigo-400 bg-indigo-500/30 dark:bg-indigo-400/30 cursor-move ${isDragging || isResizing ? 'opacity-75' : ''}`}
-                      style={{
-                        width: `${cropSettings.width * scale}px`,
-                        height: `${cropSettings.height * scale}px`,
-                        left: `${cropSettings.positionX * scale}px`,
-                        top: `${cropSettings.positionY * scale}px`,
-                        touchAction: 'none'
-                      }}
-                      onMouseDown={handleDragStart}
-                      onTouchStart={handleDragStart}
-                    >
-                      <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none">
-                        {[...Array(8)].map((_, i) => (
-                          <div key={i} className={`border border-indigo-500 dark:border-indigo-400 border-opacity-50 ${i % 3 === 2 ? 'border-r-0' : ''} ${i >= 6 ? 'border-b-0' : ''}`} />
-                        ))}
-                      </div>
-                      <div
-                        className="absolute -top-2 -left-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nwse-resize"
-                        onMouseDown={(e) => handleResizeStart(e, 'tl')}
-                        onTouchStart={(e) => handleResizeStart(e, 'tl')}
-                      />
-                      <div
-                        className="absolute -top-2 -right-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nesw-resize"
-                        onMouseDown={(e) => handleResizeStart(e, 'tr')}
-                        onTouchStart={(e) => handleResizeStart(e, 'tr')}
-                      />
-                      <div
-                        className="absolute -bottom-2 -left-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nesw-resize"
-                        onMouseDown={(e) => handleResizeStart(e, 'bl')}
-                        onTouchStart={(e) => handleResizeStart(e, 'bl')}
-                      />
-                      <div
-                        className="absolute -bottom-2 -right-2 w-4 h-4 bg-indigo-600 dark:bg-indigo-500 rounded-full cursor-nwse-resize"
-                        onMouseDown={(e) => handleResizeStart(e, 'br')}
-                        onTouchStart={(e) => handleResizeStart(e, 'br')}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  <button
-                    onClick={() => { setShowCropModal(false); setCropImageSrc(null); setCropImageIndex(null); }}
-                    className="bg-gray-500 dark:bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-600 dark:hover:bg-gray-700 transition-colors"
-                    aria-label="Cancel crop"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleCropComplete}
-                    disabled={loading}
-                    className="bg-indigo-500 dark:bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-600 dark:hover:bg-indigo-700 flex items-center disabled:opacity-50 transition-colors"
-                    aria-label="Apply crop"
-                  >
-                    {loading ? (
-                      <><Loader2 className="w-5 h-5 animate-spin mr-2 text-white" />Cropping...</>
-                    ) : (
-                      <><Crop className="w-5 h-5 mr-2 text-white" />Apply Crop</>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
+            <EnhancedImageCrop
+              imageSrc={cropImageSrc}
+              onCropComplete={handleCropComplete}
+              onCancel={handleCropCancel}
+              loading={loading}
+            />
           ) : (
             <div className="space-y-6">
               {images.length === 0 ? (
@@ -829,7 +601,7 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
                         index={index}
                         convertedSize={convertedBlobs[index]?.blob.size}
                         onRemove={removeImage}
-                        onCrop={() => { setCropImageSrc(image.preview); setCropImageIndex(index); setShowCropModal(true); }}
+                        onCrop={() => handleCropImage(index)}
                         onDownload={() => handleDownload(index)}
                       />
                     ))}
@@ -1064,6 +836,9 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </div>
+        
+       
+        
         <section className="mt-6 text-gray-700 dark:text-gray-200">
           <h2 className="text-xl font-semibold mb-2">Why Use pdfCircle’s Image Editor?</h2>
           <p className="mb-4">
@@ -1111,6 +886,8 @@ export function ImageTools({ isLoggedIn }: { isLoggedIn: boolean }) {
             ))}
           </div>
         </section>
+        
+      
       </div>
       
     </>
